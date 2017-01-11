@@ -1,0 +1,71 @@
+{
+  "name": "@akashic/akashic-cli-export-html",
+  "version": "0.0.5",
+  "description": "A module to convert your Akashic game runnable standalone.",
+  "main": "lib/index.js",
+  "scripts": {
+    "prepublish": "gulp clean && npm run install:typings && gulp compile",
+    "install:typings": "gulp install:typings",
+    "clean:typings": "gulp clean:typings",
+    "clean": "gulp clean",
+    "start": "npm run build && node bin/run",
+    "build": "gulp compile",
+    "lint": "gulp lint lint-md",
+    "test": "gulp test && gulp lint && gulp lint-md"
+  },
+  "author": "DWANGO Co., Ltd.",
+  "license": "MIT",
+  "bin": {
+    "akashic-cli-export-html": "./bin/run"
+  },
+  "files": [
+    "README.md",
+    "bin",
+    "lib",
+    "templates",
+    "package.json"
+  ],
+  "devDependencies": {
+    "@akashic/akashic-engine": "~1.10.0",
+    "del": "~1.1.1",
+    "gulp": "~3.9.1",
+    "gulp-istanbul": "~0.10.4",
+    "gulp-jasmine": "~2.3.0",
+    "gulp-shell": "~0.5.2",
+    "gulp-tslint": "~4.3.5",
+    "gulp-expect-file": "0.0.7",
+    "gulp-uglify": "~2.0.0",
+    "gulp-rename": "^1.2.0",
+    "gulp-util": "^3.0.7",
+    "browserify": "^13.0.0",
+    "vinyl-source-stream": "^1.1.0",
+    "jasmine": "~2.1.1",
+    "jasmine-reporters": "~2.0.4",
+    "jasmine-terminal-reporter": "~0.9.1",
+    "mdast": "~2.0.0",
+    "mdast-lint": "~1.1.1",
+    "mock-fs": "3.9.0",
+    "tslint": "~3.7.4",
+    "typescript": "1.7.5",
+    "typings": "1.0.4"
+  },
+  "typings": "lib/index.d.ts",
+  "dependencies": {
+    "@akashic/akashic-cli-commons": "~0.1.3",
+    "commander": "2.8.1",
+    "ect": "^0.5.9",
+    "fs-extra": "0.30.0"
+  },
+  "optionalDependencies": {
+    "@akashic/game-driver": "~0.6.1",
+    "@akashic/pdi-browser": "~0.6.0",
+    "@akashic/game-storage": "0.0.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/akashic-games/akashic-cli-export-html.git"
+  },
+  "publishConfig": {
+    "@akashic:registry":"http://registry.npmjs.org/"
+  }
+}
