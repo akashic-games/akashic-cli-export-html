@@ -611,8 +611,8 @@ require = function e(t, n, r) {
         }, g = require("@akashic/akashic-engine"), CanvasSurface_1 = require("./CanvasSurface"), GlyphFactory = function(_super) {
             function GlyphFactory(fontFamily, fontSize, baselineHeight, cacheImageData, fontColor, strokeWidth, strokeColor, strokeOnly) {
                 _super.call(this, fontFamily, fontSize, baselineHeight, fontColor, strokeWidth, strokeColor, strokeOnly), 
-                this._cacheImageData = cacheImageData, this._glyphAreas = {}, this._marginW = Math.ceil(.2 * this.fontSize), 
-                this._marginH = Math.ceil(.2 * this.fontSize);
+                this._cacheImageData = cacheImageData, this._glyphAreas = {}, this._marginW = Math.ceil(.3 * this.fontSize + this.strokeWidth / 2), 
+                this._marginH = Math.ceil(.3 * this.fontSize + this.strokeWidth / 2);
             }
             return __extends(GlyphFactory, _super), GlyphFactory.prototype.create = function(code) {
                 var result, glyphArea = this._glyphAreas[code];

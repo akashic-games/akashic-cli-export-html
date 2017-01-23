@@ -73,6 +73,8 @@ require = function e(t, n, r) {
                     function ResourceFactory() {}
                     return ResourceFactory.prototype.createImageAsset = function(id, assetPath, width, height) {
                         throw g.ExceptionFactory.createPureVirtualError("ResourceFactory#createImageAsset");
+                    }, ResourceFactory.prototype.createVideoAsset = function(id, assetPath, width, height, system, loop, useRealSize) {
+                        throw g.ExceptionFactory.createPureVirtualError("ResourceFactory#createVideoAsset");
                     }, ResourceFactory.prototype.createAudioAsset = function(id, assetPath, duration, system) {
                         throw g.ExceptionFactory.createPureVirtualError("ResourceFactory#createAudioAsset");
                     }, ResourceFactory.prototype.createTextAsset = function(id, assetPath) {
@@ -151,6 +153,24 @@ require = function e(t, n, r) {
                     }, ImageAsset;
                 }(Asset);
                 g.ImageAsset = ImageAsset;
+                var VideoAsset = function(_super) {
+                    function VideoAsset(id, assetPath, width, height, system, loop, useRealSize) {
+                        _super.call(this, id, assetPath, width, height), this.realWidth = 0, this.realHeight = 0, 
+                        this._system = system, this._loop = loop, this._useRealSize = useRealSize;
+                    }
+                    return __extends(VideoAsset, _super), VideoAsset.prototype.asSurface = function() {
+                        throw g.ExceptionFactory.createPureVirtualError("VideoAsset#asSurface");
+                    }, VideoAsset.prototype.play = function(loop) {
+                        return this.getPlayer().play(this), this.getPlayer();
+                    }, VideoAsset.prototype.stop = function() {
+                        this.getPlayer().stop();
+                    }, VideoAsset.prototype.getPlayer = function() {
+                        throw g.ExceptionFactory.createPureVirtualError("VideoAsset#getPlayer");
+                    }, VideoAsset.prototype.destroy = function() {
+                        this._system = void 0, _super.prototype.destroy.call(this);
+                    }, VideoAsset;
+                }(ImageAsset);
+                g.VideoAsset = VideoAsset;
                 var AudioAsset = function(_super) {
                     function AudioAsset(id, assetPath, duration, system) {
                         _super.call(this, id, assetPath), this.duration = duration, this._system = system, 
@@ -244,8 +264,12 @@ require = function e(t, n, r) {
                                 if ("number" != typeof conf.width) throw g.ExceptionFactory.createAssertionError("AssetManager#_normalize: wrong width given for the image asset: " + p);
                                 if ("number" != typeof conf.height) throw g.ExceptionFactory.createAssertionError("AssetManager#_normalize: wrong height given for the image asset: " + p);
                             }
-                            "audio" === conf.type && void 0 === conf.duration && (conf.duration = 0), conf.global || (conf.global = !1), 
-                            ret[p] = conf;
+                            if ("audio" === conf.type && void 0 === conf.duration && (conf.duration = 0), "video" === conf.type && !conf.useRealSize) {
+                                if ("number" != typeof conf.width) throw g.ExceptionFactory.createAssertionError("AssetManager#_normalize: wrong width given for the video asset: " + p);
+                                if ("number" != typeof conf.height) throw g.ExceptionFactory.createAssertionError("AssetManager#_normalize: wrong height given for the video asset: " + p);
+                                conf.useRealSize = !1;
+                            }
+                            conf.global || (conf.global = !1), ret[p] = conf;
                         }
                         for (var i = 0; i < globalScriptPaths.length; ++i) {
                             var path = globalScriptPaths[i];
@@ -279,14 +303,17 @@ require = function e(t, n, r) {
                           case "script":
                             return resourceFactory.createScriptAsset(id, uri);
 
+                          case "video":
+                            return resourceFactory.createVideoAsset(id, uri, conf.width, conf.height, new g.VideoSystem(), conf.loop, conf.useRealSize);
+
                           default:
                             throw g.ExceptionFactory.createAssertionError("AssertionError#_createAssetFor: unknown asset type " + conf.type + " for asset ID: " + id);
                         }
                     }, AssetManager.prototype._releaseAsset = function(assetId) {
                         var path, asset = this._assets[assetId] || this._loadings[assetId] && this._loadings[assetId].asset;
-                        if (asset) if (path = asset.path, asset.inUse()) {
-                            if (!(asset instanceof g.AudioAsset)) throw g.ExceptionFactory.createAssertionError("AssetManager#unrefAssets: Unsupported in-use " + asset.constructor.name);
-                            asset._system.requestDestroy(asset);
+                        if (asset) if (path = asset.path, asset.inUse()) if (asset instanceof g.AudioAsset) asset._system.requestDestroy(asset); else {
+                            if (!(asset instanceof g.VideoAsset)) throw g.ExceptionFactory.createAssertionError("AssetManager#unrefAssets: Unsupported in-use " + asset.constructor.name);
+                            asset.destroy();
                         } else asset.destroy();
                         delete this._refCounts[assetId], delete this._loadings[assetId], delete this._assets[assetId], 
                         path && this._liveAssetPathTable.hasOwnProperty(path) && delete this._liveAssetPathTable[path];
@@ -512,11 +539,24 @@ require = function e(t, n, r) {
                         }
                         return 56320 <= code && code <= 57343 ? null : code;
                     }
+                    function setupAnimatingHandler(animatingHandler, surface) {
+                        surface.isDynamic && (surface.animatingStarted.handle(animatingHandler, animatingHandler._onAnimatingStarted), 
+                        surface.animatingStopped.handle(animatingHandler, animatingHandler._onAnimatingStopped), 
+                        surface.isPlaying() && animatingHandler._onAnimatingStarted());
+                    }
+                    function migrateAnimatingHandler(animatingHandler, beforeSurface, afterSurface) {
+                        animatingHandler._onAnimatingStopped(), !beforeSurface.destroyed() && beforeSurface.isDynamic && (beforeSurface.animatingStarted.remove(animatingHandler, animatingHandler._onAnimatingStarted), 
+                        beforeSurface.animatingStopped.remove(animatingHandler, animatingHandler._onAnimatingStopped)), 
+                        afterSurface.isDynamic && (afterSurface.animatingStarted.handle(animatingHandler, animatingHandler._onAnimatingStarted), 
+                        afterSurface.animatingStopped.handle(animatingHandler, animatingHandler._onAnimatingStopped), 
+                        afterSurface.isPlaying() && animatingHandler._onAnimatingStarted());
+                    }
                     Util.distance = distance, Util.distanceBetweenOffsets = distanceBetweenOffsets, 
                     Util.distanceBetweenAreas = distanceBetweenAreas, Util.createMatrix = createMatrix, 
                     Util.createSpriteFromE = createSpriteFromE, Util.createSpriteFromScene = createSpriteFromScene, 
                     Util.asSurface = asSurface, Util.findAssetByPathAsFile = findAssetByPathAsFile, 
-                    Util.findAssetByPathAsDirectory = findAssetByPathAsDirectory, Util.charCodeAt = charCodeAt;
+                    Util.findAssetByPathAsDirectory = findAssetByPathAsDirectory, Util.charCodeAt = charCodeAt, 
+                    Util.setupAnimatingHandler = setupAnimatingHandler, Util.migrateAnimatingHandler = migrateAnimatingHandler;
                 }(Util = g.Util || (g.Util = {}));
             }(g || (g = {}));
             var g;
@@ -867,6 +907,38 @@ require = function e(t, n, r) {
                     }, SoundAudioSystem;
                 }(AudioSystem);
                 g.SoundAudioSystem = SoundAudioSystem;
+            }(g || (g = {}));
+            var g;
+            !function(g) {
+                var VideoPlayer = function() {
+                    function VideoPlayer(loop) {
+                        this._loop = !!loop, this.played = new g.Trigger(), this.stopped = new g.Trigger(), 
+                        this.currentVideo = void 0, this.volume = 1;
+                    }
+                    return VideoPlayer.prototype.play = function(videoAsset) {
+                        this.currentVideo = videoAsset, this.played.fire({
+                            player: this,
+                            video: videoAsset
+                        }), videoAsset.asSurface().animatingStarted.fire();
+                    }, VideoPlayer.prototype.stop = function() {
+                        var videoAsset = this.currentVideo;
+                        this.stopped.fire({
+                            player: this,
+                            video: videoAsset
+                        }), videoAsset.asSurface().animatingStopped.fire();
+                    }, VideoPlayer.prototype.changeVolume = function(volume) {
+                        this.volume = volume;
+                    }, VideoPlayer;
+                }();
+                g.VideoPlayer = VideoPlayer;
+            }(g || (g = {}));
+            var g;
+            !function(g) {
+                var VideoSystem = function() {
+                    function VideoSystem() {}
+                    return VideoSystem;
+                }();
+                g.VideoSystem = VideoSystem;
             }(g || (g = {}));
             var g;
             !function(g) {
@@ -1501,27 +1573,38 @@ require = function e(t, n, r) {
                             var scene = sceneOrParam;
                             _super.call(this, scene), this.surface = g.Util.asSurface(src), this.width = void 0 !== width ? width : this.surface.width, 
                             this.height = void 0 !== height ? height : this.surface.height, this.srcWidth = this.width, 
-                            this.srcHeight = this.height, this.srcX = 0, this.srcY = 0, this._stretchMatrix = void 0;
+                            this.srcHeight = this.height, this.srcX = 0, this.srcY = 0, this._stretchMatrix = void 0, 
+                            this._beforeSurface = this.surface, g.Util.setupAnimatingHandler(this, this.surface);
                         } else {
                             var param = sceneOrParam;
                             _super.call(this, param), this.surface = g.Util.asSurface(param.src), "width" in param || (this.width = this.surface.width), 
                             "height" in param || (this.height = this.surface.height), this.srcWidth = "srcWidth" in param ? param.srcWidth : this.width, 
                             this.srcHeight = "srcHeight" in param ? param.srcHeight : this.height, this.srcX = param.srcX || 0, 
-                            this.srcY = param.srcY || 0, this._stretchMatrix = void 0, this._invalidateSelf();
+                            this.srcY = param.srcY || 0, this._stretchMatrix = void 0, this._beforeSurface = this.surface, 
+                            g.Util.setupAnimatingHandler(this, this.surface), this._invalidateSelf();
                         }
                     }
-                    return __extends(Sprite, _super), Sprite.prototype.renderSelf = function(renderer, camera) {
+                    return __extends(Sprite, _super), Sprite.prototype._onUpdate = function() {
+                        this.modified();
+                    }, Sprite.prototype._onAnimatingStarted = function() {
+                        this.update.isHandled(this, this._onUpdate) || this.update.handle(this, this._onUpdate);
+                    }, Sprite.prototype._onAnimatingStopped = function() {
+                        this.destroyed() || this.update.remove(this, this._onUpdate);
+                    }, Sprite.prototype.renderSelf = function(renderer, camera) {
                         return this.srcWidth <= 0 || this.srcHeight <= 0 || (this._stretchMatrix && (renderer.save(), 
                         renderer.transform(this._stretchMatrix._matrix)), renderer.drawImage(this.surface, this.srcX, this.srcY, this.srcWidth, this.srcHeight, 0, 0), 
                         this._stretchMatrix && renderer.restore(), !0);
                     }, Sprite.prototype.invalidate = function() {
                         this._invalidateSelf(), this.modified();
                     }, Sprite.prototype.destroy = function(destroySurface) {
-                        destroySurface && this.surface && !this.surface.destroyed() && this.surface.destroy(), 
-                        this.surface = void 0, _super.prototype.destroy.call(this);
+                        this.surface && !this.surface.destroyed() && (destroySurface ? this.surface.destroy() : this.surface.isDynamic && (this.surface.animatingStarted.remove(this, this._onAnimatingStarted), 
+                        this.surface.animatingStopped.remove(this, this._onAnimatingStopped))), this.surface = void 0, 
+                        _super.prototype.destroy.call(this);
                     }, Sprite.prototype._invalidateSelf = function() {
                         this.width === this.srcWidth && this.height === this.srcHeight ? this._stretchMatrix = void 0 : (this._stretchMatrix = g.Util.createMatrix(), 
-                        this._stretchMatrix.scale(this.width / this.srcWidth, this.height / this.srcHeight));
+                        this._stretchMatrix.scale(this.width / this.srcWidth, this.height / this.srcHeight)), 
+                        this.surface !== this._beforeSurface && (g.Util.migrateAnimatingHandler(this, this._beforeSurface, this.surface), 
+                        this._beforeSurface = this.surface);
                     }, Sprite;
                 }(g.E);
                 g.Sprite = Sprite;
@@ -1582,16 +1665,23 @@ require = function e(t, n, r) {
                             var scene = sceneOrParam;
                             _super.call(this, scene), this.tileWidth = tileWidth, this.tileHeight = tileHeight, 
                             this.tileData = tileData, this.tileChips = g.Util.asSurface(src), this.height = this.tileHeight * this.tileData.length, 
-                            this.width = this.tileWidth * this.tileData[0].length, this._tilesInRow = Math.floor(this.tileChips.width / this.tileWidth), 
-                            this._invalidateSelf();
+                            this.width = this.tileWidth * this.tileData[0].length, this._tilesInRow = Math.floor(this.tileChips.width / this.tileWidth);
                         } else {
                             var param = sceneOrParam;
                             _super.call(this, param), this.tileWidth = param.tileWidth, this.tileHeight = param.tileHeight, 
                             this.tileData = param.tileData, this.tileChips = g.Util.asSurface(param.src), this.height = this.tileHeight * this.tileData.length, 
-                            this.width = this.tileWidth * this.tileData[0].length, this._invalidateSelf();
+                            this.width = this.tileWidth * this.tileData[0].length;
                         }
+                        this._beforeTileChips = this.tileChips, g.Util.setupAnimatingHandler(this, this.tileChips), 
+                        this._invalidateSelf();
                     }
-                    return __extends(Tile, _super), Tile.prototype.renderCache = function(renderer) {
+                    return __extends(Tile, _super), Tile.prototype._onUpdate = function() {
+                        this.invalidate();
+                    }, Tile.prototype._onAnimatingStarted = function() {
+                        this.update.isHandled(this, this._onUpdate) || this.update.handle(this, this._onUpdate);
+                    }, Tile.prototype._onAnimatingStopped = function() {
+                        this.destroyed() || this.update.remove(this, this._onUpdate);
+                    }, Tile.prototype.renderCache = function(renderer) {
                         if (!this.tileData) throw g.ExceptionFactory.createAssertionError("Tile#_renderCache: don't have a tile data");
                         if (!(this.tileWidth <= 0 || this.tileHeight <= 0)) for (var y = 0; y < this.tileData.length; ++y) for (var row = this.tileData[y], x = 0; x < row.length; ++x) {
                             var tile = row[x];
@@ -1606,7 +1696,8 @@ require = function e(t, n, r) {
                         destroySurface && this.tileChips && !this.tileChips.destroyed() && this.tileChips.destroy(), 
                         this.tileChips = void 0, _super.prototype.destroy.call(this);
                     }, Tile.prototype._invalidateSelf = function() {
-                        this._tilesInRow = Math.floor(this.tileChips.width / this.tileWidth);
+                        this._tilesInRow = Math.floor(this.tileChips.width / this.tileWidth), this.tileChips !== this._beforeTileChips && (g.Util.migrateAnimatingHandler(this, this._beforeTileChips, this.tileChips), 
+                        this._beforeTileChips = this.tileChips);
                     }, Tile;
                 }(g.CacheableE);
                 g.Tile = Tile;
@@ -2074,13 +2165,18 @@ require = function e(t, n, r) {
             var g;
             !function(g) {
                 var Surface = function() {
-                    function Surface(width, height, drawable) {
-                        if (width % 1 !== 0 || height % 1 !== 0) throw g.ExceptionFactory.createAssertionError("Surface#constructor: width and height must be integers");
-                        this.width = width, this.height = height, drawable && (this._drawable = drawable);
+                    function Surface(width, height, drawable, isDynamic) {
+                        if (void 0 === isDynamic && (isDynamic = !1), width % 1 !== 0 || height % 1 !== 0) throw g.ExceptionFactory.createAssertionError("Surface#constructor: width and height must be integers");
+                        this.width = width, this.height = height, drawable && (this._drawable = drawable), 
+                        this.isDynamic = isDynamic, this.isDynamic ? (this.animatingStarted = new g.Trigger(), 
+                        this.animatingStopped = new g.Trigger()) : (this.animatingStarted = void 0, this.animatingStopped = void 0);
                     }
                     return Surface.prototype.renderer = function() {
                         throw g.ExceptionFactory.createPureVirtualError("Surface#renderer");
+                    }, Surface.prototype.isPlaying = function() {
+                        throw g.ExceptionFactory.createPureVirtualError("Surface#isPlaying()");
                     }, Surface.prototype.destroy = function() {
+                        this.animatingStarted && this.animatingStarted.destroy(), this.animatingStopped && this.animatingStopped.destroy(), 
                         this._destroyed = !0;
                     }, Surface.prototype.destroyed = function() {
                         return !!this._destroyed;
@@ -2150,9 +2246,11 @@ require = function e(t, n, r) {
                             var code = g.Util.charCodeAt(this.text, i);
                             if (code) {
                                 var glyph = this.font.glyphForCharacter(code);
-                                if (glyph) {
-                                    if (glyph.width < 0 || glyph.height < 0) continue;
-                                    if (glyph.x < 0 || glyph.y < 0) continue;
+                                if (!glyph) {
+                                    var str = 4294901760 & code ? String.fromCharCode((4294901760 & code) >>> 16, 65535 & code) : String.fromCharCode(code);
+                                    throw g.ExceptionFactory.createAssertionError("Label#_invalidateSelf(): failed to get a glyph for '" + str + "' (BitmapFont might not have the glyph or DynamicFont might create a glyph larger than its atlas).");
+                                }
+                                if (!(glyph.width < 0 || glyph.height < 0 || glyph.x < 0 || glyph.y < 0)) {
                                     this.glyphs.push(glyph), this._textWidth += glyph.advanceWidth * glyphScale;
                                     var height = glyph.offsetY + glyph.height;
                                     maxHeight < height && (maxHeight = height);
@@ -2473,6 +2571,7 @@ require = function e(t, n, r) {
                         var glyph = this._glyphs[code];
                         if (!glyph || !glyph.isSurfaceValid) {
                             if (glyph = this._glyphFactory.create(code), glyph.surface) {
+                                if (glyph.width > this._atlasSize.width || glyph.height > this._atlasSize.height) return null;
                                 var atlas_1 = this._addToAtlas(glyph);
                                 if (!atlas_1 && (this._reallocateAtlas(), atlas_1 = this._addToAtlas(glyph), !atlas_1)) return null;
                                 glyph._atlas = atlas_1;
