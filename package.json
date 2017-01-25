@@ -58,7 +58,7 @@
   },
   "optionalDependencies": {
     "@akashic/game-driver": "~0.7.0",
-    "@akashic/pdi-browser": "~0.7.0",
+    "@akashic/pdi-browser": "~0.7.2",
     "@akashic/game-storage": "0.0.6"
   },
   "repository": {
