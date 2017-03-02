@@ -4,14 +4,17 @@ import * as fs from "fs";
 import * as path from "path";
 
 export interface ExportHTMLParameterObject extends TransferTemplateParameterObject {
-	// nothing to declare.
+	cwd?: string;
 };
 
 export function _completeExportHTMLParameterObject(param: ExportHTMLParameterObject): void {
+	param.cwd = param.cwd || process.cwd();
 	param.logger = param.logger || new cmn.ConsoleLogger();
 }
 export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<void> {
 	_completeExportHTMLParameterObject(param);
+	const restoreDirectory: (err?: any) => Promise<void> = cmn.Util.chdir(param.cwd);
+
 	if (!param.output) {
 		return Promise.reject("--output option must be specified.");
 	}
@@ -43,8 +46,10 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 			}
 		});
 	})
+	.then(restoreDirectory)
 	.catch((error) => {
 		param.logger.error(error);
+		restoreDirectory();
 		throw new Error(error);
 	})
 	.then(() => param.logger.info("Done!"));
