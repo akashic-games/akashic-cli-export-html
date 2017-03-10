@@ -9,11 +9,19 @@ interface CommandParameterObject {
 	quiet?: boolean;
 	output?: string;
 	exclude?: string[];
+	tiny?: boolean;
 }
 
 function cli(param: CommandParameterObject): void {
 	var logger = new ConsoleLogger({ quiet: param.quiet });
-	var exportParam = { force: param.force, quiet: param.quiet, output: param.output, exclude: param.exclude, logger: logger };
+	var exportParam = {
+		force: param.force,
+		quiet: param.quiet,
+		output: param.output,
+		exclude: param.exclude,
+		logger: logger,
+		tiny: param.tiny
+	};
 	Promise.resolve()
 		.then(() => promiseExportHTML(exportParam))
 		.catch((err: any) => {
@@ -32,6 +40,7 @@ commander
 	.option("-f, --force", "Overwrites existing files")
 	.option("-q, --quiet", "Suppress output")
 	.option("-o, --output <fileName>", "Name of output file or directory")
+	.option("-t, --tiny", "minify output")
 	.option("-e, --exclude [fileNames]", "Name of exclude file", (fileNames: string, list: string[]) => {
 		list.push(fileNames);
 		return list; }, []);

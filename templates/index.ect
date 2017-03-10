@@ -55,20 +55,14 @@ if (! ("gLocalAssetContainer" in window)) {
 }
 
 <% for asset in @assets : %>
-window.gLocalAssetContainer["<%- asset.name %>"] = 
 
 <% if asset.type is "script" : %>
+window.gLocalAssetContainer["<%- asset.name %>"] =
 function(g) {
-<% else if asset.type is "text" : %>
-`
-<% end %>
-
 <%- asset.code %>
-
-<% if asset.type is "script" : %>
 };
 <% else if asset.type is "text" : %>
-`;
+window.gLocalAssetContainer["<%- asset.name %>"] = "<%- asset.code %>";
 <% end %>
 
 <% end %>
