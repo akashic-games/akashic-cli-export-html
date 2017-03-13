@@ -14,3 +14,4 @@ tmp
 spec/build
 templates/template-export-html/js/LocalScriptAsset.js
 templates/template-export-html/js/LocalTextAsset.js
+.vscode

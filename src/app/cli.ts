@@ -5,6 +5,7 @@ import { ConsoleLogger } from "@akashic/akashic-cli-commons";
 import { promiseExportHTML } from "./exportHTML";
 
 interface CommandParameterObject {
+	cwd?: string;
 	force?: boolean;
 	quiet?: boolean;
 	output?: string;
@@ -13,7 +14,14 @@ interface CommandParameterObject {
 
 function cli(param: CommandParameterObject): void {
 	var logger = new ConsoleLogger({ quiet: param.quiet });
-	var exportParam = { force: param.force, quiet: param.quiet, output: param.output, exclude: param.exclude, logger: logger };
+	var exportParam = {
+		cwd: param.cwd,
+		force: param.force,
+		quiet: param.quiet,
+		output: param.output,
+		exclude: param.exclude,
+		logger: logger
+	};
 	Promise.resolve()
 		.then(() => promiseExportHTML(exportParam))
 		.catch((err: any) => {
@@ -29,12 +37,14 @@ commander
 
 commander
 	.description("convert your Akashic game runnable standalone.")
+	.option("-C, --cwd <dir>", "The directory to export from")
 	.option("-f, --force", "Overwrites existing files")
 	.option("-q, --quiet", "Suppress output")
 	.option("-o, --output <fileName>", "Name of output file or directory")
 	.option("-e, --exclude [fileNames]", "Name of exclude file", (fileNames: string, list: string[]) => {
 		list.push(fileNames);
-		return list; }, []);
+		return list;
+	}, []);
 
 export function run(argv: string[]): void {
 	commander.parse(argv);
