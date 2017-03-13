@@ -1,6 +1,6 @@
 {
   "name": "@akashic/akashic-cli-export-html",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A module to convert your Akashic game runnable standalone.",
   "main": "lib/index.js",
   "scripts": {
