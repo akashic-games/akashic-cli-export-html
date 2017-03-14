@@ -46,7 +46,7 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 				innerHTMLAssetsArray.push({
 					name: "game.json",
 					type: "text",
-					code: replaceJson(JSON.stringify(conf._content, null, "\t"))
+					code: escape(JSON.stringify(conf._content, null, "\t"))
 				});
 
 				var assetNames = Object.keys(assets);
@@ -55,7 +55,7 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 					return (type === "script" || type === "text");
 				}).forEach((assetName) => {
 					var assetString = fs.readFileSync(assets[assetName].path, "utf8").replace(/\r\n|\n/g, "\n");
-					if (assets[assetName].type === "text") assetString = replaceJson(assetString);
+					if (assets[assetName].type === "text") assetString = escape(assetString);
 
 					innerHTMLAssetsArray.push({
 						name: assetName,
@@ -70,7 +70,7 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 						var scriptString = fs.readFileSync(scriptPath, "utf8").replace(/\r\n|\n/g, "\n");
 
 						if (path.extname(scriptPath) === ".json") {
-							scriptString = replaceJson(filterUnparsablePath(scriptString));
+							scriptString = escape(filterUnparsablePath(scriptString));
 						}
 
 						innerHTMLAssetsArray.push({
@@ -154,8 +154,6 @@ function filterUnparsablePath(assetString: string): string {
 	return assetString.replace(/\\\\/g, "/"); // Windows環境では、インストールされたモジュールの package.json の _where や _args プロパティに \\ 区切りのパスが挿入される
 }
 
-function replaceJson(code: string): string {
-	// 改行と空白を除去し、jsonのエスケープ文字を正しく扱えるよう処理する
-	return code.replace(/\\n/g, "").replace(/\s/g, "").replace(/\\\"/g, "\\\\\"").replace(/\"/g, "\\\"");
-
+function escape(code: string): string {
+	return encodeURIComponent(code.replace(/\\n/g, ""));
 }

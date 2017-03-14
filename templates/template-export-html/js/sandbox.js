@@ -38,6 +38,7 @@ window.addEventListener("load", function() {
 		pf.loadGameConfiguration = function(url, callback) {
 			try {
 				var gameJsonText = window.gLocalAssetContainer["game.json"];
+				gameJsonText = decodeURIComponent(gameJsonText);
 				callback(null, JSON.parse(gameJsonText));
 			} catch(error) {
 				callback(error, null);
