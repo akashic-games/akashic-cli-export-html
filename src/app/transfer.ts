@@ -69,7 +69,7 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 						var scriptPath = path.resolve("./", scriptName);
 						var scriptString = fs.readFileSync(scriptPath, "utf8").replace(/\r\n|\n/g, "\n");
 
-						if (scriptPath.indexOf("package.json") !== -1) {
+						if (path.extname(scriptPath) === ".json") {
 							scriptString = replaceJson(filterUnparsablePath(scriptString));
 						}
 
@@ -96,13 +96,11 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 
 };
 
-function copyAssetFilesTiny(outputPath: string, assets: any, options: TransferTemplateParameterObject): void {
+function copyAssetFilesTiny(outputPath: string, assets: cmn.Assets, options: TransferTemplateParameterObject): void {
 	options.logger.info("copying tiny fileset...");
 	var assetNames = Object.keys(assets);
 	assetNames.filter((assetName) => {
-		var ignoreTypes = ["script", "text"];
-		var type = assets[assetName].type;
-		return  ignoreTypes.indexOf(type) === -1;
+		return assets[assetName].type !== "script" || assets[assetName].type !== "text";
 	}).forEach((assetName) => {
 		var assetPath = assets[assetName].path;
 		var assetDir = path.dirname(assetPath);
@@ -118,7 +116,9 @@ function copyAssetFilesTiny(outputPath: string, assets: any, options: TransferTe
 						{clobber: options.force}
 					);
 				} catch (e) {
-					// ignore Error
+					if (e.code !== "ENOENT" && e.code !== "EEXIT") {
+						options.logger.error("Error while copying: " + e);
+					}
 				}
 			});
 		} else {
@@ -157,4 +157,5 @@ function filterUnparsablePath(assetString: string): string {
 function replaceJson(code: string): string {
 	// 改行と空白を除去し、jsonのエスケープ文字を正しく扱えるよう処理する
 	return code.replace(/\\n/g, "").replace(/\s/g, "").replace(/\\\"/g, "\\\\\"").replace(/\"/g, "\\\"");
+
 }
