@@ -97,7 +97,7 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 };
 
 function copyAssetFilesTiny(outputPath: string, assets: any, options: TransferTemplateParameterObject): void {
-	options.logger.info("copying minimum files...");
+	options.logger.info("copying tiny fileset...");
 	var assetNames = Object.keys(assets);
 	assetNames.filter((assetName) => {
 		var ignoreTypes = ["script", "text"];
@@ -114,7 +114,8 @@ function copyAssetFilesTiny(outputPath: string, assets: any, options: TransferTe
 				try {
 					fsx.copySync(
 						path.resolve(process.cwd(), assetPath) + "." + type,
-						dst + "." + type
+						dst + "." + type,
+						{clobber: options.force}
 					);
 				} catch (e) {
 					// ignore Error
@@ -123,7 +124,8 @@ function copyAssetFilesTiny(outputPath: string, assets: any, options: TransferTe
 		} else {
 			fsx.copySync(
 				path.resolve(process.cwd(), assetPath),
-				dst
+				dst,
+				{clobber: options.force}
 			);
 		}
 	});

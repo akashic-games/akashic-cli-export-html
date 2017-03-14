@@ -43,7 +43,7 @@ commander
 	.option("-f, --force", "Overwrites existing files")
 	.option("-q, --quiet", "Suppress output")
 	.option("-o, --output <fileName>", "Name of output file or directory")
-	.option("-t, --tiny", "minify output")
+	.option("-t, --tiny", "output tiny fileset")
 	.option("-e, --exclude [fileNames]", "Name of exclude file", (fileNames: string, list: string[]) => {
 		list.push(fileNames);
 		return list;
