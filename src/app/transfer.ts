@@ -16,7 +16,7 @@ export interface TransferTemplateParameterObject {
 	output?: string;
 	force?: boolean;
 	logger?: cmn.Logger;
-	tiny?: boolean;
+	strip?: boolean;
 }
 
 export function _completeTransferTemplateParameterObject(param: TransferTemplateParameterObject): void {
@@ -84,8 +84,8 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 				var ectRender = ect({root: __dirname + "/../templates", ext: ".ect"});
 				var html = ectRender.render("index", {assets: innerHTMLAssetsArray});
 				fs.writeFileSync(path.resolve(outputPath, "./index.html"), html);
-				if (options.tiny) {
-					copyAssetFilesTiny(outputPath, assets, options);
+				if (options.strip) {
+					copyAssetFilesStrip(outputPath, assets, options);
 				} else {
 					copyAssetFiles(outputPath, options);
 				}
@@ -96,8 +96,8 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 
 };
 
-function copyAssetFilesTiny(outputPath: string, assets: cmn.Assets, options: TransferTemplateParameterObject): void {
-	options.logger.info("copying tiny fileset...");
+function copyAssetFilesStrip(outputPath: string, assets: cmn.Assets, options: TransferTemplateParameterObject): void {
+	options.logger.info("copying stripped fileset...");
 	var assetNames = Object.keys(assets);
 	assetNames.filter((assetName) => {
 		return assets[assetName].type !== "script" || assets[assetName].type !== "text";

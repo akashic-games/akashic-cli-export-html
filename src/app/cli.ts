@@ -10,7 +10,7 @@ interface CommandParameterObject {
 	quiet?: boolean;
 	output?: string;
 	exclude?: string[];
-	tiny?: boolean;
+	strip?: boolean;
 }
 
 function cli(param: CommandParameterObject): void {
@@ -22,7 +22,7 @@ function cli(param: CommandParameterObject): void {
 		output: param.output,
 		exclude: param.exclude,
 		logger: logger,
-		tiny: param.tiny
+		strip: param.strip
 	};
 	Promise.resolve()
 		.then(() => promiseExportHTML(exportParam))
@@ -43,7 +43,7 @@ commander
 	.option("-f, --force", "Overwrites existing files")
 	.option("-q, --quiet", "Suppress output")
 	.option("-o, --output <fileName>", "Name of output file or directory")
-	.option("-t, --tiny", "output tiny fileset")
+	.option("-s, --strip", "output stripped fileset")
 	.option("-e, --exclude [fileNames]", "Name of exclude file", (fileNames: string, list: string[]) => {
 		list.push(fileNames);
 		return list;
