@@ -117,7 +117,7 @@ function copyAssetFilesStrip(outputPath: string, assets: cmn.Assets, options: Tr
 					);
 				} catch (e) {
 					if (e.code !== "ENOENT" && e.code !== "EEXIT") {
-						options.logger.error("Error while copying: " + e);
+						options.logger.error("Error while copying: " + e.message);
 					}
 				}
 			});
@@ -139,7 +139,7 @@ function copyAssetFiles(outputPath: string, options: TransferTemplateParameterOb
 		fsx.removeSync(path.resolve(outputPath, "script"));
 		fsx.removeSync(path.resolve(outputPath, "text"));
 	} catch (e) {
-		options.logger.error("Error while copying: " + e);
+		options.logger.error("Error while copying: " + e.message);
 	}
 	fsx.copySync(path.resolve(__dirname, "..", "templates/template-export-html"),  outputPath);
 }
