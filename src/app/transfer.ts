@@ -70,7 +70,7 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 						var scriptString = fs.readFileSync(scriptPath, "utf8").replace(/\r\n|\n/g, "\n");
 
 						if (path.extname(scriptPath) === ".json") {
-							scriptString = escape(filterUnparsablePath(scriptString));
+							scriptString = escape(scriptString);
 						}
 
 						innerHTMLAssetsArray.push({
@@ -150,10 +150,6 @@ function wrap(code: string): string {
 	return PRE_SCRIPT + "\r" + code + "\r" + POST_SCRIPT + "\r";
 }
 
-function filterUnparsablePath(assetString: string): string {
-	return assetString.replace(/\\\\/g, "/"); // Windows環境では、インストールされたモジュールの package.json の _where や _args プロパティに \\ 区切りのパスが挿入される
-}
-
 function escape(code: string): string {
-	return encodeURIComponent(code.replace(/\\n/g, ""));
+	return encodeURIComponent(code);
 }
