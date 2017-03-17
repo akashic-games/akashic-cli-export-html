@@ -46,7 +46,7 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 				innerHTMLAssetsArray.push({
 					name: "game.json",
 					type: "text",
-					code: escape(JSON.stringify(conf._content, null, "\t"))
+					code: encodeURIComponent(JSON.stringify(conf._content, null, "\t"))
 				});
 
 				var assetNames = Object.keys(assets);
@@ -55,7 +55,7 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 					return (type === "script" || type === "text");
 				}).forEach((assetName) => {
 					var assetString = fs.readFileSync(assets[assetName].path, "utf8").replace(/\r\n|\n/g, "\n");
-					if (assets[assetName].type === "text") assetString = escape(assetString);
+					if (assets[assetName].type === "text") assetString = encodeURIComponent(assetString);
 
 					innerHTMLAssetsArray.push({
 						name: assetName,
@@ -70,7 +70,7 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 						var scriptString = fs.readFileSync(scriptPath, "utf8").replace(/\r\n|\n/g, "\n");
 
 						if (path.extname(scriptPath) === ".json") {
-							scriptString = escape(scriptString);
+							scriptString = encodeURIComponent(scriptString);
 						}
 
 						innerHTMLAssetsArray.push({
@@ -116,7 +116,7 @@ function copyAssetFilesStrip(outputPath: string, assets: cmn.Assets, options: Tr
 						{clobber: options.force}
 					);
 				} catch (e) {
-					if (e.code !== "ENOENT" && e.code !== "EEXIT") {
+					if (e.code !== "ENOENT") {
 						options.logger.error("Error while copying: " + e.message);
 					}
 				}
@@ -148,8 +148,4 @@ function wrap(code: string): string {
 	var PRE_SCRIPT = "(function(exports, require, module, __filename, __dirname) {";
 	var POST_SCRIPT = "})(g.module.exports, g.module.require, g.module, g.filename, g.dirname);";
 	return PRE_SCRIPT + "\r" + code + "\r" + POST_SCRIPT + "\r";
-}
-
-function escape(code: string): string {
-	return encodeURIComponent(code);
 }
