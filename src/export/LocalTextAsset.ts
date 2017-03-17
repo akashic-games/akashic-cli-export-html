@@ -3,8 +3,7 @@ class LocalTextAsset extends g.TextAsset {
 
 	constructor(id: string, path: string) {
 		super(id, path);
-		this.data = window.gLocalAssetContainer[id];
-		this.data = decodeURIComponent(this.data);
+		this.data = decodeURIComponent(window.gLocalAssetContainer[id]);
 	}
 
 	_load(loader: g.AssetLoadHandler): void {
