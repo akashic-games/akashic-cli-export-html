@@ -16,6 +16,7 @@ export interface TransferTemplateParameterObject {
 	output?: string;
 	force?: boolean;
 	logger?: cmn.Logger;
+	strip?: boolean;
 }
 
 export function _completeTransferTemplateParameterObject(param: TransferTemplateParameterObject): void {
@@ -45,7 +46,7 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 				innerHTMLAssetsArray.push({
 					name: "game.json",
 					type: "text",
-					code: JSON.stringify(conf._content, null, "\t")
+					code: encodeURIComponent(JSON.stringify(conf._content, null, "\t"))
 				});
 
 				var assetNames = Object.keys(assets);
@@ -54,6 +55,8 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 					return (type === "script" || type === "text");
 				}).forEach((assetName) => {
 					var assetString = fs.readFileSync(assets[assetName].path, "utf8").replace(/\r\n|\n/g, "\n");
+					if (assets[assetName].type === "text") assetString = encodeURIComponent(assetString);
+
 					innerHTMLAssetsArray.push({
 						name: assetName,
 						type: assets[assetName].type,
@@ -66,8 +69,8 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 						var scriptPath = path.resolve("./", scriptName);
 						var scriptString = fs.readFileSync(scriptPath, "utf8").replace(/\r\n|\n/g, "\n");
 
-						if (scriptPath.indexOf("package.json") !== -1) {
-							scriptString = filterUnparsablePath(scriptString);
+						if (path.extname(scriptPath) === ".json") {
+							scriptString = encodeURIComponent(scriptString);
 						}
 
 						innerHTMLAssetsArray.push({
@@ -81,12 +84,52 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 				var ectRender = ect({root: __dirname + "/../templates", ext: ".ect"});
 				var html = ectRender.render("index", {assets: innerHTMLAssetsArray});
 				fs.writeFileSync(path.resolve(outputPath, "./index.html"), html);
-				copyAssetFiles(outputPath, options);
+				if (options.strip) {
+					copyAssetFilesStrip(outputPath, assets, options);
+				} else {
+					copyAssetFiles(outputPath, options);
+				}
 				resolve();
 			})
 			.catch((err) => reject(err));
 	});
 
+};
+
+function copyAssetFilesStrip(outputPath: string, assets: cmn.Assets, options: TransferTemplateParameterObject): void {
+	options.logger.info("copying stripped fileset...");
+	var assetNames = Object.keys(assets);
+	assetNames.filter((assetName) => {
+		return assets[assetName].type !== "script" || assets[assetName].type !== "text";
+	}).forEach((assetName) => {
+		var assetPath = assets[assetName].path;
+		var assetDir = path.dirname(assetPath);
+		fsx.mkdirsSync(path.resolve(outputPath, assetDir));
+		var dst = path.join(outputPath, assetPath);
+		if (assets[assetName].type === "audio") {
+			var audioTypes = ["ogg", "mp4", "aac"];
+			audioTypes.forEach((type) => {
+				try {
+					fsx.copySync(
+						path.resolve(process.cwd(), assetPath) + "." + type,
+						dst + "." + type,
+						{clobber: options.force}
+					);
+				} catch (e) {
+					if (e.code !== "ENOENT") {
+						options.logger.error("Error while copying: " + e.message);
+					}
+				}
+			});
+		} else {
+			fsx.copySync(
+				path.resolve(process.cwd(), assetPath),
+				dst,
+				{clobber: options.force}
+			);
+		}
+	});
+	fsx.copySync(path.resolve(__dirname, "..", "templates/template-export-html"),  outputPath);
 };
 
 function copyAssetFiles(outputPath: string, options: TransferTemplateParameterObject ): void {
@@ -96,7 +139,7 @@ function copyAssetFiles(outputPath: string, options: TransferTemplateParameterOb
 		fsx.removeSync(path.resolve(outputPath, "script"));
 		fsx.removeSync(path.resolve(outputPath, "text"));
 	} catch (e) {
-		options.logger.error("Error while copying: " + e);
+		options.logger.error("Error while copying: " + e.message);
 	}
 	fsx.copySync(path.resolve(__dirname, "..", "templates/template-export-html"),  outputPath);
 }
@@ -105,8 +148,4 @@ function wrap(code: string): string {
 	var PRE_SCRIPT = "(function(exports, require, module, __filename, __dirname) {";
 	var POST_SCRIPT = "})(g.module.exports, g.module.require, g.module, g.filename, g.dirname);";
 	return PRE_SCRIPT + "\r" + code + "\r" + POST_SCRIPT + "\r";
-}
-
-function filterUnparsablePath(assetString: string): string {
-	return assetString.replace(/\\\\/g, "/"); // Windows環境では、インストールされたモジュールの package.json の _where や _args プロパティに \\ 区切りのパスが挿入される
 }
