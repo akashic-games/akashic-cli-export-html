@@ -56,11 +56,15 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 				}).forEach((assetName) => {
 					var assetString = fs.readFileSync(assets[assetName].path, "utf8").replace(/\r\n|\n/g, "\n");
 					if (assets[assetName].type === "text") assetString = encodeURIComponent(assetString);
-
+					if (assets[assetName].type === "script") {
+						const code = wrap(assetString, assetName);
+						const filePath = path.resolve(outputPath, "./js/" + assetName + ".js")
+						fsx.outputFileSync(filePath, code);
+					}
 					innerHTMLAssetsArray.push({
-						name: assetName,
+						name: (assets[assetName].type === "script" ? assetName + ".js" : assetName),
 						type: assets[assetName].type,
-						code: (assets[assetName].type === "script" ? wrap(assetString) : assetString)
+						code: (assets[assetName].type === "script" ? undefined : assetString)
 					});
 				});
 
@@ -73,10 +77,17 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 							scriptString = encodeURIComponent(scriptString);
 						}
 
+						var escapedScriptName: string;
+						if (/\.js$/i.test(scriptName)) {
+							escapedScriptName = scriptName.replace(/\//g, "__");
+							const code = wrap(scriptString, "./" + scriptName);
+							const filePath = path.resolve(outputPath, "./js/" + escapedScriptName);
+							fsx.outputFileSync(filePath, code);
+						}
 						innerHTMLAssetsArray.push({
-							name: "./" + scriptName,
+							name: (/\.js$/i.test(scriptName) ? escapedScriptName : "./" + scriptName),
 							type: (/\.js$/i.test(scriptName) ? "script" : "text"),
-							code: (/\.js$/i.test(scriptName) ? wrap(scriptString) : scriptString)
+							code: (/\.js$/i.test(scriptName) ? undefined : scriptString)
 						});
 					});
 				}
@@ -144,8 +155,8 @@ function copyAssetFiles(outputPath: string, options: TransferTemplateParameterOb
 	fsx.copySync(path.resolve(__dirname, "..", "templates/template-export-html"),  outputPath);
 }
 
-function wrap(code: string): string {
-	var PRE_SCRIPT = "(function(exports, require, module, __filename, __dirname) {";
-	var POST_SCRIPT = "})(g.module.exports, g.module.require, g.module, g.filename, g.dirname);";
+function wrap(code: string, name: string): string {
+	var PRE_SCRIPT = "window.gLocalAssetContainer[\"" + name + "\"] = function(g) { (function(exports, require, module, __filename, __dirname) {";
+	var POST_SCRIPT = "})(g.module.exports, g.module.require, g.module, g.filename, g.dirname);}";
 	return PRE_SCRIPT + "\r" + code + "\r" + POST_SCRIPT + "\r";
 }
