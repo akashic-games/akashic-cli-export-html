@@ -58,7 +58,7 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 					if (assets[assetName].type === "text") assetString = encodeURIComponent(assetString);
 					if (assets[assetName].type === "script") {
 						const code = wrap(assetString, assetName);
-						const filePath = path.resolve(outputPath, "./js/" + assetName + ".js")
+						const filePath = path.resolve(outputPath, "./js/" + assetName + ".js");
 						fsx.outputFileSync(filePath, code);
 					}
 					innerHTMLAssetsArray.push({
@@ -156,7 +156,8 @@ function copyAssetFiles(outputPath: string, options: TransferTemplateParameterOb
 }
 
 function wrap(code: string, name: string): string {
-	var PRE_SCRIPT = "window.gLocalAssetContainer[\"" + name + "\"] = function(g) { (function(exports, require, module, __filename, __dirname) {";
+	var PRE_SCRIPT = "window.gLocalAssetContainer[\"" +
+		name + "\"] = function(g) { (function(exports, require, module, __filename, __dirname) {";
 	var POST_SCRIPT = "})(g.module.exports, g.module.require, g.module, g.filename, g.dirname);}";
 	return PRE_SCRIPT + "\r" + code + "\r" + POST_SCRIPT + "\r";
 }
