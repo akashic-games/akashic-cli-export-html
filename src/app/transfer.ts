@@ -4,10 +4,6 @@ import * as cmn from "@akashic/akashic-cli-commons";
 import * as fsx from "fs-extra";
 import * as ect from "ect";
 
-interface InnerHTMLAssetData {
-	srcPath: string;
-}
-
 export interface TransferTemplateParameterObject {
 	quiet?: boolean;
 	exclude?: string[];
@@ -40,44 +36,40 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 				});
 
 				var assets = conf._content.assets;
-				var innerHTMLAssetsArray: InnerHTMLAssetData[] = [];
-				var gamejsonPath = path.resolve(outputPath, "./js/" + "game.json.js");
-				fsx.outputFileSync(gamejsonPath, wrapJson(encodeURIComponent(JSON.stringify(conf._content, null, "\t")), "game.json"));
+				var innerHTMLAssetsArray: string[] = [];
+				var gamejsonPath = path.resolve(outputPath, "./js/game.json.js");
+				fsx.outputFileSync(gamejsonPath, wrapText(JSON.stringify(conf._content, null, "\t"), "game.json"));
 
-				innerHTMLAssetsArray.push({
-					srcPath: "./js/game.json.js"
-				});
+				innerHTMLAssetsArray.push("./js/game.json.js");
 
 				var assetNames = Object.keys(assets);
 				assetNames.filter((assetName) => {
 					var type = assets[assetName].type;
 					return (type === "script" || type === "text");
 				}).forEach((assetName) => {
+					var isScript = assets[assetName].type === "script";
 					var assetString = fs.readFileSync(assets[assetName].path, "utf8").replace(/\r\n|\n/g, "\n");
-					if (assets[assetName].type === "text") assetString = encodeURIComponent(assetString);
 
-					var code = (assets[assetName].type === "script" ? wrapScript(assetString, assetName) : wrapJson(assetString, assetName));
-					var filePath = path.resolve(outputPath, "./js/assets/" + assetName + (assets[assetName].type === "script" ? ".js" : ".json.js"));
+					var code = (isScript ? wrapScript(assetString, assetName) : wrapText(assetString, assetName));
+					var relativePath = "./js/assets/" + assetName + (isScript ? ".js" : ".json.js")
+					var filePath = path.resolve(outputPath, relativePath);
+
 					fsx.outputFileSync(filePath, code);
-
-					innerHTMLAssetsArray.push({
-						srcPath: "./js/assets/" + assetName + (assets[assetName].type === "script" ? ".js" : ".json.js")
-					});
+					innerHTMLAssetsArray.push(relativePath);
 				});
 
 				if (conf._content.globalScripts) {
 					conf._content.globalScripts.forEach((scriptName: string) => {
-						var scriptPath = path.resolve("./", scriptName);
-						var scriptString = fs.readFileSync(scriptPath, "utf8").replace(/\r\n|\n/g, "\n");
-						if (path.extname(scriptPath) === ".json") scriptString = encodeURIComponent(scriptString);
+						scriptName = "./" + scriptName;
+						var isScript = /\.js$/i.test(scriptName);
+						var scriptString = fs.readFileSync(scriptName, "utf8").replace(/\r\n|\n/g, "\n");
 
-						var code = /\.js$/i.test(scriptName) ? wrapScript(scriptString, "./" + scriptName) : wrapJson(scriptString, "./" + scriptName);
-						var filePath = path.resolve(outputPath, "./globalScripts/" + scriptName + (/\.js$/i.test(scriptName) ? "" : ".js"));
+						var code = isScript ? wrapScript(scriptString, scriptName) : wrapText(scriptString, scriptName);
+						var relativePath = "./globalScripts/" + scriptName + (isScript ? "" : ".js");
+						var filePath = path.resolve(outputPath, relativePath);
+
 						fsx.outputFileSync(filePath, code);
-
-						innerHTMLAssetsArray.push({
-							srcPath: "./globalScripts/" + (/\.js$/i.test(scriptName) ? scriptName : scriptName + ".js")
-						});
+						innerHTMLAssetsArray.push(relativePath);
 					});
 				}
 
@@ -151,8 +143,8 @@ function wrapScript(code: string, name: string): string {
 	return PRE_SCRIPT + "\r" + code + "\r" + POST_SCRIPT + "\r";
 }
 
-function wrapJson(code: string, name: string): string {
+function wrapText(code: string, name: string): string {
 	var PRE_SCRIPT = "window.gLocalAssetContainer[\"" + name + "\"] = \"";
 	var POST_SCRIPT = "\"";
-	return PRE_SCRIPT + code + POST_SCRIPT + "\r";
+	return PRE_SCRIPT + encodeURIComponent(code) + POST_SCRIPT + "\r";
 }

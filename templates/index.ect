@@ -6,7 +6,7 @@
 <script src="./js/akashic-engine.strip.js"></script>
 <script src="./js/game-driver.strip.js"></script>
 <script src="./js/pdi-browser.strip.js"></script>
-<script src="./js/initAssetContainer.js"></script>
+<script src="./js/initGlobals.js"></script>
 <script src="./js/LocalScriptAsset.js"></script>
 <script src="./js/LocalTextAsset.js"></script>
 <script src="./js/game-storage.strip.js"></script>
@@ -14,7 +14,7 @@
 <link rel="stylesheet" type="text/css" href="css/style.css">
 
 <% for asset in @assets : %>
-<script src="<%- asset.srcPath %>"></script>
+<script src="<%- asset %>"></script>
 <% end %>
 <script src="./js/sandbox.js"></script>
 </head>
