@@ -69,7 +69,6 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 					conf._content.globalScripts.forEach((scriptName: string) => {
 						var scriptPath = path.resolve("./", scriptName);
 						var scriptString = fs.readFileSync(scriptPath, "utf8").replace(/\r\n|\n/g, "\n");
-
 						if (path.extname(scriptPath) === ".json") scriptString = encodeURIComponent(scriptString);
 
 						var code = /\.js$/i.test(scriptName) ? wrapScript(scriptString, "./" + scriptName) : wrapJson(scriptString, "./" + scriptName);
