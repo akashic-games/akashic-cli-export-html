@@ -1,1 +1,0 @@
-window.gLocalAssetContainer["game.json"] = "%7B%7D"
