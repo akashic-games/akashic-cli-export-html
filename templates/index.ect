@@ -3,44 +3,23 @@
 <head>
 <meta charset="utf-8">
 <title>game</title>
-<script type="text/javascript" src="./js/akashic-engine.strip.js"></script>
-
-<script type="text/javascript" src="./js/game-driver.strip.js"></script>
-<script type="text/javascript" src="./js/pdi-browser.strip.js"></script>
-<script>
-window.g = require("@akashic/akashic-engine");
-</script>
-<script type="text/javascript" src="./js/LocalScriptAsset.js"></script>
-<script type="text/javascript" src="./js/LocalTextAsset.js"></script>
-<script type="text/javascript" src="./js/game-storage.strip.js"></script>
-<script type="text/javascript" src="./js/logger.js"></script>
-
+<script src="./js/akashic-engine.strip.js"></script>
+<script src="./js/game-driver.strip.js"></script>
+<script src="./js/pdi-browser.strip.js"></script>
+<script src="./js/initAssetContainer.js"></script>
+<script src="./js/LocalScriptAsset.js"></script>
+<script src="./js/LocalTextAsset.js"></script>
+<script src="./js/game-storage.strip.js"></script>
+<script src="./js/logger.js"></script>
 <link rel="stylesheet" type="text/css" href="css/style.css">
 
+<% for asset in @assets : %>
+<script src="<%- asset.srcPath %>"></script>
+<% end %>
+<script src="./js/sandbox.js"></script>
 </head>
 <body>
 <div id="container">
 </div>
-
-<script>
-
-if (! ("gLocalAssetContainer" in window)) {
-	window.gLocalAssetContainer = {};
-}
-
-</script>
-
-<% for asset in @assets : %>
-<% if asset.type is "script" : %>
-<script src="./js/<%- asset.name %>"></script>
-<% else if asset.type is "text" : %>
-<script>
-window.gLocalAssetContainer["<%- asset.name %>"] = "<%- asset.code %>";
-</script>
-<% end %>
-<% end %>
-</script>
-<script type="text/javascript" src="./js/sandbox.js"></script>
-
 </body>
 </html>

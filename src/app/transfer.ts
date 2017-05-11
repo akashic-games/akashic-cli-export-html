@@ -5,9 +5,7 @@ import * as fsx from "fs-extra";
 import * as ect from "ect";
 
 interface InnerHTMLAssetData {
-	name: string;
-	type: string;
-	code: string;
+	srcPath: string;
 }
 
 export interface TransferTemplateParameterObject {
@@ -43,10 +41,11 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 
 				var assets = conf._content.assets;
 				var innerHTMLAssetsArray: InnerHTMLAssetData[] = [];
+				var gamejsonPath = path.resolve(outputPath, "./js/" + "game.json.js");
+				fsx.outputFileSync(gamejsonPath, wrapJson(encodeURIComponent(JSON.stringify(conf._content, null, "\t")), "game.json"));
+
 				innerHTMLAssetsArray.push({
-					name: "game.json",
-					type: "text",
-					code: encodeURIComponent(JSON.stringify(conf._content, null, "\t"))
+					srcPath: "./js/game.json.js"
 				});
 
 				var assetNames = Object.keys(assets);
@@ -56,15 +55,13 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 				}).forEach((assetName) => {
 					var assetString = fs.readFileSync(assets[assetName].path, "utf8").replace(/\r\n|\n/g, "\n");
 					if (assets[assetName].type === "text") assetString = encodeURIComponent(assetString);
-					if (assets[assetName].type === "script") {
-						const code = wrap(assetString, assetName);
-						const filePath = path.resolve(outputPath, "./js/" + assetName + ".js");
-						fsx.outputFileSync(filePath, code);
-					}
+
+					var code = (assets[assetName].type === "script" ? wrapScript(assetString, assetName) : wrapJson(assetString, assetName));
+					var filePath = path.resolve(outputPath, "./js/assets/" + assetName + (assets[assetName].type === "script" ? ".js" : ".json.js"));
+					fsx.outputFileSync(filePath, code);
+
 					innerHTMLAssetsArray.push({
-						name: (assets[assetName].type === "script" ? assetName + ".js" : assetName),
-						type: assets[assetName].type,
-						code: (assets[assetName].type === "script" ? undefined : assetString)
+						srcPath: "./js/assets/" + assetName + (assets[assetName].type === "script" ? ".js" : ".json.js")
 					});
 				});
 
@@ -73,21 +70,14 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 						var scriptPath = path.resolve("./", scriptName);
 						var scriptString = fs.readFileSync(scriptPath, "utf8").replace(/\r\n|\n/g, "\n");
 
-						if (path.extname(scriptPath) === ".json") {
-							scriptString = encodeURIComponent(scriptString);
-						}
+						if (path.extname(scriptPath) === ".json") scriptString = encodeURIComponent(scriptString);
 
-						var escapedScriptName: string;
-						if (/\.js$/i.test(scriptName)) {
-							escapedScriptName = scriptName.replace(/\//g, "__");
-							const code = wrap(scriptString, "./" + scriptName);
-							const filePath = path.resolve(outputPath, "./js/" + escapedScriptName);
-							fsx.outputFileSync(filePath, code);
-						}
+						var code = /\.js$/i.test(scriptName) ? wrapScript(scriptString, "./" + scriptName) : wrapJson(scriptString, "./" + scriptName);
+						var filePath = path.resolve(outputPath, "./globalScripts/" + scriptName + (/\.js$/i.test(scriptName) ? "" : ".js"));
+						fsx.outputFileSync(filePath, code);
+
 						innerHTMLAssetsArray.push({
-							name: (/\.js$/i.test(scriptName) ? escapedScriptName : "./" + scriptName),
-							type: (/\.js$/i.test(scriptName) ? "script" : "text"),
-							code: (/\.js$/i.test(scriptName) ? undefined : scriptString)
+							srcPath: "./globalScripts/" + (/\.js$/i.test(scriptName) ? scriptName : scriptName + ".js")
 						});
 					});
 				}
@@ -155,9 +145,15 @@ function copyAssetFiles(outputPath: string, options: TransferTemplateParameterOb
 	fsx.copySync(path.resolve(__dirname, "..", "templates/template-export-html"),  outputPath);
 }
 
-function wrap(code: string, name: string): string {
+function wrapScript(code: string, name: string): string {
 	var PRE_SCRIPT = "window.gLocalAssetContainer[\"" +
 		name + "\"] = function(g) { (function(exports, require, module, __filename, __dirname) {";
 	var POST_SCRIPT = "})(g.module.exports, g.module.require, g.module, g.filename, g.dirname);}";
 	return PRE_SCRIPT + "\r" + code + "\r" + POST_SCRIPT + "\r";
+}
+
+function wrapJson(code: string, name: string): string {
+	var PRE_SCRIPT = "window.gLocalAssetContainer[\"" + name + "\"] = \"";
+	var POST_SCRIPT = "\"";
+	return PRE_SCRIPT + code + POST_SCRIPT + "\r";
 }
