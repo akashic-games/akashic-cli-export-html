@@ -21,12 +21,12 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 	return new Promise<void>((resolve, reject) => {
 		if (!options.output) {
 			options.logger.error("output path is not defined.");
-			reject("output is not defined.");
+			return reject("output is not defined.");
 		}
 		var outputPath = path.resolve(options.output);
 		if (!/^\.\./.test(path.relative(process.cwd(), outputPath))) {
 			options.logger.error("output path overlaps with source directory.");
-			reject("output is bad path.");
+			return reject("output is bad path.");
 		}
 
 		cmn.ConfigurationFile.read(path.join(process.cwd(), "game.json"), options.logger)
@@ -51,7 +51,7 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 					var assetString = fs.readFileSync(assets[assetName].path, "utf8").replace(/\r\n|\n/g, "\n");
 
 					var code = (isScript ? wrapScript(assetString, assetName) : wrapText(assetString, assetName));
-					var relativePath = "./js/assets/" + assetName + (isScript ? ".js" : ".json.js")
+					var relativePath = "./js/assets/" + assetName + (isScript ? ".js" : ".json.js");
 					var filePath = path.resolve(outputPath, relativePath);
 
 					fsx.outputFileSync(filePath, code);
