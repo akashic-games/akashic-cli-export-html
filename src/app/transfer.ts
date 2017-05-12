@@ -36,11 +36,11 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 				});
 
 				var assets = conf._content.assets;
-				var innerHTMLAssetsArray: string[] = [];
+				var assetPaths: string[] = [];
 				var gamejsonPath = path.resolve(outputPath, "./js/game.json.js");
 				fsx.outputFileSync(gamejsonPath, wrapText(JSON.stringify(conf._content, null, "\t"), "game.json"));
 
-				innerHTMLAssetsArray.push("./js/game.json.js");
+				assetPaths.push("./js/game.json.js");
 
 				var assetNames = Object.keys(assets);
 				assetNames.filter((assetName) => {
@@ -55,7 +55,7 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 					var filePath = path.resolve(outputPath, relativePath);
 
 					fsx.outputFileSync(filePath, code);
-					innerHTMLAssetsArray.push(relativePath);
+					assetPaths.push(relativePath);
 				});
 
 				if (conf._content.globalScripts) {
@@ -69,12 +69,12 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 						var filePath = path.resolve(outputPath, relativePath);
 
 						fsx.outputFileSync(filePath, code);
-						innerHTMLAssetsArray.push(relativePath);
+						assetPaths.push(relativePath);
 					});
 				}
 
 				var ectRender = ect({root: __dirname + "/../templates", ext: ".ect"});
-				var html = ectRender.render("index", {assets: innerHTMLAssetsArray});
+				var html = ectRender.render("index", {assets: assetPaths});
 				fs.writeFileSync(path.resolve(outputPath, "./index.html"), html);
 				if (options.strip) {
 					copyAssetFilesStrip(outputPath, assets, options);
@@ -140,11 +140,11 @@ function wrapScript(code: string, name: string): string {
 	var PRE_SCRIPT = "window.gLocalAssetContainer[\"" +
 		name + "\"] = function(g) { (function(exports, require, module, __filename, __dirname) {";
 	var POST_SCRIPT = "})(g.module.exports, g.module.require, g.module, g.filename, g.dirname);}";
-	return PRE_SCRIPT + "\r" + code + "\r" + POST_SCRIPT + "\r";
+	return PRE_SCRIPT + "\n" + code + "\n" + POST_SCRIPT + "\n";
 }
 
 function wrapText(code: string, name: string): string {
 	var PRE_SCRIPT = "window.gLocalAssetContainer[\"" + name + "\"] = \"";
 	var POST_SCRIPT = "\"";
-	return PRE_SCRIPT + encodeURIComponent(code) + POST_SCRIPT + "\r";
+	return PRE_SCRIPT + encodeURIComponent(code) + POST_SCRIPT + "\n";
 }
