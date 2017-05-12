@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.1.3
+* 出力ファイルの構造を変更
+  * ScriptAsset や TextAsset を index.html に埋め込まないようになりました。
+
 ## 0.1.2
 * IEで動作しない問題を修正
 * 出力ファイルを最小限にする `--strip` オプションを追加
