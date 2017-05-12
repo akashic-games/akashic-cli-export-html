@@ -92,7 +92,7 @@ function copyAssetFilesStrip(outputPath: string, assets: cmn.Assets, options: Tr
 	options.logger.info("copying stripped fileset...");
 	var assetNames = Object.keys(assets);
 	assetNames.filter((assetName) => {
-		return assets[assetName].type !== "script" || assets[assetName].type !== "text";
+		return assets[assetName].type !== "script" && assets[assetName].type !== "text";
 	}).forEach((assetName) => {
 		var assetPath = assets[assetName].path;
 		var assetDir = path.dirname(assetPath);
