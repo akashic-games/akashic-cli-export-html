@@ -24,14 +24,20 @@ require = function e(t, n, r) {
     "@akashic/akashic-engine": [ function(require, module, exports) {
         (function() {
             "use strict";
-            var g;
+            var g, __extends = this && this.__extends || function(d, b) {
+                function __() {
+                    this.constructor = d;
+                }
+                for (var p in b) b.hasOwnProperty(p) && (d[p] = b[p]);
+                d.prototype = null === b ? Object.create(b) : (__.prototype = b.prototype, new __());
+            };
             !function(g) {
+                var AssetLoadErrorType;
                 !function(AssetLoadErrorType) {
                     AssetLoadErrorType[AssetLoadErrorType.Unspecified = 0] = "Unspecified", AssetLoadErrorType[AssetLoadErrorType.RetryLimitExceeded = 1] = "RetryLimitExceeded", 
                     AssetLoadErrorType[AssetLoadErrorType.NetworkError = 2] = "NetworkError", AssetLoadErrorType[AssetLoadErrorType.ClientError = 3] = "ClientError", 
                     AssetLoadErrorType[AssetLoadErrorType.ServerError = 4] = "ServerError";
-                }(g.AssetLoadErrorType || (g.AssetLoadErrorType = {}));
-                g.AssetLoadErrorType;
+                }(AssetLoadErrorType = g.AssetLoadErrorType || (g.AssetLoadErrorType = {}));
             }(g || (g = {}));
             var g;
             !function(g) {
@@ -75,17 +81,17 @@ require = function e(t, n, r) {
                         throw g.ExceptionFactory.createPureVirtualError("ResourceFactory#createImageAsset");
                     }, ResourceFactory.prototype.createVideoAsset = function(id, assetPath, width, height, system, loop, useRealSize) {
                         throw g.ExceptionFactory.createPureVirtualError("ResourceFactory#createVideoAsset");
-                    }, ResourceFactory.prototype.createAudioAsset = function(id, assetPath, duration, system) {
+                    }, ResourceFactory.prototype.createAudioAsset = function(id, assetPath, duration, system, loop, hint) {
                         throw g.ExceptionFactory.createPureVirtualError("ResourceFactory#createAudioAsset");
                     }, ResourceFactory.prototype.createTextAsset = function(id, assetPath) {
                         throw g.ExceptionFactory.createPureVirtualError("ResourceFactory#createTextAsset");
-                    }, ResourceFactory.prototype.createAudioPlayer = function(system, loop) {
+                    }, ResourceFactory.prototype.createAudioPlayer = function(system) {
                         throw g.ExceptionFactory.createPureVirtualError("ResourceFactory#createAudioPlayer");
                     }, ResourceFactory.prototype.createScriptAsset = function(id, assetPath) {
                         throw g.ExceptionFactory.createPureVirtualError("ResourceFactory#createScriptAsset");
                     }, ResourceFactory.prototype.createSurface = function(width, height) {
                         throw g.ExceptionFactory.createPureVirtualError("ResourceFactory#createSurface");
-                    }, ResourceFactory.prototype.createGlyphFactory = function(fontFamily, fontSize, baselineHeight, fontColor, strokeWidth, strokeColor, strokeOnly) {
+                    }, ResourceFactory.prototype.createGlyphFactory = function(fontFamily, fontSize, baselineHeight, fontColor, strokeWidth, strokeColor, strokeOnly, fontWeight) {
                         throw g.ExceptionFactory.createPureVirtualError("ResourceFactory#createGlphFactory");
                     }, ResourceFactory.prototype.createSurfaceAtlas = function(width, height) {
                         return new g.SurfaceAtlas(this.createSurface(width, height));
@@ -119,13 +125,7 @@ require = function e(t, n, r) {
                 }();
                 g.RandomGenerator = RandomGenerator;
             }(g || (g = {}));
-            var g, __extends = this && this.__extends || function(d, b) {
-                function __() {
-                    this.constructor = d;
-                }
-                for (var p in b) b.hasOwnProperty(p) && (d[p] = b[p]);
-                d.prototype = null === b ? Object.create(b) : (__.prototype = b.prototype, new __());
-            };
+            var g;
             !function(g) {
                 var Asset = function() {
                     function Asset(id, path) {
@@ -146,7 +146,8 @@ require = function e(t, n, r) {
                 g.Asset = Asset;
                 var ImageAsset = function(_super) {
                     function ImageAsset(id, assetPath, width, height) {
-                        _super.call(this, id, assetPath), this.width = width, this.height = height;
+                        var _this = _super.call(this, id, assetPath) || this;
+                        return _this.width = width, _this.height = height, _this;
                     }
                     return __extends(ImageAsset, _super), ImageAsset.prototype.asSurface = function() {
                         throw g.ExceptionFactory.createPureVirtualError("ImageAsset#asSurface");
@@ -155,8 +156,9 @@ require = function e(t, n, r) {
                 g.ImageAsset = ImageAsset;
                 var VideoAsset = function(_super) {
                     function VideoAsset(id, assetPath, width, height, system, loop, useRealSize) {
-                        _super.call(this, id, assetPath, width, height), this.realWidth = 0, this.realHeight = 0, 
-                        this._system = system, this._loop = loop, this._useRealSize = useRealSize;
+                        var _this = _super.call(this, id, assetPath, width, height) || this;
+                        return _this.realWidth = 0, _this.realHeight = 0, _this._system = system, _this._loop = loop, 
+                        _this._useRealSize = useRealSize, _this;
                     }
                     return __extends(VideoAsset, _super), VideoAsset.prototype.asSurface = function() {
                         throw g.ExceptionFactory.createPureVirtualError("VideoAsset#asSurface");
@@ -172,9 +174,10 @@ require = function e(t, n, r) {
                 }(ImageAsset);
                 g.VideoAsset = VideoAsset;
                 var AudioAsset = function(_super) {
-                    function AudioAsset(id, assetPath, duration, system) {
-                        _super.call(this, id, assetPath), this.duration = duration, this._system = system, 
-                        this.data = void 0;
+                    function AudioAsset(id, assetPath, duration, system, loop, hint) {
+                        var _this = _super.call(this, id, assetPath) || this;
+                        return _this.duration = duration, _this.loop = loop, _this.hint = hint, _this._system = system, 
+                        _this.data = void 0, _this;
                     }
                     return __extends(AudioAsset, _super), AudioAsset.prototype.play = function() {
                         var player = this._system.createPlayer();
@@ -190,7 +193,8 @@ require = function e(t, n, r) {
                 g.AudioAsset = AudioAsset;
                 var TextAsset = function(_super) {
                     function TextAsset(id, assetPath) {
-                        _super.call(this, id, assetPath), this.data = void 0;
+                        var _this = _super.call(this, id, assetPath) || this;
+                        return _this.data = void 0, _this;
                     }
                     return __extends(TextAsset, _super), TextAsset.prototype.destroy = function() {
                         this.data = void 0, _super.prototype.destroy.call(this);
@@ -199,7 +203,7 @@ require = function e(t, n, r) {
                 g.TextAsset = TextAsset;
                 var ScriptAsset = function(_super) {
                     function ScriptAsset() {
-                        _super.apply(this, arguments);
+                        return null !== _super && _super.apply(this, arguments) || this;
                     }
                     return __extends(ScriptAsset, _super), ScriptAsset.prototype.execute = function(execEnv) {
                         throw g.ExceptionFactory.createPureVirtualError("ScriptAsset#execute");
@@ -211,26 +215,49 @@ require = function e(t, n, r) {
             }(g || (g = {}));
             var g;
             !function(g) {
+                function normalizeAudioSystemConfMap(confMap) {
+                    confMap = confMap || {};
+                    var systemDefaults = {
+                        music: {
+                            loop: !0,
+                            hint: {
+                                streaming: !0
+                            }
+                        },
+                        sound: {
+                            loop: !1,
+                            hint: {
+                                streaming: !1
+                            }
+                        }
+                    };
+                    for (var key in systemDefaults) key in confMap || (confMap[key] = systemDefaults[key]);
+                    return confMap;
+                }
                 var AssetLoadingInfo = function() {
                     function AssetLoadingInfo(asset, handler) {
                         this.asset = asset, this.handlers = [ handler ], this.errorCount = 0, this.loading = !1;
                     }
                     return AssetLoadingInfo;
                 }(), AssetManager = function() {
-                    function AssetManager(game, conf, globalScriptPaths) {
-                        this.game = game, this.configuration = this._normalize(conf || {}, globalScriptPaths || []), 
-                        this._assets = {}, this._liveAssetPathTable = {}, this._refCounts = {}, this._loadings = {};
+                    function AssetManager(game, conf, audioSystemConfMap) {
+                        this.game = game, this.configuration = this._normalize(conf || {}, normalizeAudioSystemConfMap(audioSystemConfMap)), 
+                        this._assets = {}, this._liveAssetVirtualPathTable = {}, this._liveAbsolutePathTable = {}, 
+                        this._refCounts = {}, this._loadings = {};
                     }
                     return AssetManager.prototype.destroy = function() {
                         for (var assetIds = Object.keys(this._refCounts), i = 0; i < assetIds.length; ++i) this._releaseAsset(assetIds[i]);
-                        this.game = void 0, this.configuration = void 0, this._assets = void 0, this._liveAssetPathTable = void 0, 
-                        this._refCounts = void 0, this._loadings = void 0;
+                        this.game = void 0, this.configuration = void 0, this._assets = void 0, this._liveAssetVirtualPathTable = void 0, 
+                        this._liveAbsolutePathTable = void 0, this._refCounts = void 0, this._loadings = void 0;
                     }, AssetManager.prototype.destroyed = function() {
                         return void 0 === this.game;
                     }, AssetManager.prototype.retryLoad = function(asset) {
                         if (!this._loadings.hasOwnProperty(asset.id)) throw g.ExceptionFactory.createAssertionError("AssetManager#retryLoad: invalid argument.");
                         var loadingInfo = this._loadings[asset.id];
-                        if (loadingInfo.errorCount > AssetManager.MAX_ERROR_COUNT) throw g.ExceptionFactory.createAssertionError("AssetManager#retryLoad: too many retrying.");
+                        if (loadingInfo.errorCount > AssetManager.MAX_ERROR_COUNT) {
+                            if (!this.configuration[asset.id]) return;
+                            throw g.ExceptionFactory.createAssertionError("AssetManager#retryLoad: too many retrying.");
+                        }
                         loadingInfo.loading || (loadingInfo.loading = !0, asset._load(this));
                     }, AssetManager.prototype.globalAssetIds = function() {
                         var ret = [], conf = this.configuration;
@@ -253,32 +280,30 @@ require = function e(t, n, r) {
                         return waitingCount;
                     }, AssetManager.prototype.unrefAssets = function(assetOrIds) {
                         for (var i = 0, len = assetOrIds.length; i < len; ++i) this.unrefAsset(assetOrIds[i]);
-                    }, AssetManager.prototype._normalize = function(configuration, globalScriptPaths) {
+                    }, AssetManager.prototype._normalize = function(configuration, audioSystemConfMap) {
                         var ret = {};
                         if (!(configuration instanceof Object)) throw g.ExceptionFactory.createAssertionError("AssetManager#_normalize: invalid arguments.");
                         for (var p in configuration) if (configuration.hasOwnProperty(p)) {
                             var conf = Object.create(configuration[p]);
                             if (!conf.path) throw g.ExceptionFactory.createAssertionError("AssetManager#_normalize: No path given for: " + p);
+                            if (!conf.virtualPath) throw g.ExceptionFactory.createAssertionError("AssetManager#_normalize: No virtualPath given for: " + p);
                             if (!conf.type) throw g.ExceptionFactory.createAssertionError("AssetManager#_normalize: No type given for: " + p);
                             if ("image" === conf.type) {
                                 if ("number" != typeof conf.width) throw g.ExceptionFactory.createAssertionError("AssetManager#_normalize: wrong width given for the image asset: " + p);
                                 if ("number" != typeof conf.height) throw g.ExceptionFactory.createAssertionError("AssetManager#_normalize: wrong height given for the image asset: " + p);
                             }
-                            if ("audio" === conf.type && void 0 === conf.duration && (conf.duration = 0), "video" === conf.type && !conf.useRealSize) {
+                            if ("audio" === conf.type) {
+                                void 0 === conf.duration && (conf.duration = 0);
+                                var audioSystemConf = audioSystemConfMap[conf.systemId];
+                                void 0 === conf.loop && (conf.loop = !!audioSystemConf && !!audioSystemConf.loop), 
+                                void 0 === conf.hint && (conf.hint = audioSystemConf ? audioSystemConf.hint : {});
+                            }
+                            if ("video" === conf.type && !conf.useRealSize) {
                                 if ("number" != typeof conf.width) throw g.ExceptionFactory.createAssertionError("AssetManager#_normalize: wrong width given for the video asset: " + p);
                                 if ("number" != typeof conf.height) throw g.ExceptionFactory.createAssertionError("AssetManager#_normalize: wrong height given for the video asset: " + p);
                                 conf.useRealSize = !1;
                             }
                             conf.global || (conf.global = !1), ret[p] = conf;
-                        }
-                        for (var i = 0; i < globalScriptPaths.length; ++i) {
-                            var path = globalScriptPaths[i];
-                            if (ret.hasOwnProperty(path)) throw g.ExceptionFactory.createAssertionError("AssetManager#_normalize: Asset ID already exists: " + path);
-                            ret[path] = {
-                                type: /\.json$/i.test(path) ? "text" : "script",
-                                path: path,
-                                global: !0
-                            };
                         }
                         return ret;
                     }, AssetManager.prototype._createAssetFor = function(idOrConf) {
@@ -295,7 +320,7 @@ require = function e(t, n, r) {
 
                           case "audio":
                             var system = conf.systemId ? this.game.audio[conf.systemId] : this.game.audio[this.game.defaultAudioSystemId];
-                            return resourceFactory.createAudioAsset(id, uri, conf.duration, system);
+                            return resourceFactory.createAudioAsset(id, uri, conf.duration, system, conf.loop, conf.hint);
 
                           case "text":
                             return resourceFactory.createTextAsset(id, uri);
@@ -315,8 +340,12 @@ require = function e(t, n, r) {
                             if (!(asset instanceof g.VideoAsset)) throw g.ExceptionFactory.createAssertionError("AssetManager#unrefAssets: Unsupported in-use " + asset.constructor.name);
                             asset.destroy();
                         } else asset.destroy();
-                        delete this._refCounts[assetId], delete this._loadings[assetId], delete this._assets[assetId], 
-                        path && this._liveAssetPathTable.hasOwnProperty(path) && delete this._liveAssetPathTable[path];
+                        if (delete this._refCounts[assetId], delete this._loadings[assetId], delete this._assets[assetId], 
+                        this.configuration[assetId]) {
+                            var virtualPath = this.configuration[assetId].virtualPath;
+                            virtualPath && this._liveAssetVirtualPathTable.hasOwnProperty(virtualPath) && delete this._liveAssetVirtualPathTable[virtualPath], 
+                            path && this._liveAbsolutePathTable.hasOwnProperty(path) && delete this._liveAbsolutePathTable[path];
+                        }
                     }, AssetManager.prototype._countLoadingAsset = function() {
                         return Object.keys(this._loadings).length;
                     }, AssetManager.prototype._onAssetError = function(asset, error) {
@@ -330,29 +359,44 @@ require = function e(t, n, r) {
                         if (!this.destroyed() && !asset.destroyed()) {
                             var loadingInfo = this._loadings[asset.id];
                             if (loadingInfo.loading = !1, delete this._loadings[asset.id], this._assets[asset.id] = asset, 
-                            this._liveAssetPathTable.hasOwnProperty(asset.path)) {
-                                if (this._liveAssetPathTable[asset.path].path !== asset.path) throw g.ExceptionFactory.createAssertionError("AssetManager#_onAssetLoad(): duplicated asset path");
-                            } else this._liveAssetPathTable[asset.path] = asset;
+                            this.configuration[asset.id]) {
+                                var virtualPath = this.configuration[asset.id].virtualPath;
+                                if (this._liveAssetVirtualPathTable.hasOwnProperty(virtualPath)) {
+                                    if (this._liveAssetVirtualPathTable[virtualPath].path !== asset.path) throw g.ExceptionFactory.createAssertionError("AssetManager#_onAssetLoad(): duplicated asset path");
+                                } else this._liveAssetVirtualPathTable[virtualPath] = asset;
+                                this._liveAbsolutePathTable.hasOwnProperty(asset.path) || (this._liveAbsolutePathTable[asset.path] = virtualPath);
+                            }
                             for (var hs = loadingInfo.handlers, i = 0; i < hs.length; ++i) hs[i]._onAssetLoad(asset);
                         }
-                    }, AssetManager.MAX_ERROR_COUNT = 3, AssetManager;
+                    }, AssetManager;
                 }();
-                g.AssetManager = AssetManager;
+                AssetManager.MAX_ERROR_COUNT = 3, g.AssetManager = AssetManager;
             }(g || (g = {}));
             var g;
             !function(g) {
                 function _require(game, path, currentModule) {
-                    var targetScriptAsset, resolvedPath, basedir = currentModule ? currentModule._dirname : game.assetBase, liveAssetPathTable = game._assetManager._liveAssetPathTable;
+                    var targetScriptAsset, resolvedPath, resolvedVirtualPath, basedir = currentModule ? currentModule._dirname : game.assetBase, liveAssetVirtualPathTable = game._assetManager._liveAssetVirtualPathTable;
                     if (path.indexOf("/") === -1 && game._assetManager._assets.hasOwnProperty(path) && (targetScriptAsset = game._assetManager._assets[path]), 
                     /^\.\/|^\.\.\/|^\//.test(path)) {
                         if (resolvedPath = g.PathUtil.resolvePath(basedir, path), game._scriptCaches.hasOwnProperty(resolvedPath)) return game._scriptCaches[resolvedPath]._cachedValue();
                         if (game._scriptCaches.hasOwnProperty(resolvedPath + ".js")) return game._scriptCaches[resolvedPath + ".js"]._cachedValue();
-                        targetScriptAsset || (targetScriptAsset = g.Util.findAssetByPathAsFile(resolvedPath, liveAssetPathTable)), 
-                        targetScriptAsset || (targetScriptAsset = g.Util.findAssetByPathAsDirectory(resolvedPath, liveAssetPathTable));
-                    } else if (!targetScriptAsset) for (var dirs = currentModule ? currentModule.paths : [ g.PathUtil.resolvePath(basedir, "node_modules") ], i = 0; i < dirs.length; ++i) {
-                        var dir = dirs[i];
-                        if (resolvedPath = g.PathUtil.resolvePath(dir, path), targetScriptAsset = g.Util.findAssetByPathAsFile(resolvedPath, liveAssetPathTable)) break;
-                        if (targetScriptAsset = g.Util.findAssetByPathAsDirectory(resolvedPath, liveAssetPathTable)) break;
+                        if (currentModule) {
+                            if (!currentModule._virtualDirname) throw g.ExceptionFactory.createAssertionError("g._require: require from DynamicAsset is not supported");
+                            resolvedVirtualPath = g.PathUtil.resolvePath(currentModule._virtualDirname, path);
+                        } else {
+                            if ("./" !== path.substring(0, 2)) throw g.ExceptionFactory.createAssertionError("g._require: entry point must start with './'");
+                            resolvedVirtualPath = path.substring(2);
+                        }
+                        targetScriptAsset || (targetScriptAsset = g.Util.findAssetByPathAsFile(resolvedVirtualPath, liveAssetVirtualPathTable)), 
+                        targetScriptAsset || (targetScriptAsset = g.Util.findAssetByPathAsDirectory(resolvedVirtualPath, liveAssetVirtualPathTable));
+                    } else if (!targetScriptAsset) {
+                        var dirs = currentModule ? currentModule.paths : [];
+                        dirs.push("node_modules");
+                        for (var i = 0; i < dirs.length; ++i) {
+                            var dir = dirs[i];
+                            if (resolvedVirtualPath = g.PathUtil.resolvePath(dir, path), targetScriptAsset = g.Util.findAssetByPathAsFile(resolvedVirtualPath, liveAssetVirtualPathTable)) break;
+                            if (targetScriptAsset = g.Util.findAssetByPathAsDirectory(resolvedVirtualPath, liveAssetVirtualPathTable)) break;
+                        }
                     }
                     if (targetScriptAsset) {
                         if (game._scriptCaches.hasOwnProperty(targetScriptAsset.path)) return game._scriptCaches[targetScriptAsset.path]._cachedValue();
@@ -370,7 +414,7 @@ require = function e(t, n, r) {
                 g._require = _require;
                 var Module = function() {
                     function Module(game, id, path) {
-                        var _this = this, dirname = g.PathUtil.resolveDirname(path), _g = Object.create(g, {
+                        var _this = this, dirname = g.PathUtil.resolveDirname(path), virtualPath = game._assetManager._liveAbsolutePathTable[path], virtualDirname = virtualPath ? g.PathUtil.resolveDirname(virtualPath) : void 0, _g = Object.create(g, {
                             game: {
                                 value: game,
                                 enumerable: !0
@@ -391,8 +435,8 @@ require = function e(t, n, r) {
                             }
                         });
                         this.id = id, this.filename = path, this.exports = {}, this.parent = null, this.loaded = !1, 
-                        this.children = [], this.paths = g.PathUtil.makeNodeModulePaths(dirname), this._dirname = dirname, 
-                        this._g = _g, this.require = function(path) {
+                        this.children = [], this.paths = virtualDirname ? g.PathUtil.makeNodeModulePaths(virtualDirname) : [], 
+                        this._dirname = dirname, this._virtualDirname = virtualDirname, this._g = _g, this.require = function(path) {
                             return "g" === path ? _g : g._require(game, path, _this);
                         };
                     }
@@ -656,7 +700,8 @@ require = function e(t, n, r) {
                 g.Trigger = Trigger;
                 var ConditionalChainTrigger = function(_super) {
                     function ConditionalChainTrigger(chain, filterOwner, filter) {
-                        _super.call(this, chain), this.filterOwner = filterOwner, this.filter = filter;
+                        var _this = _super.call(this, chain) || this;
+                        return _this.filterOwner = filterOwner, _this.filter = filter, _this;
                     }
                     return __extends(ConditionalChainTrigger, _super), ConditionalChainTrigger.prototype._onChainFire = function(e) {
                         this.filter && !this.filter.call(this.filterOwner, e) || this.fire(e);
@@ -763,10 +808,10 @@ require = function e(t, n, r) {
             var g;
             !function(g) {
                 var AudioPlayer = function() {
-                    function AudioPlayer(system, loop) {
-                        this._loop = !!loop, this.played = new g.Trigger(), this.stopped = new g.Trigger(), 
-                        this.currentAudio = void 0, this.volume = system.volume, this._muted = system._muted, 
-                        this._playbackRate = system._playbackRate, this._system = system;
+                    function AudioPlayer(system) {
+                        this.played = new g.Trigger(), this.stopped = new g.Trigger(), this.currentAudio = void 0, 
+                        this.volume = system.volume, this._muted = system._muted, this._playbackRate = system._playbackRate, 
+                        this._system = system;
                     }
                     return AudioPlayer.prototype.play = function(audio) {
                         this.currentAudio = audio, this.played.fire({
@@ -837,11 +882,12 @@ require = function e(t, n, r) {
                 g.AudioSystem = AudioSystem;
                 var MusicAudioSystem = function(_super) {
                     function MusicAudioSystem(id, game) {
-                        _super.call(this, id, game), this._player = void 0, this._suppressingAudio = void 0;
+                        var _this = _super.call(this, id, game) || this;
+                        return _this._player = void 0, _this._suppressingAudio = void 0, _this;
                     }
                     return __extends(MusicAudioSystem, _super), Object.defineProperty(MusicAudioSystem.prototype, "player", {
                         get: function() {
-                            return this._player || (this._player = this.game.resourceFactory.createAudioPlayer(this, !0), 
+                            return this._player || (this._player = this.game.resourceFactory.createAudioPlayer(this), 
                             this._player.played.handle(this, this._onPlayerPlayed), this._player.stopped.handle(this, this._onPlayerStopped)), 
                             this._player;
                         },
@@ -880,7 +926,8 @@ require = function e(t, n, r) {
                 g.MusicAudioSystem = MusicAudioSystem;
                 var SoundAudioSystem = function(_super) {
                     function SoundAudioSystem(id, game) {
-                        _super.call(this, id, game), this.players = [];
+                        var _this = _super.call(this, id, game) || this;
+                        return _this.players = [], _this;
                     }
                     return __extends(SoundAudioSystem, _super), SoundAudioSystem.prototype.createPlayer = function() {
                         var player = this.game.resourceFactory.createAudioPlayer(this);
@@ -981,23 +1028,26 @@ require = function e(t, n, r) {
             !function(g) {
                 var E = function(_super) {
                     function E(sceneOrParam) {
+                        var _this = this;
                         if (sceneOrParam instanceof g.Scene) {
                             var scene = sceneOrParam;
-                            _super.call(this), this.children = void 0, this.parent = void 0, this._touchable = !1, 
-                            this.state = 0, this._hasTouchableChildren = !1, this._update = void 0, this._message = void 0, 
-                            this._pointDown = void 0, this._pointMove = void 0, this._pointUp = void 0, this._targetCameras = void 0, 
-                            this.local = scene.local !== g.LocalTickMode.NonLocal, scene.register(this), scene.game.logger.debug("[deprecated] E or Subclass of E: This constructor is deprecated. Refer to the API documentation and use each constructor(param: ParameterObject) instead.");
+                            _this = _super.call(this) || this, _this.children = void 0, _this.parent = void 0, 
+                            _this._touchable = !1, _this.state = 0, _this._hasTouchableChildren = !1, _this._update = void 0, 
+                            _this._message = void 0, _this._pointDown = void 0, _this._pointMove = void 0, _this._pointUp = void 0, 
+                            _this._targetCameras = void 0, _this.local = scene.local !== g.LocalTickMode.NonLocal, 
+                            scene.register(_this), scene.game.logger.debug("[deprecated] E or Subclass of E: This constructor is deprecated. Refer to the API documentation and use each constructor(param: ParameterObject) instead.");
                         } else {
                             var param = sceneOrParam;
-                            if (_super.call(this, param), this.children = void 0, this.parent = void 0, this._touchable = !1, 
-                            this.state = 0, this._hasTouchableChildren = !1, this._update = void 0, this._message = void 0, 
-                            this._pointDown = void 0, this._pointMove = void 0, this._pointUp = void 0, this._targetCameras = void 0, 
-                            this.tag = param.tag, this.local = param.scene.local !== g.LocalTickMode.NonLocal || !!param.local, 
-                            param.children) for (var i = 0; i < param.children.length; ++i) this.append(param.children[i]);
-                            param.parent && param.parent.append(this), param.targetCameras && (this.targetCameras = param.targetCameras), 
-                            "touchable" in param && (this.touchable = param.touchable), param.hidden && this.hide(), 
-                            this.id = param.id, param.scene.register(this);
+                            if (_this = _super.call(this, param) || this, _this.children = void 0, _this.parent = void 0, 
+                            _this._touchable = !1, _this.state = 0, _this._hasTouchableChildren = !1, _this._update = void 0, 
+                            _this._message = void 0, _this._pointDown = void 0, _this._pointMove = void 0, _this._pointUp = void 0, 
+                            _this._targetCameras = void 0, _this.tag = param.tag, _this.local = param.scene.local !== g.LocalTickMode.NonLocal || !!param.local, 
+                            param.children) for (var i = 0; i < param.children.length; ++i) _this.append(param.children[i]);
+                            param.parent && param.parent.append(_this), param.targetCameras && (_this.targetCameras = param.targetCameras), 
+                            "touchable" in param && (_this.touchable = param.touchable), param.hidden && _this.hide(), 
+                            _this.id = param.id, param.scene.register(_this);
                         }
+                        return _this;
                     }
                     return __extends(E, _super), Object.defineProperty(E.prototype, "update", {
                         get: function() {
@@ -1185,8 +1235,9 @@ require = function e(t, n, r) {
             !function(g) {
                 var CacheableE = function(_super) {
                     function CacheableE(sceneOrParam) {
-                        _super.call(this, sceneOrParam), this._shouldRenderChildren = !0, this._cache = void 0, 
-                        this._renderer = void 0, this._renderedCamera = void 0;
+                        var _this = _super.call(this, sceneOrParam) || this;
+                        return _this._shouldRenderChildren = !0, _this._cache = void 0, _this._renderer = void 0, 
+                        _this._renderedCamera = void 0, _this;
                     }
                     return __extends(CacheableE, _super), CacheableE.prototype.invalidate = function() {
                         this.state &= -3, this.modified();
@@ -1211,24 +1262,25 @@ require = function e(t, n, r) {
             }(g || (g = {}));
             var g;
             !function(g) {
+                var StorageRegion;
                 !function(StorageRegion) {
                     StorageRegion[StorageRegion.Slots = 1] = "Slots", StorageRegion[StorageRegion.Scores = 2] = "Scores", 
                     StorageRegion[StorageRegion.Counts = 3] = "Counts", StorageRegion[StorageRegion.Values = 4] = "Values";
-                }(g.StorageRegion || (g.StorageRegion = {}));
-                g.StorageRegion;
+                }(StorageRegion = g.StorageRegion || (g.StorageRegion = {}));
+                var StorageOrder;
                 !function(StorageOrder) {
                     StorageOrder[StorageOrder.Asc = 0] = "Asc", StorageOrder[StorageOrder.Desc = 1] = "Desc";
-                }(g.StorageOrder || (g.StorageOrder = {}));
-                g.StorageOrder;
+                }(StorageOrder = g.StorageOrder || (g.StorageOrder = {}));
+                var StorageCondition;
                 !function(StorageCondition) {
                     StorageCondition[StorageCondition.Equal = 1] = "Equal", StorageCondition[StorageCondition.GreaterThan = 2] = "GreaterThan", 
                     StorageCondition[StorageCondition.LessThan = 3] = "LessThan";
-                }(g.StorageCondition || (g.StorageCondition = {}));
-                g.StorageCondition;
+                }(StorageCondition = g.StorageCondition || (g.StorageCondition = {}));
+                var StorageCountsOperation;
                 !function(StorageCountsOperation) {
                     StorageCountsOperation[StorageCountsOperation.Incr = 1] = "Incr", StorageCountsOperation[StorageCountsOperation.Decr = 2] = "Decr";
-                }(g.StorageCountsOperation || (g.StorageCountsOperation = {}));
-                var StorageValueStore = (g.StorageCountsOperation, function() {
+                }(StorageCountsOperation = g.StorageCountsOperation || (g.StorageCountsOperation = {}));
+                var StorageValueStore = function() {
                     function StorageValueStore(keys, values) {
                         this._keys = keys, this._values = values;
                     }
@@ -1246,7 +1298,7 @@ require = function e(t, n, r) {
                         var values = this.get(keyOrIndex);
                         if (values) return values[0];
                     }, StorageValueStore;
-                }());
+                }();
                 g.StorageValueStore = StorageValueStore;
                 var StorageLoader = function() {
                     function StorageLoader(storage, keys, serialization) {
@@ -1307,7 +1359,7 @@ require = function e(t, n, r) {
                                 error: error,
                                 cancelRetry: !1
                             };
-                            this._scene.assetLoadFailed.fire(failureInfo), error.retriable && !failureInfo.cancelRetry ? this._assetManager.retryLoad(asset) : this._scene.game.terminateGame(), 
+                            this._scene.assetLoadFailed.fire(failureInfo), error.retriable && !failureInfo.cancelRetry ? this._assetManager.retryLoad(asset) : this._assetManager.configuration[asset.id] && this._scene.game.terminateGame(), 
                             this._scene.assetLoadCompleted.fire(asset);
                         }
                     }, SceneAssetHolder.prototype._onAssetLoad = function(asset) {
@@ -1318,16 +1370,19 @@ require = function e(t, n, r) {
                         }
                     }, SceneAssetHolder;
                 }();
-                g.SceneAssetHolder = SceneAssetHolder, function(SceneState) {
+                g.SceneAssetHolder = SceneAssetHolder;
+                var SceneState;
+                !function(SceneState) {
                     SceneState[SceneState.Destroyed = 0] = "Destroyed", SceneState[SceneState.Standby = 1] = "Standby", 
-                    SceneState[SceneState.Active = 2] = "Active", SceneState[SceneState.Deactive = 3] = "Deactive";
-                }(g.SceneState || (g.SceneState = {}));
-                var SceneState = g.SceneState;
+                    SceneState[SceneState.Active = 2] = "Active", SceneState[SceneState.Deactive = 3] = "Deactive", 
+                    SceneState[SceneState.BeforeDestroyed = 4] = "BeforeDestroyed";
+                }(SceneState = g.SceneState || (g.SceneState = {}));
+                var SceneLoadState;
                 !function(SceneLoadState) {
                     SceneLoadState[SceneLoadState.Initial = 0] = "Initial", SceneLoadState[SceneLoadState.Ready = 1] = "Ready", 
                     SceneLoadState[SceneLoadState.ReadyFired = 2] = "ReadyFired", SceneLoadState[SceneLoadState.LoadedFired = 3] = "LoadedFired";
-                }(g.SceneLoadState || (g.SceneLoadState = {}));
-                var SceneLoadState = g.SceneLoadState, Scene = function() {
+                }(SceneLoadState = g.SceneLoadState || (g.SceneLoadState = {}));
+                var Scene = function() {
                     function Scene(gameOrParam, assetIds) {
                         var game, local, tickGenerationMode;
                         if (gameOrParam instanceof g.Game) game = gameOrParam, local = g.LocalTickMode.NonLocal, 
@@ -1359,6 +1414,7 @@ require = function e(t, n, r) {
                     return Scene.prototype.modified = function(isBubbling) {
                         this.game.modified = !0;
                     }, Scene.prototype.destroy = function() {
+                        this.state = SceneState.BeforeDestroyed, this.stateChanged.fire(this.state);
                         var gameDb = this.game.db;
                         for (var p in gameDb) gameDb.hasOwnProperty(p) && gameDb[p].scene === this && gameDb[p].destroy();
                         var gameDb = this.game._localDb;
@@ -1464,9 +1520,10 @@ require = function e(t, n, r) {
             !function(g) {
                 var LoadingScene = function(_super) {
                     function LoadingScene(param) {
-                        param.local = !0, _super.call(this, param), this.targetReset = new g.Trigger(), 
-                        this.targetReady = new g.Trigger(), this.targetAssetLoaded = new g.Trigger(), this._explicitEnd = !!param.explicitEnd, 
-                        this._targetScene = void 0;
+                        var _this = this;
+                        return param.local = !0, _this = _super.call(this, param) || this, _this.targetReset = new g.Trigger(), 
+                        _this.targetReady = new g.Trigger(), _this.targetAssetLoaded = new g.Trigger(), 
+                        _this._explicitEnd = !!param.explicitEnd, _this._targetScene = void 0, _this;
                     }
                     return __extends(LoadingScene, _super), LoadingScene.prototype.destroy = function() {
                         this._clearTargetScene(), _super.prototype.destroy.call(this);
@@ -1502,7 +1559,8 @@ require = function e(t, n, r) {
             !function(g) {
                 var CameraCancellingE = function(_super) {
                     function CameraCancellingE(param) {
-                        _super.call(this, param), this._canceller = new g.Object2D();
+                        var _this = _super.call(this, param) || this;
+                        return _this._canceller = new g.Object2D(), _this;
                     }
                     return __extends(CameraCancellingE, _super), CameraCancellingE.prototype.renderSelf = function(renderer, camera) {
                         if (!this.children) return !1;
@@ -1517,13 +1575,14 @@ require = function e(t, n, r) {
                     }, CameraCancellingE;
                 }(g.E), DefaultLoadingScene = function(_super) {
                     function DefaultLoadingScene(param) {
-                        _super.call(this, {
+                        var _this = _super.call(this, {
                             game: param.game,
                             name: "akashic:default-loading-scene"
-                        }), this._barWidth = Math.min(param.game.width, Math.max(100, param.game.width / 2)), 
-                        this._barHeight = 5, this._gauge = void 0, this._gaugeUpdateCount = 0, this._totalWaitingAssetCount = 0, 
-                        this.loaded.handle(this, this._onLoaded), this.targetReset.handle(this, this._onTargetReset), 
-                        this.targetAssetLoaded.handle(this, this._onTargetAssetLoaded);
+                        }) || this;
+                        return _this._barWidth = Math.min(param.game.width, Math.max(100, param.game.width / 2)), 
+                        _this._barHeight = 5, _this._gauge = void 0, _this._gaugeUpdateCount = 0, _this._totalWaitingAssetCount = 0, 
+                        _this.loaded.handle(_this, _this._onLoaded), _this.targetReset.handle(_this, _this._onTargetReset), 
+                        _this.targetAssetLoaded.handle(_this, _this._onTargetAssetLoaded), _this;
                     }
                     return __extends(DefaultLoadingScene, _super), DefaultLoadingScene.prototype._onLoaded = function() {
                         var gauge;
@@ -1569,20 +1628,23 @@ require = function e(t, n, r) {
             !function(g) {
                 var Sprite = function(_super) {
                     function Sprite(sceneOrParam, src, width, height) {
+                        var _this = this;
                         if (sceneOrParam instanceof g.Scene) {
                             var scene = sceneOrParam;
-                            _super.call(this, scene), this.surface = g.Util.asSurface(src), this.width = void 0 !== width ? width : this.surface.width, 
-                            this.height = void 0 !== height ? height : this.surface.height, this.srcWidth = this.width, 
-                            this.srcHeight = this.height, this.srcX = 0, this.srcY = 0, this._stretchMatrix = void 0, 
-                            this._beforeSurface = this.surface, g.Util.setupAnimatingHandler(this, this.surface);
+                            _this = _super.call(this, scene) || this, _this.surface = g.Util.asSurface(src), 
+                            _this.width = void 0 !== width ? width : _this.surface.width, _this.height = void 0 !== height ? height : _this.surface.height, 
+                            _this.srcWidth = _this.width, _this.srcHeight = _this.height, _this.srcX = 0, _this.srcY = 0, 
+                            _this._stretchMatrix = void 0, _this._beforeSurface = _this.surface, g.Util.setupAnimatingHandler(_this, _this.surface);
                         } else {
                             var param = sceneOrParam;
-                            _super.call(this, param), this.surface = g.Util.asSurface(param.src), "width" in param || (this.width = this.surface.width), 
-                            "height" in param || (this.height = this.surface.height), this.srcWidth = "srcWidth" in param ? param.srcWidth : this.width, 
-                            this.srcHeight = "srcHeight" in param ? param.srcHeight : this.height, this.srcX = param.srcX || 0, 
-                            this.srcY = param.srcY || 0, this._stretchMatrix = void 0, this._beforeSurface = this.surface, 
-                            g.Util.setupAnimatingHandler(this, this.surface), this._invalidateSelf();
+                            _this = _super.call(this, param) || this, _this.surface = g.Util.asSurface(param.src), 
+                            "width" in param || (_this.width = _this.surface.width), "height" in param || (_this.height = _this.surface.height), 
+                            _this.srcWidth = "srcWidth" in param ? param.srcWidth : _this.width, _this.srcHeight = "srcHeight" in param ? param.srcHeight : _this.height, 
+                            _this.srcX = param.srcX || 0, _this.srcY = param.srcY || 0, _this._stretchMatrix = void 0, 
+                            _this._beforeSurface = _this.surface, g.Util.setupAnimatingHandler(_this, _this.surface), 
+                            _this._invalidateSelf();
                         }
+                        return _this;
                     }
                     return __extends(Sprite, _super), Sprite.prototype._onUpdate = function() {
                         this.modified();
@@ -1613,16 +1675,18 @@ require = function e(t, n, r) {
             !function(g) {
                 var FrameSprite = function(_super) {
                     function FrameSprite(sceneOrParam, src, width, height) {
+                        var _this = this;
                         if (sceneOrParam instanceof g.Scene) {
                             var scene = sceneOrParam;
-                            _super.call(this, scene, src, width, height), this._lastUsedIndex = 0, this.frameNumber = 0, 
-                            this.frames = [ 0 ], this.interval = void 0, this._timer = void 0;
+                            _this = _super.call(this, scene, src, width, height) || this, _this._lastUsedIndex = 0, 
+                            _this.frameNumber = 0, _this.frames = [ 0 ], _this.interval = void 0, _this._timer = void 0;
                         } else {
                             var param = sceneOrParam;
-                            _super.call(this, param), this._lastUsedIndex = 0, this.frameNumber = param.frameNumber || 0, 
-                            this.frames = "frames" in param ? param.frames : [ 0 ], this.interval = param.interval, 
-                            this._timer = void 0, this._modifiedSelf();
+                            _this = _super.call(this, param) || this, _this._lastUsedIndex = 0, _this.frameNumber = param.frameNumber || 0, 
+                            _this.frames = "frames" in param ? param.frames : [ 0 ], _this.interval = param.interval, 
+                            _this._timer = void 0, _this._modifiedSelf();
                         }
+                        return _this;
                     }
                     return __extends(FrameSprite, _super), FrameSprite.createBySprite = function(sprite, width, height) {
                         var frameSprite = new FrameSprite({
@@ -1661,19 +1725,20 @@ require = function e(t, n, r) {
             !function(g) {
                 var Tile = function(_super) {
                     function Tile(sceneOrParam, src, tileWidth, tileHeight, tileData) {
+                        var _this = this;
                         if (sceneOrParam instanceof g.Scene) {
                             var scene = sceneOrParam;
-                            _super.call(this, scene), this.tileWidth = tileWidth, this.tileHeight = tileHeight, 
-                            this.tileData = tileData, this.tileChips = g.Util.asSurface(src), this.height = this.tileHeight * this.tileData.length, 
-                            this.width = this.tileWidth * this.tileData[0].length, this._tilesInRow = Math.floor(this.tileChips.width / this.tileWidth);
+                            _this = _super.call(this, scene) || this, _this.tileWidth = tileWidth, _this.tileHeight = tileHeight, 
+                            _this.tileData = tileData, _this.tileChips = g.Util.asSurface(src), _this.height = _this.tileHeight * _this.tileData.length, 
+                            _this.width = _this.tileWidth * _this.tileData[0].length, _this._tilesInRow = Math.floor(_this.tileChips.width / _this.tileWidth);
                         } else {
                             var param = sceneOrParam;
-                            _super.call(this, param), this.tileWidth = param.tileWidth, this.tileHeight = param.tileHeight, 
-                            this.tileData = param.tileData, this.tileChips = g.Util.asSurface(param.src), this.height = this.tileHeight * this.tileData.length, 
-                            this.width = this.tileWidth * this.tileData[0].length;
+                            _this = _super.call(this, param) || this, _this.tileWidth = param.tileWidth, _this.tileHeight = param.tileHeight, 
+                            _this.tileData = param.tileData, _this.tileChips = g.Util.asSurface(param.src), 
+                            _this.height = _this.tileHeight * _this.tileData.length, _this.width = _this.tileWidth * _this.tileData[0].length;
                         }
-                        this._beforeTileChips = this.tileChips, g.Util.setupAnimatingHandler(this, this.tileChips), 
-                        this._invalidateSelf();
+                        return _this._beforeTileChips = _this.tileChips, g.Util.setupAnimatingHandler(_this, _this.tileChips), 
+                        _this._invalidateSelf(), _this;
                     }
                     return __extends(Tile, _super), Tile.prototype._onUpdate = function() {
                         this.invalidate();
@@ -1704,14 +1769,15 @@ require = function e(t, n, r) {
             }(g || (g = {}));
             var g;
             !function(g) {
+                var EventType;
                 !function(EventType) {
                     EventType[EventType.Unknown = 0] = "Unknown", EventType[EventType.Join = 1] = "Join", 
-                    EventType[EventType.Leave = 2] = "Leave", EventType[EventType.Seed = 3] = "Seed", 
-                    EventType[EventType.PointDown = 4] = "PointDown", EventType[EventType.PointMove = 5] = "PointMove", 
-                    EventType[EventType.PointUp = 6] = "PointUp", EventType[EventType.Message = 7] = "Message", 
-                    EventType[EventType.Operation = 8] = "Operation";
-                }(g.EventType || (g.EventType = {}));
-                var EventType = g.EventType, PointEvent = function() {
+                    EventType[EventType.Leave = 2] = "Leave", EventType[EventType.Timestamp = 3] = "Timestamp", 
+                    EventType[EventType.Seed = 4] = "Seed", EventType[EventType.PointDown = 5] = "PointDown", 
+                    EventType[EventType.PointMove = 6] = "PointMove", EventType[EventType.PointUp = 7] = "PointUp", 
+                    EventType[EventType.Message = 8] = "Message", EventType[EventType.Operation = 9] = "Operation";
+                }(EventType = g.EventType || (g.EventType = {}));
+                var PointEvent = function() {
                     function PointEvent(pointerId, target, point, player, local, priority) {
                         this.priority = priority, this.local = local, this.player = player, this.pointerId = pointerId, 
                         this.target = target, this.point = point;
@@ -1721,23 +1787,26 @@ require = function e(t, n, r) {
                 g.PointEvent = PointEvent;
                 var PointDownEvent = function(_super) {
                     function PointDownEvent(pointerId, target, point, player, local, priority) {
-                        _super.call(this, pointerId, target, point, player, local, priority), this.type = EventType.PointDown;
+                        var _this = _super.call(this, pointerId, target, point, player, local, priority) || this;
+                        return _this.type = EventType.PointDown, _this;
                     }
                     return __extends(PointDownEvent, _super), PointDownEvent;
                 }(PointEvent);
                 g.PointDownEvent = PointDownEvent;
                 var PointUpEvent = function(_super) {
                     function PointUpEvent(pointerId, target, point, prevDelta, startDelta, player, local, priority) {
-                        _super.call(this, pointerId, target, point, player, local, priority), this.type = EventType.PointUp, 
-                        this.prevDelta = prevDelta, this.startDelta = startDelta;
+                        var _this = _super.call(this, pointerId, target, point, player, local, priority) || this;
+                        return _this.type = EventType.PointUp, _this.prevDelta = prevDelta, _this.startDelta = startDelta, 
+                        _this;
                     }
                     return __extends(PointUpEvent, _super), PointUpEvent;
                 }(PointEvent);
                 g.PointUpEvent = PointUpEvent;
                 var PointMoveEvent = function(_super) {
                     function PointMoveEvent(pointerId, target, point, prevDelta, startDelta, player, local, priority) {
-                        _super.call(this, pointerId, target, point, player, local, priority), this.type = EventType.PointMove, 
-                        this.prevDelta = prevDelta, this.startDelta = startDelta;
+                        var _this = _super.call(this, pointerId, target, point, player, local, priority) || this;
+                        return _this.type = EventType.PointMove, _this.prevDelta = prevDelta, _this.startDelta = startDelta, 
+                        _this;
                     }
                     return __extends(PointMoveEvent, _super), PointMoveEvent;
                 }(PointEvent);
@@ -1772,6 +1841,14 @@ require = function e(t, n, r) {
                     return LeaveEvent;
                 }();
                 g.LeaveEvent = LeaveEvent;
+                var TimestampEvent = function() {
+                    function TimestampEvent(timestamp, player, priority) {
+                        this.type = EventType.Timestamp, this.priority = priority, this.player = player, 
+                        this.timestamp = timestamp;
+                    }
+                    return TimestampEvent;
+                }();
+                g.TimestampEvent = TimestampEvent;
                 var SeedEvent = function() {
                     function SeedEvent(generator, priority) {
                         this.type = EventType.Seed, this.priority = priority, this.generator = generator;
@@ -1782,11 +1859,12 @@ require = function e(t, n, r) {
             }(g || (g = {}));
             var g;
             !function(g) {
+                var LogLevel;
                 !function(LogLevel) {
                     LogLevel[LogLevel.Error = 0] = "Error", LogLevel[LogLevel.Warn = 1] = "Warn", LogLevel[LogLevel.Info = 2] = "Info", 
                     LogLevel[LogLevel.Debug = 3] = "Debug";
-                }(g.LogLevel || (g.LogLevel = {}));
-                var LogLevel = g.LogLevel, Logger = function() {
+                }(LogLevel = g.LogLevel || (g.LogLevel = {}));
+                var Logger = function() {
                     function Logger(game) {
                         this.game = game, this.logging = new g.Trigger();
                     }
@@ -1842,7 +1920,7 @@ require = function e(t, n, r) {
                         this._eventTriggerMap[g.EventType.Operation] = void 0, this._loaded = new g.Trigger(), 
                         this._started = new g.Trigger(), this.isLoaded = !1, this.snapshotRequest = new g.Trigger(), 
                         this.external = {}, this.logger = new g.Logger(this), this._main = gameConfiguration.main, 
-                        this._mainParameter = void 0, this._assetManager = new g.AssetManager(this, gameConfiguration.assets, gameConfiguration.globalScripts);
+                        this._mainParameter = void 0, this._configuration = gameConfiguration, this._assetManager = new g.AssetManager(this, gameConfiguration.assets, gameConfiguration.audio);
                         var operationPluginsField = gameConfiguration.operationPlugins || [];
                         this._operationPluginManager = new g.OperationPluginManager(this, operationPluginViewInfo, operationPluginsField), 
                         this._operationPluginOperated = new g.Trigger(), this._operationPluginManager.operated.handle(this._operationPluginOperated, this._operationPluginOperated.fire), 
@@ -1938,7 +2016,7 @@ require = function e(t, n, r) {
                         throw g.ExceptionFactory.createPureVirtualError("Game#removeEventFilter");
                     }, Game.prototype.shouldSaveSnapshot = function() {
                         throw g.ExceptionFactory.createPureVirtualError("Game#shouldSaveSnapshot");
-                    }, Game.prototype.saveSnapshot = function(snapshot) {
+                    }, Game.prototype.saveSnapshot = function(snapshot, timestamp) {
                         throw g.ExceptionFactory.createPureVirtualError("Game#saveSnapshot");
                     }, Game.prototype._fireSceneReady = function(scene) {
                         this._sceneChangeRequests.push({
@@ -1975,14 +2053,23 @@ require = function e(t, n, r) {
                             for (;this.scene() !== this._initialScene; ) this.popScene(), this._flushSceneChangeRequests();
                             this.isLoaded || this.scenes.pop();
                         }
-                        param && (void 0 !== param.age && (this.age = param.age), void 0 !== param.randGen && (this.random[0] = param.randGen)), 
+                        switch (param && (void 0 !== param.age && (this.age = param.age), void 0 !== param.randGen && (this.random[0] = param.randGen)), 
                         this._loaded.removeAllByHandler(this._start), this.join._reset(), this.leave._reset(), 
                         this.seed._reset(), this._idx = 0, this._localIdx = 0, this._cameraIdx = 0, this.db = {}, 
                         this._localDb = {}, this.events = [], this.modified = !0, this.loadingScene = void 0, 
                         this._focusingCamera = void 0, this._scriptCaches = {}, this.snapshotRequest._reset(), 
-                        this._sceneChangeRequests = [], this._isTerminated = !1, this.vars = {}, this._defaultLoadingScene = new g.DefaultLoadingScene({
-                            game: this
-                        });
+                        this._sceneChangeRequests = [], this._isTerminated = !1, this.vars = {}, this._configuration.defaultLoadingScene) {
+                          case "none":
+                            this._defaultLoadingScene = new g.LoadingScene({
+                                game: this
+                            });
+                            break;
+
+                          default:
+                            this._defaultLoadingScene = new g.DefaultLoadingScene({
+                                game: this
+                            });
+                        }
                     }, Game.prototype._loadAndStart = function(param) {
                         this._mainParameter = param || {}, this.isLoaded ? this._start() : (this._loaded.handle(this, this._start), 
                         this.pushScene(this._initialScene), this._flushSceneChangeRequests());
@@ -2074,16 +2161,19 @@ require = function e(t, n, r) {
             !function(g) {
                 var Camera2D = function(_super) {
                     function Camera2D(gameOrParam) {
+                        var _this = this;
                         if (gameOrParam instanceof g.Game) {
                             var game = gameOrParam;
-                            _super.call(this), this.game = game, this.local = !1, this.name = void 0, this._modifiedCount = 0, 
-                            this.width = game.width, this.height = game.height, game.logger.debug("[deprecated] Camera2D:This constructor is deprecated. Refer to the API documentation and use Camera2D(param: Camera2DParameterObject) instead.");
+                            _this = _super.call(this) || this, _this.game = game, _this.local = !1, _this.name = void 0, 
+                            _this._modifiedCount = 0, _this.width = game.width, _this.height = game.height, 
+                            game.logger.debug("[deprecated] Camera2D:This constructor is deprecated. Refer to the API documentation and use Camera2D(param: Camera2DParameterObject) instead.");
                         } else {
                             var param = gameOrParam;
-                            _super.call(this, param), this.game = param.game, this.local = !!param.local, this.name = param.name, 
-                            this._modifiedCount = 0, this.width = param.game.width, this.height = param.game.height;
+                            _this = _super.call(this, param) || this, _this.game = param.game, _this.local = !!param.local, 
+                            _this.name = param.name, _this._modifiedCount = 0, _this.width = param.game.width, 
+                            _this.height = param.game.height;
                         }
-                        this.id = this.local ? void 0 : this.game._cameraIdx++;
+                        return _this.id = _this.local ? void 0 : _this.game._cameraIdx++, _this;
                     }
                     return __extends(Camera2D, _super), Camera2D.deserialize = function(ser, game) {
                         var s = ser;
@@ -2188,21 +2278,23 @@ require = function e(t, n, r) {
             !function(g) {
                 var Label = function(_super) {
                     function Label(sceneOrParam, text, font, fontSize) {
+                        var _this = this;
                         if (sceneOrParam instanceof g.Scene) {
                             var scene = sceneOrParam;
-                            _super.call(this, scene), this.text = text, this.bitmapFont = font, this.font = font, 
-                            this.textAlign = g.TextAlign.Left, this.glyphs = new Array(text.length), this.fontSize = fontSize, 
-                            this.maxWidth = void 0, this.widthAutoAdjust = !0, this.textColor = void 0, this._textWidth = 0, 
-                            this._game = void 0, this._invalidateSelf();
+                            _this = _super.call(this, scene) || this, _this.text = text, _this.bitmapFont = font, 
+                            _this.font = font, _this.textAlign = g.TextAlign.Left, _this.glyphs = new Array(text.length), 
+                            _this.fontSize = fontSize, _this.maxWidth = void 0, _this.widthAutoAdjust = !0, 
+                            _this.textColor = void 0, _this._textWidth = 0, _this._game = void 0, _this._invalidateSelf();
                         } else {
                             var param = sceneOrParam;
                             if (!param.font && !param.bitmapFont) throw g.ExceptionFactory.createAssertionError("Label#constructor: 'font' or 'bitmapFont' must be given to LabelParameterObject");
-                            _super.call(this, param), this.text = param.text, this.bitmapFont = param.bitmapFont, 
-                            this.font = param.font ? param.font : param.bitmapFont, this.textAlign = "textAlign" in param ? param.textAlign : g.TextAlign.Left, 
-                            this.glyphs = new Array(param.text.length), this.fontSize = param.fontSize, this.maxWidth = param.maxWidth, 
-                            this.widthAutoAdjust = !("widthAutoAdjust" in param) || param.widthAutoAdjust, this.textColor = param.textColor, 
-                            this._textWidth = 0, this._game = void 0, this._invalidateSelf();
+                            _this = _super.call(this, param) || this, _this.text = param.text, _this.bitmapFont = param.bitmapFont, 
+                            _this.font = param.font ? param.font : param.bitmapFont, _this.textAlign = "textAlign" in param ? param.textAlign : g.TextAlign.Left, 
+                            _this.glyphs = new Array(param.text.length), _this.fontSize = param.fontSize, _this.maxWidth = param.maxWidth, 
+                            _this.widthAutoAdjust = !("widthAutoAdjust" in param) || param.widthAutoAdjust, 
+                            _this.textColor = param.textColor, _this._textWidth = 0, _this._game = void 0, _this._invalidateSelf();
                         }
+                        return _this;
                     }
                     return __extends(Label, _super), Label.prototype.aligning = function(width, textAlign) {
                         this.width = width, this.widthAutoAdjust = !1, this.textAlign = textAlign;
@@ -2246,14 +2338,15 @@ require = function e(t, n, r) {
                             var code = g.Util.charCodeAt(this.text, i);
                             if (code) {
                                 var glyph = this.font.glyphForCharacter(code);
-                                if (!glyph) {
+                                if (glyph) {
+                                    if (!(glyph.width < 0 || glyph.height < 0 || glyph.x < 0 || glyph.y < 0)) {
+                                        this.glyphs.push(glyph), this._textWidth += glyph.advanceWidth * glyphScale;
+                                        var height = glyph.offsetY + glyph.height;
+                                        maxHeight < height && (maxHeight = height);
+                                    }
+                                } else {
                                     var str = 4294901760 & code ? String.fromCharCode((4294901760 & code) >>> 16, 65535 & code) : String.fromCharCode(code);
-                                    throw g.ExceptionFactory.createAssertionError("Label#_invalidateSelf(): failed to get a glyph for '" + str + "' (BitmapFont might not have the glyph or DynamicFont might create a glyph larger than its atlas).");
-                                }
-                                if (!(glyph.width < 0 || glyph.height < 0 || glyph.x < 0 || glyph.y < 0)) {
-                                    this.glyphs.push(glyph), this._textWidth += glyph.advanceWidth * glyphScale;
-                                    var height = glyph.offsetY + glyph.height;
-                                    maxHeight < height && (maxHeight = height);
+                                    this.game().logger.warn("Label#_invalidateSelf(): failed to get a glyph for '" + str + "' (BitmapFont might not have the glyph or DynamicFont might create a glyph larger than its atlas).");
                                 }
                             }
                         }
@@ -2278,16 +2371,21 @@ require = function e(t, n, r) {
                 }();
                 g_1.Glyph = Glyph;
                 var BitmapFont = function() {
-                    function BitmapFont(src, map, defaultGlyphWidth, defaultGlyphHeight, missingGlyph) {
-                        this.surface = g_1.Util.asSurface(src), this.map = map, this.defaultGlyphWidth = defaultGlyphWidth, 
-                        this.defaultGlyphHeight = defaultGlyphHeight, this.missingGlyph = missingGlyph, 
-                        this.size = defaultGlyphHeight;
+                    function BitmapFont(srcOrParam, map, defaultGlyphWidth, defaultGlyphHeight, missingGlyph) {
+                        if (srcOrParam instanceof g_1.Surface || srcOrParam instanceof g_1.Asset) this.surface = g_1.Util.asSurface(srcOrParam), 
+                        this.map = map, this.defaultGlyphWidth = defaultGlyphWidth, this.defaultGlyphHeight = defaultGlyphHeight, 
+                        this.missingGlyph = missingGlyph, this.size = defaultGlyphHeight; else {
+                            var param = srcOrParam;
+                            this.surface = g_1.Util.asSurface(param.src), this.map = param.map, this.defaultGlyphWidth = param.defaultGlyphWidth, 
+                            this.defaultGlyphHeight = param.defaultGlyphHeight, this.missingGlyph = param.missingGlyph, 
+                            this.size = param.defaultGlyphHeight;
+                        }
                     }
                     return BitmapFont.prototype.glyphForCharacter = function(code) {
                         var g = this.map[code] || this.missingGlyph;
                         if (!g) return null;
                         var w = void 0 === g.width ? this.defaultGlyphWidth : g.width, h = void 0 === g.height ? this.defaultGlyphHeight : g.height, offsetX = g.offsetX || 0, offsetY = g.offsetY || 0, advanceWidth = void 0 === g.advanceWidth ? w : g.advanceWidth, surface = 0 === w || 0 === h ? void 0 : this.surface;
-                        return new Glyph(code, g.x, g.y, w, h, offsetX, offsetY, advanceWidth, surface, (!0));
+                        return new Glyph(code, g.x, g.y, w, h, offsetX, offsetY, advanceWidth, surface, !0);
                     }, BitmapFont.prototype.destroy = function() {
                         this.surface && !this.surface.destroyed() && this.surface.destroy(), this.map = void 0;
                     }, BitmapFont.prototype.destroyed = function() {
@@ -2300,15 +2398,17 @@ require = function e(t, n, r) {
             !function(g) {
                 var FilledRect = function(_super) {
                     function FilledRect(sceneOrParam, cssColor, width, height) {
+                        var _this = this;
                         if (sceneOrParam instanceof g.Scene) {
                             var scene = sceneOrParam;
-                            if (_super.call(this, scene), "string" != typeof cssColor) throw g.ExceptionFactory.createTypeMismatchError("ColorBox#constructor(cssColor)", "string", cssColor);
-                            this.cssColor = cssColor, this.width = width, this.height = height;
+                            if (_this = _super.call(this, scene) || this, "string" != typeof cssColor) throw g.ExceptionFactory.createTypeMismatchError("ColorBox#constructor(cssColor)", "string", cssColor);
+                            _this.cssColor = cssColor, _this.width = width, _this.height = height;
                         } else {
                             var param = sceneOrParam;
-                            if (_super.call(this, param), "string" != typeof param.cssColor) throw g.ExceptionFactory.createTypeMismatchError("ColorBox#constructor(cssColor)", "string", cssColor);
-                            this.cssColor = param.cssColor;
+                            if (_this = _super.call(this, param) || this, "string" != typeof param.cssColor) throw g.ExceptionFactory.createTypeMismatchError("ColorBox#constructor(cssColor)", "string", cssColor);
+                            _this.cssColor = param.cssColor;
                         }
+                        return _this;
                     }
                     return __extends(FilledRect, _super), FilledRect.prototype.renderSelf = function(renderer) {
                         return renderer.fillRect(0, 0, this.width, this.height, this.cssColor), !0;
@@ -2320,19 +2420,22 @@ require = function e(t, n, r) {
             !function(g) {
                 var Pane = function(_super) {
                     function Pane(sceneOrParam, width, height, backgroundImage, padding, backgroundEffector) {
+                        var _this = this;
                         if (sceneOrParam instanceof g.Scene) {
                             var scene = sceneOrParam;
-                            _super.call(this, scene), this.width = this._oldWidth = width, this.height = this._oldHeight = height, 
-                            this.backgroundImage = g.Util.asSurface(backgroundImage), this.backgroundEffector = backgroundEffector, 
-                            this._shouldRenderChildren = !1, this._padding = padding, this._initialize(), this._paddingChanged = !1, 
-                            this._bgSurface = void 0, this._bgRenderer = void 0;
+                            _this = _super.call(this, scene) || this, _this.width = _this._oldWidth = width, 
+                            _this.height = _this._oldHeight = height, _this.backgroundImage = g.Util.asSurface(backgroundImage), 
+                            _this.backgroundEffector = backgroundEffector, _this._shouldRenderChildren = !1, 
+                            _this._padding = padding, _this._initialize(), _this._paddingChanged = !1, _this._bgSurface = void 0, 
+                            _this._bgRenderer = void 0;
                         } else {
                             var param = sceneOrParam;
-                            _super.call(this, param), this._oldWidth = param.width, this._oldHeight = param.height, 
-                            this.backgroundImage = g.Util.asSurface(param.backgroundImage), this.backgroundEffector = param.backgroundEffector, 
-                            this._shouldRenderChildren = !1, this._padding = param.padding, this._initialize(), 
-                            this._paddingChanged = !1, this._bgSurface = void 0, this._bgRenderer = void 0;
+                            _this = _super.call(this, param) || this, _this._oldWidth = param.width, _this._oldHeight = param.height, 
+                            _this.backgroundImage = g.Util.asSurface(param.backgroundImage), _this.backgroundEffector = param.backgroundEffector, 
+                            _this._shouldRenderChildren = !1, _this._padding = param.padding, _this._initialize(), 
+                            _this._paddingChanged = !1, _this._bgSurface = void 0, _this._bgRenderer = void 0;
                         }
+                        return _this;
                     }
                     return __extends(Pane, _super), Object.defineProperty(Pane.prototype, "padding", {
                         get: function() {
@@ -2500,6 +2603,10 @@ require = function e(t, n, r) {
                         height: height
                     };
                 }
+                var FontWeight;
+                !function(FontWeight) {
+                    FontWeight[FontWeight.Normal = 0] = "Normal", FontWeight[FontWeight.Bold = 1] = "Bold";
+                }(FontWeight = g.FontWeight || (g.FontWeight = {}));
                 var SurfaceAtlasSlot = function() {
                     function SurfaceAtlasSlot(x, y, width, height) {
                         this.x = x, this.y = y, this.width = width, this.height = height, this.prev = null, 
@@ -2550,17 +2657,27 @@ require = function e(t, n, r) {
                 }();
                 g.SurfaceAtlas = SurfaceAtlas;
                 var DynamicFont = function() {
-                    function DynamicFont(fontFamily, size, game, hint, fontColor, strokeWidth, strokeColor, strokeOnly) {
+                    function DynamicFont(fontFamilyOrParam, size, game, hint, fontColor, strokeWidth, strokeColor, strokeOnly) {
                         if (void 0 === hint && (hint = {}), void 0 === fontColor && (fontColor = "black"), 
                         void 0 === strokeWidth && (strokeWidth = 0), void 0 === strokeColor && (strokeColor = "black"), 
-                        void 0 === strokeOnly && (strokeOnly = !1), this.fontFamily = fontFamily, this.size = size, 
-                        this.hint = hint, this.fontColor = fontColor, this.strokeWidth = strokeWidth, this.strokeColor = strokeColor, 
-                        this.strokeOnly = strokeOnly, this._resourceFactory = game.resourceFactory, this._glyphs = {}, 
-                        this._glyphFactory = this._resourceFactory.createGlyphFactory(fontFamily, size, hint.baselineHeight, fontColor, strokeWidth, strokeColor, strokeOnly), 
-                        this._atlases = [], this._currentAtlasIndex = 0, this._destroyed = !1, hint.initialAtlasWidth = hint.initialAtlasWidth ? hint.initialAtlasWidth : 2048, 
-                        hint.initialAtlasHeight = hint.initialAtlasHeight ? hint.initialAtlasHeight : 2048, 
-                        hint.maxAtlasWidth = hint.maxAtlasWidth ? hint.maxAtlasWidth : 2048, hint.maxAtlasHeight = hint.maxAtlasHeight ? hint.maxAtlasHeight : 2048, 
-                        hint.maxAtlasNum = hint.maxAtlasNum ? hint.maxAtlasNum : 1, this._hint = hint, this._atlasSize = calcAtlasSize(this._hint), 
+                        void 0 === strokeOnly && (strokeOnly = !1), "number" == typeof fontFamilyOrParam) this.fontFamily = fontFamilyOrParam, 
+                        this.size = size, this.hint = hint, this.fontColor = fontColor, this.strokeWidth = strokeWidth, 
+                        this.strokeColor = strokeColor, this.strokeOnly = strokeOnly, this._resourceFactory = game.resourceFactory, 
+                        this._glyphFactory = this._resourceFactory.createGlyphFactory(fontFamilyOrParam, size, hint.baselineHeight, fontColor, strokeWidth, strokeColor, strokeOnly), 
+                        game.logger.debug("[deprecated] DynamicFont: This constructor is deprecated. Refer to the API documentation and use constructor(param: DynamicFontParameterObject) instead."); else {
+                            var param = fontFamilyOrParam;
+                            this.fontFamily = param.fontFamily, this.size = param.size, this.hint = "hint" in param ? param.hint : {}, 
+                            this.fontColor = "fontColor" in param ? param.fontColor : "black", this.fontWeight = "fontWeight" in param ? param.fontWeight : FontWeight.Normal, 
+                            this.strokeWidth = "strokeWidth" in param ? param.strokeWidth : 0, this.strokeColor = "strokeColor" in param ? param.strokeColor : "black", 
+                            this.strokeOnly = "strokeOnly" in param && param.strokeOnly, this._resourceFactory = param.game.resourceFactory, 
+                            this._glyphFactory = this._resourceFactory.createGlyphFactory(this.fontFamily, this.size, this.hint.baselineHeight, this.fontColor, this.strokeWidth, this.strokeColor, this.strokeOnly, this.fontWeight);
+                        }
+                        if (this._glyphs = {}, this._atlases = [], this._currentAtlasIndex = 0, this._destroyed = !1, 
+                        this.hint.initialAtlasWidth = this.hint.initialAtlasWidth ? this.hint.initialAtlasWidth : 2048, 
+                        this.hint.initialAtlasHeight = this.hint.initialAtlasHeight ? this.hint.initialAtlasHeight : 2048, 
+                        this.hint.maxAtlasWidth = this.hint.maxAtlasWidth ? this.hint.maxAtlasWidth : 2048, 
+                        this.hint.maxAtlasHeight = this.hint.maxAtlasHeight ? this.hint.maxAtlasHeight : 2048, 
+                        this.hint.maxAtlasNum = this.hint.maxAtlasNum ? this.hint.maxAtlasNum : 1, this._atlasSize = calcAtlasSize(this.hint), 
                         this._atlases.push(this._resourceFactory.createSurfaceAtlas(this._atlasSize.width, this._atlasSize.height)), 
                         hint.presetChars) for (var i = 0, len = hint.presetChars.length; i < len; i++) {
                             var code = g.Util.charCodeAt(hint.presetChars, i);
@@ -2669,19 +2786,20 @@ require = function e(t, n, r) {
             }(g || (g = {}));
             var g;
             !function(g) {
+                var CompositeOperation;
                 !function(CompositeOperation) {
                     CompositeOperation[CompositeOperation.SourceOver = 0] = "SourceOver", CompositeOperation[CompositeOperation.SourceAtop = 1] = "SourceAtop", 
                     CompositeOperation[CompositeOperation.Lighter = 2] = "Lighter", CompositeOperation[CompositeOperation.Copy = 3] = "Copy";
-                }(g.CompositeOperation || (g.CompositeOperation = {}));
-                g.CompositeOperation;
+                }(CompositeOperation = g.CompositeOperation || (g.CompositeOperation = {}));
             }(g || (g = {}));
             var g;
             !function(g) {
                 var GlyphFactory = function() {
-                    function GlyphFactory(fontFamily, fontSize, baselineHeight, fontColor, strokeWidth, strokeColor, strokeOnly) {
+                    function GlyphFactory(fontFamily, fontSize, baselineHeight, fontColor, strokeWidth, strokeColor, strokeOnly, fontWeight) {
                         void 0 === baselineHeight && (baselineHeight = fontSize), void 0 === fontColor && (fontColor = "black"), 
                         void 0 === strokeWidth && (strokeWidth = 0), void 0 === strokeColor && (strokeColor = "black"), 
-                        void 0 === strokeOnly && (strokeOnly = !1), this.fontFamily = fontFamily, this.fontSize = fontSize, 
+                        void 0 === strokeOnly && (strokeOnly = !1), void 0 === fontWeight && (fontWeight = g.FontWeight.Normal), 
+                        this.fontFamily = fontFamily, this.fontSize = fontSize, this.fontWeight = fontWeight, 
                         this.baselineHeight = baselineHeight, this.fontColor = fontColor, this.strokeWidth = strokeWidth, 
                         this.strokeColor = strokeColor, this.strokeOnly = strokeOnly;
                     }
@@ -2693,31 +2811,33 @@ require = function e(t, n, r) {
             }(g || (g = {}));
             var g;
             !function(g) {
+                var LocalTickMode;
                 !function(LocalTickMode) {
                     LocalTickMode[LocalTickMode.NonLocal = 0] = "NonLocal", LocalTickMode[LocalTickMode.FullLocal = 1] = "FullLocal", 
                     LocalTickMode[LocalTickMode.InterpolateLocal = 2] = "InterpolateLocal";
-                }(g.LocalTickMode || (g.LocalTickMode = {}));
-                g.LocalTickMode;
+                }(LocalTickMode = g.LocalTickMode || (g.LocalTickMode = {}));
             }(g || (g = {}));
             var g;
             !function(g) {
                 var MultiLineLabel = function(_super) {
                     function MultiLineLabel(sceneOrParam, text, font, fontSize, width, lineBreak) {
-                        if (void 0 === lineBreak && (lineBreak = !0), sceneOrParam instanceof g.Scene) {
+                        void 0 === lineBreak && (lineBreak = !0);
+                        var _this = this;
+                        if (sceneOrParam instanceof g.Scene) {
                             var scene = sceneOrParam;
-                            _super.call(this, scene), this.text = text, this.bitmapFont = font, this.fontSize = fontSize, 
-                            this.width = width, this.lineBreak = lineBreak, this.lineGap = 0, this.textAlign = g.TextAlign.Left, 
-                            this.textColor = void 0;
+                            _this = _super.call(this, scene) || this, _this.text = text, _this.bitmapFont = font, 
+                            _this.fontSize = fontSize, _this.width = width, _this.lineBreak = lineBreak, _this.lineGap = 0, 
+                            _this.textAlign = g.TextAlign.Left, _this.textColor = void 0;
                         } else {
                             var param = sceneOrParam;
-                            _super.call(this, param), this.text = param.text, this.bitmapFont = param.bitmapFont, 
-                            this.fontSize = param.fontSize, this.width = param.width, this.lineBreak = !("lineBreak" in param) || param.lineBreak, 
-                            this.lineGap = param.lineGap || 0, this.textAlign = "textAlign" in param ? param.textAlign : g.TextAlign.Left, 
-                            this.textColor = param.textColor;
+                            _this = _super.call(this, param) || this, _this.text = param.text, _this.bitmapFont = param.bitmapFont, 
+                            _this.fontSize = param.fontSize, _this.width = param.width, _this.lineBreak = !("lineBreak" in param) || param.lineBreak, 
+                            _this.lineGap = param.lineGap || 0, _this.textAlign = "textAlign" in param ? param.textAlign : g.TextAlign.Left, 
+                            _this.textColor = param.textColor;
                         }
-                        this._lines = [], this._beforeText = void 0, this._beforeLineBreak = void 0, this._beforeBitmapFont = void 0, 
-                        this._beforeFontSize = void 0, this._beforeTextAlign = void 0, this._beforeWidth = void 0, 
-                        this._invalidateSelf();
+                        return _this._lines = [], _this._beforeText = void 0, _this._beforeLineBreak = void 0, 
+                        _this._beforeBitmapFont = void 0, _this._beforeFontSize = void 0, _this._beforeTextAlign = void 0, 
+                        _this._beforeWidth = void 0, _this._invalidateSelf(), _this;
                     }
                     return __extends(MultiLineLabel, _super), MultiLineLabel.prototype.invalidate = function() {
                         this._invalidateSelf(), _super.prototype.invalidate.call(this);
@@ -2989,23 +3109,25 @@ require = function e(t, n, r) {
             }(g || (g = {}));
             var g;
             !function(g) {
+                var TextBaseline;
                 !function(TextBaseline) {
                     TextBaseline[TextBaseline.Top = 0] = "Top", TextBaseline[TextBaseline.Middle = 1] = "Middle", 
                     TextBaseline[TextBaseline.Alphabetic = 2] = "Alphabetic", TextBaseline[TextBaseline.Bottom = 3] = "Bottom";
-                }(g.TextBaseline || (g.TextBaseline = {}));
-                var TextBaseline = g.TextBaseline;
+                }(TextBaseline = g.TextBaseline || (g.TextBaseline = {}));
+                var FontFamily;
                 !function(FontFamily) {
                     FontFamily[FontFamily.SansSerif = 0] = "SansSerif", FontFamily[FontFamily.Serif = 1] = "Serif", 
                     FontFamily[FontFamily.Monospace = 2] = "Monospace";
-                }(g.FontFamily || (g.FontFamily = {}));
-                var FontFamily = g.FontFamily, SystemLabel = function(_super) {
+                }(FontFamily = g.FontFamily || (g.FontFamily = {}));
+                var SystemLabel = function(_super) {
                     function SystemLabel(param) {
-                        _super.call(this, param), this.text = param.text, this.fontSize = param.fontSize, 
-                        this.textAlign = "textAlign" in param ? param.textAlign : g.TextAlign.Left, this.textBaseline = "textBaseline" in param ? param.textBaseline : TextBaseline.Alphabetic, 
-                        this.maxWidth = param.maxWidth, this.textColor = "textColor" in param ? param.textColor : "black", 
-                        this.fontFamily = "fontFamily" in param ? param.fontFamily : FontFamily.SansSerif, 
-                        this.strokeWidth = "strokeWidth" in param ? param.strokeWidth : 0, this.strokeColor = "strokeColor" in param ? param.strokeColor : "black", 
-                        this.strokeOnly = "strokeOnly" in param && param.strokeOnly;
+                        var _this = _super.call(this, param) || this;
+                        return _this.text = param.text, _this.fontSize = param.fontSize, _this.textAlign = "textAlign" in param ? param.textAlign : g.TextAlign.Left, 
+                        _this.textBaseline = "textBaseline" in param ? param.textBaseline : TextBaseline.Alphabetic, 
+                        _this.maxWidth = param.maxWidth, _this.textColor = "textColor" in param ? param.textColor : "black", 
+                        _this.fontFamily = "fontFamily" in param ? param.fontFamily : FontFamily.SansSerif, 
+                        _this.strokeWidth = "strokeWidth" in param ? param.strokeWidth : 0, _this.strokeColor = "strokeColor" in param ? param.strokeColor : "black", 
+                        _this.strokeOnly = "strokeOnly" in param && param.strokeOnly, _this;
                     }
                     return __extends(SystemLabel, _super), SystemLabel.prototype.renderSelf = function(renderer, camera) {
                         if (this.text) {
@@ -3031,18 +3153,18 @@ require = function e(t, n, r) {
             }(g || (g = {}));
             var g;
             !function(g) {
+                var TextAlign;
                 !function(TextAlign) {
                     TextAlign[TextAlign.Left = 0] = "Left", TextAlign[TextAlign.Center = 1] = "Center", 
                     TextAlign[TextAlign.Right = 2] = "Right";
-                }(g.TextAlign || (g.TextAlign = {}));
-                g.TextAlign;
+                }(TextAlign = g.TextAlign || (g.TextAlign = {}));
             }(g || (g = {}));
             var g;
             !function(g) {
+                var TickGenerationMode;
                 !function(TickGenerationMode) {
                     TickGenerationMode[TickGenerationMode.ByClock = 0] = "ByClock", TickGenerationMode[TickGenerationMode.Manual = 1] = "Manual";
-                }(g.TickGenerationMode || (g.TickGenerationMode = {}));
-                g.TickGenerationMode;
+                }(TickGenerationMode = g.TickGenerationMode || (g.TickGenerationMode = {}));
             }(g || (g = {}));
             var g;
             !function(g) {
@@ -3096,8 +3218,10 @@ require = function e(t, n, r) {
             !function(g) {
                 var XorshiftRandomGenerator = function(_super) {
                     function XorshiftRandomGenerator(seed, xorshift) {
+                        var _this = this;
                         if (void 0 === seed) throw g.ExceptionFactory.createAssertionError("XorshiftRandomGenerator#constructor: seed is undefined");
-                        _super.call(this, seed), xorshift ? this._xorshift = g.Xorshift.deserialize(xorshift) : this._xorshift = new g.Xorshift(seed);
+                        return _this = _super.call(this, seed) || this, xorshift ? _this._xorshift = g.Xorshift.deserialize(xorshift) : _this._xorshift = new g.Xorshift(seed), 
+                        _this;
                     }
                     return __extends(XorshiftRandomGenerator, _super), XorshiftRandomGenerator.deserialize = function(ser) {
                         return new XorshiftRandomGenerator(ser._seed, ser._xorshift);
