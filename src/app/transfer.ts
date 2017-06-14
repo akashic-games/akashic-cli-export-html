@@ -51,7 +51,9 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 					var assetString = fs.readFileSync(assets[assetName].path, "utf8").replace(/\r\n|\n/g, "\n");
 
 					var code = (isScript ? wrapScript(assetString, assetName) : wrapText(assetString, assetName));
-					var relativePath = "./js/assets/" + assetName + (isScript ? ".js" : ".json.js");
+					var assetPath = assets[assetName].path;
+					var relativePath = "./js/assets/" + path.dirname(assetPath) + "/" +
+						path.basename(assetPath, path.extname(assetPath)) + (isScript ? ".js" : ".json.js");
 					var filePath = path.resolve(outputPath, relativePath);
 
 					fsx.outputFileSync(filePath, code);
@@ -60,7 +62,6 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 
 				if (conf._content.globalScripts) {
 					conf._content.globalScripts.forEach((scriptName: string) => {
-						scriptName = "./" + scriptName;
 						var isScript = /\.js$/i.test(scriptName);
 						var scriptString = fs.readFileSync(scriptName, "utf8").replace(/\r\n|\n/g, "\n");
 
