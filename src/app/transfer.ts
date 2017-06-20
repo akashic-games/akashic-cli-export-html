@@ -126,23 +126,9 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 				var preloadScripts: string[] = [];
 				var postloadScripts: string[] = [];
 				if (options.bundle) {
-					var preloadScriptsName = ["akashic-engine.strip.js", "game-driver.strip.js", "pdi-browser.strip.js"];
-					var postloadScriptsName =
-						["LocalScriptAsset.js", "LocalTextAsset.js", "game-storage.strip.js", "logger.js", "sandbox.js", "initGlobals.js"];
-					preloadScriptsName.forEach((name) => {
-						try {
-							var code = fs.readFileSync(
-									path.resolve(__dirname, "..", "templates/template-export-html/js", name), "utf8").replace(/\r\n|\n/g, "\n");
-							preloadScripts.push(code);
-						} catch (e) { throw new Error(e); }
-					});
-					postloadScriptsName.forEach((name) => {
-						try {
-							var code = fs.readFileSync(
-									path.resolve(__dirname, "..", "templates/template-export-html/js", name), "utf8").replace(/\r\n|\n/g, "\n");
-							postloadScripts.push(code);
-						} catch (e) { throw new Error(e); }
-					});
+					var scripts = getDefaultBundleScripts();
+					preloadScripts = scripts.preloadScripts;
+					postloadScripts = scripts.postloadScripts;
 				}
 
 				var ectRender = ect({root: __dirname + "/../templates", ext: ".ect"});
@@ -229,4 +215,32 @@ function wrap(code: string): string {
 	var PRE_SCRIPT = "(function(exports, require, module, __filename, __dirname) {";
 	var POST_SCRIPT = "})(g.module.exports, g.module.require, g.module, g.filename, g.dirname);";
 	return PRE_SCRIPT + "\n" + code + "\n" + POST_SCRIPT + "\n";
+}
+
+function getDefaultBundleScripts():  any {
+	var preloadScripts: string[] = [];
+	var postloadScripts: string[] = [];
+	var preloadScriptsName =
+		["akashic-engine.strip.js", "game-driver.strip.js", "pdi-browser.strip.js"];
+	var postloadScriptsName =
+		["LocalScriptAsset.js", "LocalTextAsset.js", "game-storage.strip.js", "logger.js", "sandbox.js", "initGlobals.js"];
+
+	preloadScriptsName.forEach((name) => {
+		try {
+			var code = fs.readFileSync(
+					path.resolve(__dirname, "..", "templates/template-export-html/js", name), "utf8").replace(/\r\n|\n/g, "\n");
+			preloadScripts.push(code);
+		} catch (e) { throw new Error(e); }
+	});
+	postloadScriptsName.forEach((name) => {
+		try {
+			var code = fs.readFileSync(
+				path.resolve(__dirname, "..", "templates/template-export-html/js", name), "utf8").replace(/\r\n|\n/g, "\n");
+			postloadScripts.push(code);
+		} catch (e) { throw new Error(e); }
+	});
+	return {
+		preloadScripts,
+		postloadScripts
+	};
 }
