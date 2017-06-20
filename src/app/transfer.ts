@@ -11,6 +11,13 @@ export interface TransferTemplateParameterObject {
 	force?: boolean;
 	logger?: cmn.Logger;
 	strip?: boolean;
+	bundle?: boolean;
+}
+
+interface InnerHTMLAssetData {
+	name: string;
+	type: string;
+	code: string;
 }
 
 export function _completeTransferTemplateParameterObject(param: TransferTemplateParameterObject): void {
@@ -35,12 +42,24 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 					content: content
 				});
 
+				var innerHTMLAssetsArray: InnerHTMLAssetData[] = [];
 				var assets = conf._content.assets;
-				var assetPaths: string[] = [];
 				var gamejsonPath = path.resolve(outputPath, "./js/game.json.js");
-				fsx.outputFileSync(gamejsonPath, wrapText(JSON.stringify(conf._content, null, "\t"), "game.json"));
 
-				assetPaths.push("./js/game.json.js");
+				if (options.bundle) {
+					innerHTMLAssetsArray.push({
+						name: "game.json",
+						type: "text",
+						code: encodeURIComponent(JSON.stringify(conf._content, null, "\t"))
+					});
+				} else {
+					fsx.outputFileSync(gamejsonPath, wrapText(JSON.stringify(conf._content, null, "\t"), "game.json"));
+					innerHTMLAssetsArray.push({
+						name: "./js/game.json.js",
+						type: undefined,
+						code: undefined
+					});
+				}
 
 				var assetNames = Object.keys(assets);
 				assetNames.filter((assetName) => {
@@ -50,43 +69,104 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 					var isScript = assets[assetName].type === "script";
 					var assetString = fs.readFileSync(assets[assetName].path, "utf8").replace(/\r\n|\n/g, "\n");
 
-					var code = (isScript ? wrapScript(assetString, assetName) : wrapText(assetString, assetName));
-					var assetPath = assets[assetName].path;
-					var relativePath = "./js/assets/" + path.dirname(assetPath) + "/" +
-						path.basename(assetPath, path.extname(assetPath)) + (isScript ? ".js" : ".json.js");
-					var filePath = path.resolve(outputPath, relativePath);
+					if (options.bundle) {
+						if (assets[assetName].type === "text") assetString = encodeURIComponent(assetString);
+						innerHTMLAssetsArray.push({
+							name: assetName,
+							type: assets[assetName].type,
+							code: (assets[assetName].type === "script" ? wrap(assetString) : assetString)
+						});
+					} else {
+						var code = (isScript ? wrapScript(assetString, assetName) : wrapText(assetString, assetName));
+						var assetPath = assets[assetName].path;
+						var relativePath = "./js/assets/" + path.dirname(assetPath) + "/" +
+							path.basename(assetPath, path.extname(assetPath)) + (isScript ? ".js" : ".json.js");
+						var filePath = path.resolve(outputPath, relativePath);
 
-					fsx.outputFileSync(filePath, code);
-					assetPaths.push(relativePath);
+						fsx.outputFileSync(filePath, code);
+						innerHTMLAssetsArray.push({
+							name: relativePath,
+							type: undefined,
+							code: undefined
+						});
+					}
 				});
 
 				if (conf._content.globalScripts) {
 					conf._content.globalScripts.forEach((scriptName: string) => {
-						var isScript = /\.js$/i.test(scriptName);
 						var scriptString = fs.readFileSync(scriptName, "utf8").replace(/\r\n|\n/g, "\n");
+						var isScript = /\.js$/i.test(scriptName);
 
-						var code = isScript ? wrapScript(scriptString, scriptName) : wrapText(scriptString, scriptName);
-						var relativePath = "./globalScripts/" + scriptName + (isScript ? "" : ".js");
-						var filePath = path.resolve(outputPath, relativePath);
+						if (options.bundle) {
+							var scriptPath = path.resolve("./", scriptName);
+							if (path.extname(scriptPath) === ".json") {
+								scriptString = encodeURIComponent(scriptString);
+							}
 
-						fsx.outputFileSync(filePath, code);
-						assetPaths.push(relativePath);
+							innerHTMLAssetsArray.push({
+								name: scriptName,
+								type: isScript ? "script" : "text",
+								code: isScript ? wrap(scriptString) : scriptString
+							});
+						} else {
+							var code = isScript ? wrapScript(scriptString, scriptName) : wrapText(scriptString, scriptName);
+							var relativePath = "./globalScripts/" + scriptName + (isScript ? "" : ".js");
+							var filePath = path.resolve(outputPath, relativePath);
+
+							fsx.outputFileSync(filePath, code);
+							innerHTMLAssetsArray.push({
+								name: relativePath,
+								type: undefined,
+								code: undefined
+							});
+						}
+					});
+				}
+
+				var preloadScripts: string[] = [];
+				var postloadScripts: string[] = [];
+				if (options.bundle) {
+					var preloadScriptsName = ["akashic-engine.strip.js", "game-driver.strip.js", "pdi-browser.strip.js"];
+					var postloadScriptsName =
+						["LocalScriptAsset.js", "LocalTextAsset.js", "game-storage.strip.js", "logger.js", "sandbox.js", "initGlobals.js"];
+					preloadScriptsName.forEach((name) => {
+						try {
+							var code = fs.readFileSync(
+									path.resolve(__dirname, "..", "templates/template-export-html/js", name), "utf8").replace(/\r\n|\n/g, "\n");
+							preloadScripts.push(code);
+						} catch (e) { throw new Error(e); }
+					});
+					postloadScriptsName.forEach((name) => {
+						try {
+							var code = fs.readFileSync(
+									path.resolve(__dirname, "..", "templates/template-export-html/js", name), "utf8").replace(/\r\n|\n/g, "\n");
+							postloadScripts.push(code);
+						} catch (e) { throw new Error(e); }
 					});
 				}
 
 				var ectRender = ect({root: __dirname + "/../templates", ext: ".ect"});
-				var html = ectRender.render("index", {assets: assetPaths});
+				var html = ectRender.render("index", {
+					assets: innerHTMLAssetsArray,
+					isBundle: options.bundle,
+					preloadScripts: preloadScripts,
+					postloadScripts: postloadScripts
+				});
+
 				fs.writeFileSync(path.resolve(outputPath, "./index.html"), html);
 				if (options.strip) {
 					copyAssetFilesStrip(outputPath, assets, options);
 				} else {
 					copyAssetFiles(outputPath, options);
 				}
+				fsx.copySync(
+					path.resolve(__dirname, "..", "templates/template-export-html"),
+					outputPath,
+					{ filter: (filePath: string): boolean => {return !/\.js$/i.test(filePath) || !options.bundle; }});
 				resolve();
 			})
 			.catch((err) => reject(err));
 	});
-
 };
 
 function copyAssetFilesStrip(outputPath: string, assets: cmn.Assets, options: TransferTemplateParameterObject): void {
@@ -122,7 +202,6 @@ function copyAssetFilesStrip(outputPath: string, assets: cmn.Assets, options: Tr
 			);
 		}
 	});
-	fsx.copySync(path.resolve(__dirname, "..", "templates/template-export-html"),  outputPath);
 };
 
 function copyAssetFiles(outputPath: string, options: TransferTemplateParameterObject ): void {
@@ -134,18 +213,20 @@ function copyAssetFiles(outputPath: string, options: TransferTemplateParameterOb
 	} catch (e) {
 		options.logger.error("Error while copying: " + e.message);
 	}
-	fsx.copySync(path.resolve(__dirname, "..", "templates/template-export-html"),  outputPath);
 }
 
 function wrapScript(code: string, name: string): string {
-	var PRE_SCRIPT = "window.gLocalAssetContainer[\"" +
-		name + "\"] = function(g) { (function(exports, require, module, __filename, __dirname) {";
-	var POST_SCRIPT = "})(g.module.exports, g.module.require, g.module, g.filename, g.dirname);}";
-	return PRE_SCRIPT + "\n" + code + "\n" + POST_SCRIPT + "\n";
+	return "window.gLocalAssetContainer[\"" +	name + "\"] = function(g) { " + wrap(code) + "}";
 }
 
 function wrapText(code: string, name: string): string {
 	var PRE_SCRIPT = "window.gLocalAssetContainer[\"" + name + "\"] = \"";
 	var POST_SCRIPT = "\"";
 	return PRE_SCRIPT + encodeURIComponent(code) + POST_SCRIPT + "\n";
+}
+
+function wrap(code: string): string {
+	var PRE_SCRIPT = "(function(exports, require, module, __filename, __dirname) {";
+	var POST_SCRIPT = "})(g.module.exports, g.module.require, g.module, g.filename, g.dirname);";
+	return PRE_SCRIPT + "\n" + code + "\n" + POST_SCRIPT + "\n";
 }

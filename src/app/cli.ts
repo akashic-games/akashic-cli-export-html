@@ -11,6 +11,7 @@ interface CommandParameterObject {
 	output?: string;
 	exclude?: string[];
 	strip?: boolean;
+	bundle?: boolean;
 }
 
 function cli(param: CommandParameterObject): void {
@@ -22,7 +23,8 @@ function cli(param: CommandParameterObject): void {
 		output: param.output,
 		exclude: param.exclude,
 		logger: logger,
-		strip: param.strip
+		strip: param.strip,
+		bundle: param.bundle
 	};
 	Promise.resolve()
 		.then(() => promiseExportHTML(exportParam))
@@ -44,6 +46,7 @@ commander
 	.option("-q, --quiet", "Suppress output")
 	.option("-o, --output <fileName>", "Name of output file or directory")
 	.option("-s, --strip", "output stripped fileset")
+	.option("-b, --bundle", "bundle assets and scripts in index.html (to reduce the number of files)")
 	.option("-e, --exclude [fileNames]", "Name of exclude file", (fileNames: string, list: string[]) => {
 		list.push(fileNames);
 		return list;
