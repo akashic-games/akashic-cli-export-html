@@ -148,7 +148,7 @@ export function promiseTransfer(options: TransferTemplateParameterObject): Promi
 				fsx.copySync(
 					path.resolve(__dirname, "..", "templates/template-export-html"),
 					outputPath,
-					{ filter: (filePath: string): boolean => {return !/\.js$/i.test(filePath) || !options.bundle; }});
+					{ filter: (filePath: string): boolean =>  !/\.js$/i.test(filePath) || !options.bundle });
 				resolve();
 			})
 			.catch((err) => reject(err));
@@ -220,24 +220,36 @@ function wrap(code: string): string {
 function getDefaultBundleScripts():  any {
 	var preloadScripts: string[] = [];
 	var postloadScripts: string[] = [];
-	var preloadScriptsName =
+	var preloadScriptNames =
 		["akashic-engine.strip.js", "game-driver.strip.js", "pdi-browser.strip.js"];
-	var postloadScriptsName =
+	var postloadScriptNames =
 		["LocalScriptAsset.js", "LocalTextAsset.js", "game-storage.strip.js", "logger.js", "sandbox.js", "initGlobals.js"];
 
-	preloadScriptsName.forEach((name) => {
+	preloadScriptNames.forEach((name) => {
 		try {
 			var code = fs.readFileSync(
-					path.resolve(__dirname, "..", "templates/template-export-html/js", name), "utf8").replace(/\r\n|\n/g, "\n");
+				path.resolve(__dirname, "..", "templates/template-export-html/js", name), "utf8").replace(/\r\n|\n/g, "\n");
 			preloadScripts.push(code);
-		} catch (e) { throw new Error(e); }
+		} catch (e) {
+			if (e.code === "ENOENT") {
+				throw new Error(name + " is not found. Try re-install akashic-cli");
+			} else {
+				throw e;
+			}
+		}
 	});
-	postloadScriptsName.forEach((name) => {
+	postloadScriptNames.forEach((name) => {
 		try {
 			var code = fs.readFileSync(
 				path.resolve(__dirname, "..", "templates/template-export-html/js", name), "utf8").replace(/\r\n|\n/g, "\n");
 			postloadScripts.push(code);
-		} catch (e) { throw new Error(e); }
+		} catch (e) {
+			if (e.code === "ENOENT") {
+				throw new Error(name + " is not found. Try re-install akashic-cli");
+			} else {
+				throw e;
+			}
+		}
 	});
 	return {
 		preloadScripts,
