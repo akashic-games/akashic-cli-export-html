@@ -1,9 +1,12 @@
 import * as cmn from "@akashic/akashic-cli-commons";
-import { TransferTemplateParameterObject, promiseTransfer } from "./transfer";
+import { ConvertTemplateParameterObject } from "./convertUtil";
+import { promiseConvertNoBundle } from "./convertNoBundle";
+import { promiseConvertBundle } from "./convertBundle";
+
 import * as fs from "fs";
 import * as path from "path";
 
-export interface ExportHTMLParameterObject extends TransferTemplateParameterObject {
+export interface ExportHTMLParameterObject extends ConvertTemplateParameterObject {
 	cwd?: string;
 };
 
@@ -23,24 +26,24 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 		fs.stat(path.resolve(param.output), (error: any, stat: any) => {
 			if (error) {
 				if (error.code !== "ENOENT") {
-					reject("Output directory has bad status. Error code " + error.code);
+					return reject("Output directory has bad status. Error code " + error.code);
 				}
 				fs.mkdir(path.resolve(param.output), (err: any) => {
 					if (err) {
-						reject("Create " + param.output + " directory failed.");
+						return reject("Create " + param.output + " directory failed.");
 					}
-					promiseTransfer(param)
+					convertCase(param)
 						.then(() => resolve())
 						.catch((err: any) => reject(err));
 				});
 			} else if (stat) {
 				if (!stat.isDirectory()) {
-					reject(param.output + " is not directory.");
+					return reject(param.output + " is not directory.");
 				}
 				if (!param.force) {
-					reject("The output directory " + param.output + " already exists. Cannot overwrite without force option.");
+					return reject("The output directory " + param.output + " already exists. Cannot overwrite without force option.");
 				}
-				promiseTransfer(param)
+				convertCase(param)
 					.then(() => resolve())
 					.catch((err: any) => reject(err));
 			}
@@ -55,6 +58,14 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 	.then(() => param.logger.info("Done!"));
 };
 
-export function exportHTML(param: TransferTemplateParameterObject, cb: (err?: any) => void): void {
+export function exportHTML(param: ConvertTemplateParameterObject, cb: (err?: any) => void): void {
 	promiseExportHTML(param).then<void>(cb, cb);
+}
+
+function convertCase(param: ExportHTMLParameterObject): Promise<void> {
+	if (param.bundle) {
+		return promiseConvertBundle(param);
+	} else {
+		return promiseConvertNoBundle(param);
+	}
 }
