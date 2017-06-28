@@ -31,14 +31,14 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 		innerHTMLAssetsArray = await readGlobalScripts(innerHTMLAssetsArray, conf, outputPath, globalScriptsProcessor);
 	}
 
-	writeEct(innerHTMLAssetsArray, outputPath, conf, options);
+	writeEct(innerHTMLAssetsArray, outputPath, conf);
+	writeCommonFiles(outputPath, conf, options);
 }
 
-function assetProcessor(assetName: string, conf: cmn.Configuration): any {
+function assetProcessor(assetName: string, conf: cmn.Configuration): InnerHTMLAssetData {
 	var assets = conf._content.assets;
 	var isScript = assets[assetName].type === "script";
-	var assetString = fs.readFileSync(assets[assetName].path, "utf8").replace(/\r\n|\n/g, "\n");
-
+	var assetString = fs.readFileSync(assets[assetName].path, "utf8").replace(/\r\n|\r/g, "\n");
 	return {
 		name: assetName,
 		type: assets[assetName].type,
@@ -46,15 +46,14 @@ function assetProcessor(assetName: string, conf: cmn.Configuration): any {
 	};
 }
 
-function globalScriptsProcessor(scriptName: string): any {
-	var scriptString = fs.readFileSync(scriptName, "utf8").replace(/\r\n|\n/g, "\n");
+function globalScriptsProcessor(scriptName: string): InnerHTMLAssetData {
+	var scriptString = fs.readFileSync(scriptName, "utf8").replace(/\r\n|\r/g, "\n");
 	var isScript = /\.js$/i.test(scriptName);
 
 	var scriptPath = path.resolve("./", scriptName);
 	if (path.extname(scriptPath) === ".json") {
 		scriptString = encodeURIComponent(scriptString);
 	}
-
 	return {
 		name: scriptName,
 		type: isScript ? "script" : "text",
@@ -64,18 +63,18 @@ function globalScriptsProcessor(scriptName: string): any {
 
 function writeEct(
 	innerHTMLAssetsArray: InnerHTMLAssetData[], outputPath: string,
-	conf: cmn.Configuration, options: ConvertTemplateParameterObject): void {
+	conf: cmn.Configuration): void {
 	var scripts = getDefaultBundleScripts();
 	var ectRender = ect({root: __dirname + "/../templates", ext: ".ect"});
-	console.log("isBundle", options.bundle);
 	var html = ectRender.render("bundle-index", {
 		assets: innerHTMLAssetsArray,
-		isBundle: options.bundle,
 		preloadScripts: scripts.preloadScripts,
 		postloadScripts: scripts.postloadScripts
 	});
 	fs.writeFileSync(path.resolve(outputPath, "./index.html"), html);
+}
 
+function writeCommonFiles(outputPath: string, conf: cmn.Configuration, options: ConvertTemplateParameterObject): void {
 	if (options.strip) {
 		copyAssetFilesStrip(outputPath, conf._content.assets, options);
 	} else {

@@ -23,13 +23,14 @@ export async function promiseConvertNoBundle(options: ConvertTemplateParameterOb
 		assetPaths = await readGlobalScripts(assetPaths, conf, outputPath, globalScriptsProcessor);
 	}
 
-	writeEct(assetPaths, outputPath, conf, options);
+	writeEct(assetPaths, outputPath, conf);
+	writeCommonFiles(outputPath, conf, options);
 }
 
 function assetProcessor(assetName: string, conf: cmn.Configuration, outputPath: string): string {
 	var assets = conf._content.assets;
 	var isScript = assets[assetName].type === "script";
-	var assetString = fs.readFileSync(assets[assetName].path, "utf8").replace(/\r\n|\n/g, "\n");
+	var assetString = fs.readFileSync(assets[assetName].path, "utf8").replace(/\r\n|\r/g, "\n");
 
 	var code = (isScript ? wrapScript(assetString, assetName) : wrapText(assetString, assetName));
 	var assetPath = assets[assetName].path;
@@ -42,7 +43,7 @@ function assetProcessor(assetName: string, conf: cmn.Configuration, outputPath: 
 }
 
 function globalScriptsProcessor(scriptName: string, outputPath: string): string {
-	var scriptString = fs.readFileSync(scriptName, "utf8").replace(/\r\n|\n/g, "\n");
+	var scriptString = fs.readFileSync(scriptName, "utf8").replace(/\r\n|\r/g, "\n");
 	var isScript = /\.js$/i.test(scriptName);
 
 	var code = isScript ? wrapScript(scriptString, scriptName) : wrapText(scriptString, scriptName);
@@ -53,13 +54,15 @@ function globalScriptsProcessor(scriptName: string, outputPath: string): string 
 	return relativePath;
 }
 
-function writeEct(assetPaths: string[], outputPath: string, conf: cmn.Configuration, options: ConvertTemplateParameterObject): void {
+function writeEct(assetPaths: string[], outputPath: string, conf: cmn.Configuration): void {
 	var ectRender = ect({root: __dirname + "/../templates", ext: ".ect"});
 	var html = ectRender.render("no-bundle-index", {
 		assets: assetPaths
 	});
 	fs.writeFileSync(path.resolve(outputPath, "./index.html"), html);
+}
 
+function writeCommonFiles(outputPath: string, conf: cmn.Configuration, options: ConvertTemplateParameterObject): void {
 	if (options.strip) {
 		copyAssetFilesStrip(outputPath, conf._content.assets, options);
 	} else {
