@@ -3,8 +3,8 @@ import * as path from "path";
 import * as cmn from "@akashic/akashic-cli-commons";
 import * as fsx from "fs-extra";
 import * as ect from "ect";
-import { ConvertTemplateParameterObject, copyAssetFilesStrip, copyAssetFiles, wrapScript, wrapText,
-	getOutputPath, readAssets, readGlobalScripts } from "./convertUtil";
+import { ConvertTemplateParameterObject, copyAssetFilesStrip, copyAssetFiles, wrap,
+	getOutputPath, extractAssetDefinitions } from "./convertUtil";
 
 export async function promiseConvertNoBundle(options: ConvertTemplateParameterObject): Promise<void> {
 	var content = await cmn.ConfigurationFile.read(path.join(process.cwd(), "game.json"), options.logger);
@@ -18,16 +18,22 @@ export async function promiseConvertNoBundle(options: ConvertTemplateParameterOb
 	fsx.outputFileSync(gamejsonPath, wrapText(JSON.stringify(conf._content, null, "\t"), "game.json"));
 	assetPaths.push("./js/game.json.js");
 
-	assetPaths = await readAssets(assetPaths, conf, outputPath, assetProcessor);
+	var assetNames = extractAssetDefinitions(conf, "script").concat(extractAssetDefinitions(conf, "text"));
+	assetPaths = assetPaths.concat(assetNames.map((assetName: string) => {
+		return convertAssetAndOutput(assetName, conf, outputPath);
+	}));
+
 	if (conf._content.globalScripts) {
-		assetPaths = await readGlobalScripts(assetPaths, conf, outputPath, globalScriptsProcessor);
+		assetPaths = assetPaths.concat(conf._content.globalScripts.map((scriptName: string) => {
+			return convertGlobalScriptAndOutput(scriptName, outputPath);
+		}));
 	}
 
 	writeEct(assetPaths, outputPath, conf);
 	writeCommonFiles(outputPath, conf, options);
 }
 
-function assetProcessor(assetName: string, conf: cmn.Configuration, outputPath: string): string {
+function convertAssetAndOutput(assetName: string, conf: cmn.Configuration, outputPath: string): string {
 	var assets = conf._content.assets;
 	var isScript = assets[assetName].type === "script";
 	var assetString = fs.readFileSync(assets[assetName].path, "utf8").replace(/\r\n|\r/g, "\n");
@@ -42,7 +48,7 @@ function assetProcessor(assetName: string, conf: cmn.Configuration, outputPath: 
 	return relativePath;
 }
 
-function globalScriptsProcessor(scriptName: string, outputPath: string): string {
+function convertGlobalScriptAndOutput(scriptName: string, outputPath: string): string {
 	var scriptString = fs.readFileSync(scriptName, "utf8").replace(/\r\n|\r/g, "\n");
 	var isScript = /\.js$/i.test(scriptName);
 
@@ -71,4 +77,14 @@ function writeCommonFiles(outputPath: string, conf: cmn.Configuration, options: 
 	fsx.copySync(
 		path.resolve(__dirname, "..", "templates/template-export-html"),
 		outputPath);
+}
+
+function wrapScript(code: string, name: string): string {
+	return "window.gLocalAssetContainer[\"" + name + "\"] = function(g) { " + wrap(code) + "}";
+}
+
+function wrapText(code: string, name: string): string {
+	var PRE_SCRIPT = "window.gLocalAssetContainer[\"" + name + "\"] = \"";
+	var POST_SCRIPT = "\"";
+	return PRE_SCRIPT + encodeURIComponent(code) + POST_SCRIPT + "\n";
 }

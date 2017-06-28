@@ -4,7 +4,7 @@ import * as cmn from "@akashic/akashic-cli-commons";
 import * as fsx from "fs-extra";
 import * as ect from "ect";
 import { ConvertTemplateParameterObject, copyAssetFilesStrip, copyAssetFiles, wrap,
-		getDefaultBundleScripts, getOutputPath, readAssets, readGlobalScripts  } from "./convertUtil";
+		getDefaultBundleScripts, getOutputPath, extractAssetDefinitions  } from "./convertUtil";
 
 interface InnerHTMLAssetData {
 	name: string;
@@ -17,25 +17,31 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 	var conf = new cmn.Configuration({
 		content: content
 	});
-	var innerHTMLAssetsArray: InnerHTMLAssetData[] = [];
+	var innerHTMLAssetArray: InnerHTMLAssetData[] = [];
 	var outputPath = await getOutputPath(options);
 
-	innerHTMLAssetsArray.push({
+	innerHTMLAssetArray.push({
 		name: "game.json",
 		type: "text",
 		code: encodeURIComponent(JSON.stringify(conf._content, null, "\t"))
 	});
 
-	innerHTMLAssetsArray = await readAssets(innerHTMLAssetsArray, conf, undefined, assetProcessor);
+	var innerHTMLAssetNames = extractAssetDefinitions(conf, "script").concat(extractAssetDefinitions(conf, "text"));
+	innerHTMLAssetArray = innerHTMLAssetArray.concat(innerHTMLAssetNames.map((assetName: string) => {
+		return convertAssetToInnerHTMLObj(assetName, conf);
+	}));
+
 	if (conf._content.globalScripts) {
-		innerHTMLAssetsArray = await readGlobalScripts(innerHTMLAssetsArray, conf, outputPath, globalScriptsProcessor);
+		innerHTMLAssetArray = innerHTMLAssetArray.concat(conf._content.globalScripts.map((scriptName: string) => {
+			return convertScriptNameToInnerHTMLObj(scriptName);
+		}));
 	}
 
-	writeEct(innerHTMLAssetsArray, outputPath, conf);
+	writeEct(innerHTMLAssetArray, outputPath, conf);
 	writeCommonFiles(outputPath, conf, options);
 }
 
-function assetProcessor(assetName: string, conf: cmn.Configuration): InnerHTMLAssetData {
+function convertAssetToInnerHTMLObj(assetName: string, conf: cmn.Configuration): InnerHTMLAssetData {
 	var assets = conf._content.assets;
 	var isScript = assets[assetName].type === "script";
 	var assetString = fs.readFileSync(assets[assetName].path, "utf8").replace(/\r\n|\r/g, "\n");
@@ -46,7 +52,7 @@ function assetProcessor(assetName: string, conf: cmn.Configuration): InnerHTMLAs
 	};
 }
 
-function globalScriptsProcessor(scriptName: string): InnerHTMLAssetData {
+function convertScriptNameToInnerHTMLObj(scriptName: string): InnerHTMLAssetData {
 	var scriptString = fs.readFileSync(scriptName, "utf8").replace(/\r\n|\r/g, "\n");
 	var isScript = /\.js$/i.test(scriptName);
 
@@ -62,12 +68,12 @@ function globalScriptsProcessor(scriptName: string): InnerHTMLAssetData {
 };
 
 function writeEct(
-	innerHTMLAssetsArray: InnerHTMLAssetData[], outputPath: string,
+	innerHTMLAssetArray: InnerHTMLAssetData[], outputPath: string,
 	conf: cmn.Configuration): void {
 	var scripts = getDefaultBundleScripts();
 	var ectRender = ect({root: __dirname + "/../templates", ext: ".ect"});
 	var html = ectRender.render("bundle-index", {
-		assets: innerHTMLAssetsArray,
+		assets: innerHTMLAssetArray,
 		preloadScripts: scripts.preloadScripts,
 		postloadScripts: scripts.postloadScripts
 	});

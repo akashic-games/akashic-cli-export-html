@@ -17,27 +17,10 @@ export interface ConvertTemplateParameterObject {
 	bundle?: boolean;
 }
 
-export async function readAssets<T>(
-	receiver: Array<T>, conf: cmn.Configuration, outputPath: string,
-	assetProcessor: (name: string, config: cmn.Configuration, outputPath: string) => T): Promise<T[]> {
+export function extractAssetDefinitions (conf: cmn.Configuration, type: string): string[] {
 	var assets = conf._content.assets;
 	var assetNames = Object.keys(assets);
-	assetNames.filter((assetName) => {
-		var type = assets[assetName].type;
-		return (type === "script" || type === "text");
-	}).forEach((assetName) => {
-		receiver.push(assetProcessor(assetName, conf, outputPath));
-	});
-	return receiver;
-}
-
-export async function readGlobalScripts<T>(
-	receiver: Array<T>, conf: cmn.Configuration, outputPath: string,
-	globalScriptProcessor: (name: string, outputPath: string) => T): Promise<T[]> {
-	conf._content.globalScripts.forEach((scriptName: string) => {
-		receiver.push(globalScriptProcessor(scriptName, outputPath));
-	});
-	return receiver;
+	return assetNames.filter((assetName) => assets[assetName].type === type);
 }
 
 export function getOutputPath(options: ConvertTemplateParameterObject): Promise<string> {
@@ -101,16 +84,6 @@ export function copyAssetFiles(outputPath: string, options: ConvertTemplateParam
 	}
 }
 
-export function wrapScript(code: string, name: string): string {
-	return "window.gLocalAssetContainer[\"" + name + "\"] = function(g) { " + wrap(code) + "}";
-}
-
-export function wrapText(code: string, name: string): string {
-	var PRE_SCRIPT = "window.gLocalAssetContainer[\"" + name + "\"] = \"";
-	var POST_SCRIPT = "\"";
-	return PRE_SCRIPT + encodeURIComponent(code) + POST_SCRIPT + "\n";
-}
-
 export function wrap(code: string): string {
 	var PRE_SCRIPT = "(function(exports, require, module, __filename, __dirname) {";
 	var POST_SCRIPT = "})(g.module.exports, g.module.require, g.module, g.filename, g.dirname);";
@@ -123,25 +96,23 @@ export function getDefaultBundleScripts(): any {
 	var postloadScriptNames =
 		["LocalScriptAsset.js", "LocalTextAsset.js", "game-storage.strip.js", "logger.js", "sandbox.js", "initGlobals.js"];
 
-	var preloadScripts = loadScriptFile(preloadScriptNames);
-	var postloadScripts = loadScriptFile(postloadScriptNames);
+	var preloadScripts = preloadScriptNames.map(loadScriptFile);
+	var postloadScripts = postloadScriptNames.map(loadScriptFile);
 	return {
 		preloadScripts,
 		postloadScripts
 	};
 }
 
-function loadScriptFile(filenames: string[]): string[] {
-	return filenames.map((name) => {
-		try {
-			return fs.readFileSync(
-				path.resolve(__dirname, "..", "templates/template-export-html/js", name), "utf8").replace(/\r\n|\r/g, "\n");
-		} catch (e) {
-			if (e.code === "ENOENT") {
-				throw new Error(name + " is not found. Try re-install akashic-cli");
-			} else {
-				throw e;
-			}
+function loadScriptFile(fileName: string): string {
+	try {
+		return fs.readFileSync(
+			path.resolve(__dirname, "..", "templates/template-export-html/js", fileName), "utf8").replace(/\r\n|\r/g, "\n");
+	} catch (e) {
+		if (e.code === "ENOENT") {
+			throw new Error(fileName + " is not found. Try re-install akashic-cli");
+		} else {
+			throw e;
 		}
-	});
+	}
 }
