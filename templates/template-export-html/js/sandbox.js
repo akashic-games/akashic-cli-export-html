@@ -74,6 +74,9 @@ window.addEventListener("load", function() {
 			if (e) {
 				throw e;
 			}
+			driver._game._loaded.handle(function () {
+				if (window.optionProps.fitToWindow) pf.fitToWindow();
+			});
 			driver.startGame();
 		});
 	}

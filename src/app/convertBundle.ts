@@ -37,7 +37,7 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 		}));
 	}
 
-	writeEct(innerHTMLAssetArray, outputPath, conf);
+	writeEct(innerHTMLAssetArray, outputPath, conf, options);
 	writeCommonFiles(outputPath, conf, options);
 }
 
@@ -69,13 +69,14 @@ function convertScriptNameToInnerHTMLObj(scriptName: string): InnerHTMLAssetData
 
 function writeEct(
 	innerHTMLAssetArray: InnerHTMLAssetData[], outputPath: string,
-	conf: cmn.Configuration): void {
+	conf: cmn.Configuration, options: ConvertTemplateParameterObject): void {
 	var scripts = getDefaultBundleScripts();
 	var ectRender = ect({root: __dirname + "/../templates", ext: ".ect"});
 	var html = ectRender.render("bundle-index", {
 		assets: innerHTMLAssetArray,
 		preloadScripts: scripts.preloadScripts,
-		postloadScripts: scripts.postloadScripts
+		postloadScripts: scripts.postloadScripts,
+		fitWindow: !!options.fitWindow
 	});
 	fs.writeFileSync(path.resolve(outputPath, "./index.html"), html);
 }

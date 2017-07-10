@@ -15,6 +15,7 @@ export interface ConvertTemplateParameterObject {
 	logger?: cmn.Logger;
 	strip?: boolean;
 	bundle?: boolean;
+	fitWindow?: boolean;
 }
 
 export function extractAssetDefinitions (conf: cmn.Configuration, type: string): string[] {

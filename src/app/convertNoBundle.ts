@@ -29,7 +29,7 @@ export async function promiseConvertNoBundle(options: ConvertTemplateParameterOb
 		}));
 	}
 
-	writeEct(assetPaths, outputPath, conf);
+	writeEct(assetPaths, outputPath, conf, options);
 	writeCommonFiles(outputPath, conf, options);
 }
 
@@ -60,10 +60,11 @@ function convertGlobalScriptAndOutput(scriptName: string, outputPath: string): s
 	return relativePath;
 }
 
-function writeEct(assetPaths: string[], outputPath: string, conf: cmn.Configuration): void {
+function writeEct(assetPaths: string[], outputPath: string, conf: cmn.Configuration, options: ConvertTemplateParameterObject): void {
 	var ectRender = ect({root: __dirname + "/../templates", ext: ".ect"});
 	var html = ectRender.render("no-bundle-index", {
-		assets: assetPaths
+		assets: assetPaths,
+		fitWindow: !!options.fitWindow
 	});
 	fs.writeFileSync(path.resolve(outputPath, "./index.html"), html);
 }

@@ -10,6 +10,11 @@
 </script>
 
 <script>
+if (! ("optionProps" in window)) {
+	window.optionProps = {};
+}
+window.optionProps.fitToWindow = <%- @fitWindow %>
+
 window.g = require("@akashic/akashic-engine");
 </script>
 <script>
