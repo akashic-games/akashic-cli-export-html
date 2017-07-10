@@ -59,6 +59,10 @@ window.addEventListener("load", function() {
 			errorHandler: function (e) { console.log("ERRORHANDLER:", e); }
 		});
 
+		driver.gameCreatedTrigger.handle(function () {
+				if (window.optionProps.fitToWindow) pf.fitToWindow();
+		});
+
 		driver.initialize({
 			configurationUrl: "game.json",
 			assetBase: "./",
@@ -74,9 +78,6 @@ window.addEventListener("load", function() {
 			if (e) {
 				throw e;
 			}
-			driver._game._loaded.handle(function () {
-				if (window.optionProps.fitToWindow) pf.fitToWindow();
-			});
 			driver.startGame();
 		});
 	}
