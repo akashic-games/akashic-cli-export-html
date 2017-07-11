@@ -12,7 +12,7 @@ interface CommandParameterObject {
 	exclude?: string[];
 	strip?: boolean;
 	bundle?: boolean;
-	fitWindow?: boolean;
+	magnify?: boolean;
 }
 
 function cli(param: CommandParameterObject): void {
@@ -26,7 +26,7 @@ function cli(param: CommandParameterObject): void {
 		logger: logger,
 		strip: param.strip,
 		bundle: param.bundle,
-		fitWindow: param.fitWindow
+		magnify: param.magnify
 	};
 	Promise.resolve()
 		.then(() => promiseExportHTML(exportParam))
@@ -49,7 +49,7 @@ commander
 	.option("-o, --output <fileName>", "Name of output file or directory")
 	.option("-s, --strip", "output stripped fileset")
 	.option("-b, --bundle", "bundle assets and scripts in index.html (to reduce the number of files)")
-	.option("-F, --fitWindow", "fit game area to outer element size")
+	.option("-m, --magnify", "fit game area to outer element size")
 	.option("-e, --exclude [fileNames]", "Name of exclude file", (fileNames: string, list: string[]) => {
 		list.push(fileNames);
 		return list;

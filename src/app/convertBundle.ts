@@ -76,7 +76,7 @@ function writeEct(
 		assets: innerHTMLAssetArray,
 		preloadScripts: scripts.preloadScripts,
 		postloadScripts: scripts.postloadScripts,
-		fitWindow: !!options.fitWindow
+		magnify: !!options.magnify
 	});
 	fs.writeFileSync(path.resolve(outputPath, "./index.html"), html);
 }

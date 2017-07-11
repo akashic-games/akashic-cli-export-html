@@ -64,7 +64,7 @@ function writeEct(assetPaths: string[], outputPath: string, conf: cmn.Configurat
 	var ectRender = ect({root: __dirname + "/../templates", ext: ".ect"});
 	var html = ectRender.render("no-bundle-index", {
 		assets: assetPaths,
-		fitWindow: !!options.fitWindow
+		magnify: !!options.magnify
 	});
 	fs.writeFileSync(path.resolve(outputPath, "./index.html"), html);
 }
