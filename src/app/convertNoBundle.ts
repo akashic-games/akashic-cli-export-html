@@ -31,6 +31,7 @@ export async function promiseConvertNoBundle(options: ConvertTemplateParameterOb
 
 	writeEct(assetPaths, outputPath, conf, options);
 	writeCommonFiles(outputPath, conf, options);
+	writeOptionScript(outputPath, options);
 }
 
 function convertAssetAndOutput(assetName: string, conf: cmn.Configuration, outputPath: string): string {
@@ -78,6 +79,16 @@ function writeCommonFiles(outputPath: string, conf: cmn.Configuration, options: 
 	fsx.copySync(
 		path.resolve(__dirname, "..", "templates/template-export-html"),
 		outputPath);
+}
+
+function writeOptionScript(outputPath: string, options: ConvertTemplateParameterObject): void {
+	var script = `
+if (! ("optionProps" in window)) {
+	window.optionProps = {};
+}
+window.optionProps.magnify = ${!!options.magnify};
+	`;
+	fs.writeFileSync(path.resolve(outputPath, "./js/option.js"), script);
 }
 
 function wrapScript(code: string, name: string): string {

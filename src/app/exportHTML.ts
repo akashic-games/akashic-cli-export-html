@@ -63,11 +63,3 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 export function exportHTML(param: ConvertTemplateParameterObject, cb: (err?: any) => void): void {
 	promiseExportHTML(param).then<void>(cb, cb);
 }
-
-function convertCase(param: ExportHTMLParameterObject): Promise<void> {
-	if (param.bundle) {
-		return promiseConvertBundle(param);
-	} else {
-		return promiseConvertNoBundle(param);
-	}
-}
