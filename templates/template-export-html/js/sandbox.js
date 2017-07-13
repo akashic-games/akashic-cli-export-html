@@ -60,7 +60,7 @@ window.addEventListener("load", function() {
 		});
 
 		driver.gameCreatedTrigger.handle(function () {
-			if (window.optionProps.magnify) pf.fitToWindow();
+			if (window.optionProps.magnify) pf.fitToWindow(true);
 		});
 
 		driver.initialize({
