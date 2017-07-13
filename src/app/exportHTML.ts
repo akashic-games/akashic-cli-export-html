@@ -32,9 +32,7 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 					if (err) {
 						return reject("Create " + param.output + " directory failed.");
 					}
-					convertCase(param)
-						.then(() => resolve())
-						.catch((err: any) => reject(err));
+					resolve(param);
 				});
 			} else if (stat) {
 				if (!stat.isDirectory()) {
@@ -43,12 +41,16 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 				if (!param.force) {
 					return reject("The output directory " + param.output + " already exists. Cannot overwrite without force option.");
 				}
-				convertCase(param)
-					.then(() => resolve())
-					.catch((err: any) => reject(err));
+				resolve(param);
 			}
 		});
 	})
+	.then((param: ExportHTMLParameterObject) => {
+		if (param.bundle) {
+			return promiseConvertBundle(param);
+		} else {
+			return promiseConvertNoBundle(param);
+		}})
 	.then(restoreDirectory)
 	.catch((error) => {
 		param.logger.error(error);

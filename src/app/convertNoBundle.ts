@@ -4,7 +4,7 @@ import * as cmn from "@akashic/akashic-cli-commons";
 import * as fsx from "fs-extra";
 import * as ect from "ect";
 import { ConvertTemplateParameterObject, copyAssetFilesStrip, copyAssetFiles, wrap,
-	getOutputPath, extractAssetDefinitions } from "./convertUtil";
+	resolveOutputPath, extractAssetDefinitions } from "./convertUtil";
 
 export async function promiseConvertNoBundle(options: ConvertTemplateParameterObject): Promise<void> {
 	var content = await cmn.ConfigurationFile.read(path.join(process.cwd(), "game.json"), options.logger);
@@ -12,7 +12,7 @@ export async function promiseConvertNoBundle(options: ConvertTemplateParameterOb
 		content: content
 	});
 	var assetPaths: string[] = [];
-	var outputPath = await getOutputPath(options);
+	var outputPath = await resolveOutputPath(options.output);
 
 	var gamejsonPath = path.resolve(outputPath, "./js/game.json.js");
 	fsx.outputFileSync(gamejsonPath, wrapText(JSON.stringify(conf._content, null, "\t"), "game.json"));

@@ -4,7 +4,7 @@ import * as cmn from "@akashic/akashic-cli-commons";
 import * as fsx from "fs-extra";
 import * as ect from "ect";
 import { ConvertTemplateParameterObject, copyAssetFilesStrip, copyAssetFiles, wrap,
-		getDefaultBundleScripts, getOutputPath, extractAssetDefinitions  } from "./convertUtil";
+		getDefaultBundleScripts, resolveOutputPath, extractAssetDefinitions  } from "./convertUtil";
 
 interface InnerHTMLAssetData {
 	name: string;
@@ -18,7 +18,7 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 		content: content
 	});
 	var innerHTMLAssetArray: InnerHTMLAssetData[] = [];
-	var outputPath = await getOutputPath(options);
+	var outputPath = await resolveOutputPath(options.output);
 
 	innerHTMLAssetArray.push({
 		name: "game.json",
@@ -77,6 +77,7 @@ function writeEct(
 		preloadScripts: scripts.preloadScripts,
 		postloadScripts: scripts.postloadScripts,
 		magnify: !!options.magnify
+
 	});
 	fs.writeFileSync(path.resolve(outputPath, "./index.html"), html);
 }
@@ -87,8 +88,13 @@ function writeCommonFiles(outputPath: string, conf: cmn.Configuration, options: 
 	} else {
 		copyAssetFiles(outputPath, options);
 	}
-	fsx.copySync(
+
+	const filterFunc = (src: string, dest: string) => {
+		return  !(dest === path.resolve(outputPath, "js"));
+	};
+	// fs-extraのd.tsではCopyFilterにdest引数が定義されていないため、anyにキャストする
+	(<any>(fsx.copySync))(
 		path.resolve(__dirname, "..", "templates/template-export-html"),
 		outputPath,
-		{ filter: (filePath: string): boolean =>  !/\.js$/i.test(filePath)});
+		{ filter: filterFunc});
 }

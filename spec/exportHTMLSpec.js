@@ -29,7 +29,7 @@ describe("exportHTML", function () {
 				})
 				.then(() => done.fail())
 				.catch((err) => {
-					if (err.message === "output is bad path.") {
+					if (err.message === "output path overlaps with source directory.") {
 						done();
 					} else {
 						done.fail(err);

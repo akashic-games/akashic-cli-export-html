@@ -9,18 +9,6 @@ describe("convert", function () {
 		debugLogMethod: err => { /* do nothing */ }
 	});
 
-	it("_completeConvertTemplateParameterObject", function (done) {
-		Promise.resolve()
-			.then(function () {
-				var param = {
-					logger: logger
-				}
-				cvu._completeConvertTemplateParameterObject(param);
-				expect(param.quiet).toBe(false);
-			})
-			.then(done, done.fail);
-	});
-
 	it("promiseConvert output undefined", function (done) {
 		Promise.resolve()
 			.then(function () {
@@ -50,7 +38,7 @@ describe("convert", function () {
 				cvnb.promiseConvertNoBundle(param)
 					.then(() => done.fail())
 					.catch((err) => {
-						if (err === "output is bad path.") {
+						if (err === "output path overlaps with source directory.") {
 							done();
 						} else {
 							done.fail(err);

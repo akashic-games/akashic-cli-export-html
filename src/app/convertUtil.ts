@@ -3,10 +3,6 @@ import * as path from "path";
 import * as cmn from "@akashic/akashic-cli-commons";
 import * as fsx from "fs-extra";
 
-export function _completeConvertTemplateParameterObject(param: ConvertTemplateParameterObject): void {
-	param.quiet = param.quiet || false;
-}
-
 export interface ConvertTemplateParameterObject {
 	quiet?: boolean;
 	exclude?: string[];
@@ -24,18 +20,16 @@ export function extractAssetDefinitions (conf: cmn.Configuration, type: string):
 	return assetNames.filter((assetName) => assets[assetName].type === type);
 }
 
-export function getOutputPath(options: ConvertTemplateParameterObject): Promise<string> {
+export function resolveOutputPath(output: string): Promise<string> {
 	return new Promise<string>((resolve, reject) => {
-		if (!options.output) {
-			options.logger.error("output path is not defined.");
+		if (!output) {
 			return reject("output is not defined.");
 		}
-		var outputPath = path.resolve(options.output);
-		if (!/^\.\./.test(path.relative(process.cwd(), outputPath))) {
-			options.logger.error("output path overlaps with source directory.");
-			return reject("output is bad path.");
+		var resolvedPath = path.resolve(output);
+		if (!/^\.\./.test(path.relative(process.cwd(), resolvedPath))) {
+			return reject("output path overlaps with source directory.");
 		}
-		return resolve(outputPath);
+		return resolve(resolvedPath);
 	});
 }
 
@@ -76,10 +70,14 @@ export function copyAssetFilesStrip(outputPath: string, assets: cmn.Assets, opti
 
 export function copyAssetFiles(outputPath: string, options: ConvertTemplateParameterObject ): void {
 	options.logger.info("copying files...");
+	const scriptPath = path.resolve(outputPath, "script");
+	const textPath = path.resolve(outputPath, "text");
+	const filterFunc = (src: string, dest: string) => {
+		return src.indexOf(scriptPath) === -1 && src.indexOf(textPath) === -1;
+	};
 	try {
-		fsx.copySync(process.cwd(), outputPath, {clobber: options.force});
-		fsx.removeSync(path.resolve(outputPath, "script"));
-		fsx.removeSync(path.resolve(outputPath, "text"));
+		// fs-extraのd.tsではCopyFilterにdest引数が定義されていないため、anyにキャストする
+		(<any>(fsx.copySync))(process.cwd(), outputPath, {overwrite: options.force, filter: filterFunc});
 	} catch (e) {
 		options.logger.error("Error while copying: " + e.message);
 	}
