@@ -29,8 +29,9 @@ export async function promiseConvertNoBundle(options: ConvertTemplateParameterOb
 		}));
 	}
 
-	writeEct(assetPaths, outputPath, conf);
+	writeEct(assetPaths, outputPath, conf, options);
 	writeCommonFiles(outputPath, conf, options);
+	writeOptionScript(outputPath, options);
 }
 
 function convertAssetAndOutput(assetName: string, conf: cmn.Configuration, outputPath: string): string {
@@ -60,10 +61,11 @@ function convertGlobalScriptAndOutput(scriptName: string, outputPath: string): s
 	return relativePath;
 }
 
-function writeEct(assetPaths: string[], outputPath: string, conf: cmn.Configuration): void {
+function writeEct(assetPaths: string[], outputPath: string, conf: cmn.Configuration, options: ConvertTemplateParameterObject): void {
 	var ectRender = ect({root: __dirname + "/../templates", ext: ".ect"});
 	var html = ectRender.render("no-bundle-index", {
-		assets: assetPaths
+		assets: assetPaths,
+		magnify: !!options.magnify
 	});
 	fs.writeFileSync(path.resolve(outputPath, "./index.html"), html);
 }
@@ -77,6 +79,16 @@ function writeCommonFiles(outputPath: string, conf: cmn.Configuration, options: 
 	fsx.copySync(
 		path.resolve(__dirname, "..", "templates/template-export-html"),
 		outputPath);
+}
+
+function writeOptionScript(outputPath: string, options: ConvertTemplateParameterObject): void {
+	var script = `
+if (! ("optionProps" in window)) {
+	window.optionProps = {};
+}
+window.optionProps.magnify = ${!!options.magnify};
+	`;
+	fs.writeFileSync(path.resolve(outputPath, "./js/option.js"), script);
 }
 
 function wrapScript(code: string, name: string): string {
