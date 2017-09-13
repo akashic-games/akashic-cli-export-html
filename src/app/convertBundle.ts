@@ -92,9 +92,11 @@ function writeCommonFiles(outputPath: string, conf: cmn.Configuration, options: 
 	const filterFunc = (src: string, dest: string) => {
 		return  !(dest === path.resolve(outputPath, "js"));
 	};
+
+	const templatePath = options.use ? "templates/template-export-html-v2" : "templates/template-export-html-v1";
 	// fs-extraのd.tsではCopyFilterにdest引数が定義されていないため、anyにキャストする
 	(<any>(fsx.copySync))(
-		path.resolve(__dirname, "..", "templates/template-export-html"),
+		path.resolve(__dirname, "..", templatePath),
 		outputPath,
 		{ filter: filterFunc});
 }

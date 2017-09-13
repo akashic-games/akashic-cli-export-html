@@ -12,6 +12,7 @@ export interface ConvertTemplateParameterObject {
 	strip?: boolean;
 	bundle?: boolean;
 	magnify?: boolean;
+	use?: boolean;
 }
 
 export function extractAssetDefinitions (conf: cmn.Configuration, type: string): string[] {

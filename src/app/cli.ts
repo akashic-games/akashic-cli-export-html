@@ -50,6 +50,7 @@ commander
 	.option("-s, --strip", "output stripped fileset")
 	.option("-b, --bundle", "bundle assets and scripts in index.html (to reduce the number of files)")
 	.option("-m, --magnify", "fit game area to outer element size")
+	.option("-u, --use", "select Akashic Engine version")
 	.option("-e, --exclude [fileNames]", "Name of exclude file", (fileNames: string, list: string[]) => {
 		list.push(fileNames);
 		return list;

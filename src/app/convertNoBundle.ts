@@ -76,8 +76,10 @@ function writeCommonFiles(outputPath: string, conf: cmn.Configuration, options: 
 	} else {
 		copyAssetFiles(outputPath, options);
 	}
+	const templatePath = options.use ? "templates/template-export-html-v2" : "templates/template-export-html-v1";
+
 	fsx.copySync(
-		path.resolve(__dirname, "..", "templates/template-export-html"),
+		path.resolve(__dirname, "..", templatePath),
 		outputPath);
 }
 
