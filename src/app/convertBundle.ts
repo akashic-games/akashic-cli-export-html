@@ -93,7 +93,17 @@ function writeCommonFiles(outputPath: string, conf: cmn.Configuration, options: 
 		return  !(dest === path.resolve(outputPath, "js"));
 	};
 
-	const templatePath = options.use ? "templates/template-export-html-v2" : "templates/template-export-html-v1";
+	let templatePath: string;
+	switch (options.use) {
+		case "1":
+			templatePath = "templates/template-export-html-v1";
+			break;
+		case "2":
+			templatePath = "templates/template-export-html-v2";
+			break;
+		default:
+			throw Error("unknown Akashic Engine version selected");
+	}
 	// fs-extraのd.tsではCopyFilterにdest引数が定義されていないため、anyにキャストする
 	(<any>(fsx.copySync))(
 		path.resolve(__dirname, "..", templatePath),
