@@ -4,7 +4,7 @@
     "noLib": false,
     "noImplicitAny": true,
     "module": "commonjs",
-    "outDir": "../../templates/template-export-html-v1/js",
+    "outDir": "../../templates/template-export-html-v2/js",
     "newLine": "LF"
   },
   "files": [

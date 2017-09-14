@@ -31,7 +31,7 @@ gulp.task("compileApp", shell.task("tsc -p ./", {cwd: __dirname}));
 gulp.task("compileExport", ["compileExport:build"], shell.task("tsc -p ./src/export/", {cwd: __dirname}));
 
 gulp.task("compileExport:build", function() {
-	return gulp.src(["templates/template-export-html-v1/js/LocalScriptAsset.js", "templates/template-export-html-v1/js/LocaltextAsset.js"])
+	return gulp.src(["templates/template-export-html-v2/js/LocalScriptAsset.js", "templates/template-export-html-v2/js/LocaltextAsset.js"])
 		.pipe(gulp.dest("./templates/template-export-html-v1/js/"));
 });
 
