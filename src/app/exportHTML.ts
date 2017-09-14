@@ -13,7 +13,7 @@ export interface ExportHTMLParameterObject extends ConvertTemplateParameterObjec
 export function _completeExportHTMLParameterObject(param: ExportHTMLParameterObject): void {
 	param.cwd = param.cwd || process.cwd();
 	param.logger = param.logger || new cmn.ConsoleLogger();
-	param.use = param.use ? param.use : "1";
+	param.use = param.use ? param.use : "v1";
 }
 export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<void> {
 	_completeExportHTMLParameterObject(param);
