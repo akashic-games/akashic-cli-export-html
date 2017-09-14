@@ -95,10 +95,10 @@ function writeCommonFiles(outputPath: string, conf: cmn.Configuration, options: 
 
 	let templatePath: string;
 	switch (options.use) {
-		case "1":
+		case "v1":
 			templatePath = "templates/template-export-html-v1";
 			break;
-		case "2":
+		case "v2":
 			templatePath = "templates/template-export-html-v2";
 			break;
 		default:
