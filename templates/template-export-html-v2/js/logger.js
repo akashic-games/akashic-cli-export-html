@@ -26,5 +26,5 @@ function enableLogger(game) {
 		if (log.cause)
 			method.call(console, log.cause);
 	}
-	game.logger.logging.handle(onLogging);
+	game.logger.logging.add(onLogging);
 }

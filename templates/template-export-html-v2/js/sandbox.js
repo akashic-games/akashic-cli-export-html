@@ -59,7 +59,7 @@ window.addEventListener("load", function() {
 			errorHandler: function (e) { console.log("ERRORHANDLER:", e); }
 		});
 
-		driver.gameCreatedTrigger.handle(function () {
+		driver.gameCreatedTrigger.add(function () {
 			if (window.optionProps.magnify) pf.fitToWindow(true);
 		});
 
