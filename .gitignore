@@ -12,8 +12,6 @@ lib
 tmp
 .idea
 spec/build
-templates/template-export-html-v1/js/LocalScriptAsset.js
-templates/template-export-html-v1/js/LocalTextAsset.js
-templates/template-export-html-v2/js/LocalScriptAsset.js
-templates/template-export-html-v2/js/LocalTextAsset.js
+templates/template-export-html-v1/js/build
+templates/template-export-html-v2/js/build
 .vscode

@@ -37,8 +37,20 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 		}));
 	}
 
-	writeEct(innerHTMLAssetArray, outputPath, conf, options);
-	writeCommonFiles(outputPath, conf, options);
+	let templatePath: string;
+	switch (options.use) {
+		case "v1":
+			templatePath = "templates/template-export-html-v1";
+			break;
+		case "v2":
+			templatePath = "templates/template-export-html-v2";
+			break;
+		default:
+			throw Error("unknown Akashic Engine version selected");
+	}
+
+	writeEct(innerHTMLAssetArray, outputPath, conf, options, templatePath);
+	writeCommonFiles(outputPath, conf, options, templatePath);
 }
 
 function convertAssetToInnerHTMLObj(assetName: string, conf: cmn.Configuration): InnerHTMLAssetData {
@@ -69,8 +81,8 @@ function convertScriptNameToInnerHTMLObj(scriptName: string): InnerHTMLAssetData
 
 function writeEct(
 	innerHTMLAssetArray: InnerHTMLAssetData[], outputPath: string,
-	conf: cmn.Configuration, options: ConvertTemplateParameterObject): void {
-	var scripts = getDefaultBundleScripts();
+	conf: cmn.Configuration, options: ConvertTemplateParameterObject, templatePath: string): void {
+	var scripts = getDefaultBundleScripts(templatePath);
 	var ectRender = ect({root: __dirname + "/../templates", ext: ".ect"});
 	var html = ectRender.render("bundle-index", {
 		assets: innerHTMLAssetArray,
@@ -82,7 +94,9 @@ function writeEct(
 	fs.writeFileSync(path.resolve(outputPath, "./index.html"), html);
 }
 
-function writeCommonFiles(outputPath: string, conf: cmn.Configuration, options: ConvertTemplateParameterObject): void {
+function writeCommonFiles(
+	outputPath: string, conf: cmn.Configuration,
+	options: ConvertTemplateParameterObject, templatePath: string): void {
 	if (options.strip) {
 		copyAssetFilesStrip(outputPath, conf._content.assets, options);
 	} else {
@@ -93,17 +107,6 @@ function writeCommonFiles(outputPath: string, conf: cmn.Configuration, options: 
 		return  !(dest === path.resolve(outputPath, "js"));
 	};
 
-	let templatePath: string;
-	switch (options.use) {
-		case "v1":
-			templatePath = "templates/template-export-html-v1";
-			break;
-		case "v2":
-			templatePath = "templates/template-export-html-v2";
-			break;
-		default:
-			throw Error("unknown Akashic Engine version selected");
-	}
 	// fs-extraのd.tsではCopyFilterにdest引数が定義されていないため、anyにキャストする
 	(<any>(fsx.copySync))(
 		path.resolve(__dirname, "..", templatePath),

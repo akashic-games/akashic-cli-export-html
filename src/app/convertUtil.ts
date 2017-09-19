@@ -90,27 +90,27 @@ export function wrap(code: string): string {
 	return PRE_SCRIPT + "\n" + code + "\n" + POST_SCRIPT + "\n";
 }
 
-export function getDefaultBundleScripts(): any {
+export function getDefaultBundleScripts(templatePath: string): any {
 	var preloadScriptNames =
 		["akashic-engine.strip.js", "game-driver.strip.js", "pdi-browser.strip.js"];
 	var postloadScriptNames =
-		["LocalScriptAsset.js", "LocalTextAsset.js", "game-storage.strip.js", "logger.js", "sandbox.js", "initGlobals.js"];
+		["build/LocalScriptAsset.js", "build/LocalTextAsset.js", "game-storage.strip.js", "logger.js", "sandbox.js", "initGlobals.js"];
 
-	var preloadScripts = preloadScriptNames.map(loadScriptFile);
-	var postloadScripts = postloadScriptNames.map(loadScriptFile);
+	var preloadScripts = preloadScriptNames.map((fileName) => loadScriptFile(fileName, templatePath));
+	var postloadScripts = postloadScriptNames.map((fileName) => loadScriptFile(fileName, templatePath));
 	return {
 		preloadScripts,
 		postloadScripts
 	};
 }
 
-function loadScriptFile(fileName: string): string {
+function loadScriptFile(fileName: string, templatePath: string): string {
 	try {
 		return fs.readFileSync(
-			path.resolve(__dirname, "..", "templates/template-export-html/js", fileName), "utf8").replace(/\r\n|\r/g, "\n");
+			path.resolve(__dirname, "..", templatePath, "js", fileName), "utf8").replace(/\r\n|\r/g, "\n");
 	} catch (e) {
 		if (e.code === "ENOENT") {
-			throw new Error(fileName + " is not found. Try re-install akashic-cli");
+			throw new Error(fileName + " is not found. Try re-install akashic-cli" + path.resolve(__dirname, "..", templatePath, fileName));
 		} else {
 			throw e;
 		}

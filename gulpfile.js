@@ -28,12 +28,13 @@ gulp.task("compile", ["compileApp", "compileExport"]);
 
 gulp.task("compileApp", shell.task("tsc -p ./", {cwd: __dirname}));
 
-gulp.task("compileExport", ["compileExport:build"], shell.task("tsc -p ./src/export/", {cwd: __dirname}));
-
-gulp.task("compileExport:build", function() {
-	return gulp.src(["templates/template-export-html-v2/js/LocalScriptAsset.js", "templates/template-export-html-v2/js/LocaltextAsset.js"])
-		.pipe(gulp.dest("./templates/template-export-html-v1/js/"));
+gulp.task("compileExport", ["compileExport:build"], function() {
+	return gulp.src(["tmp/export/build/LocalScriptAsset.js", "tmp/export/build/LocalTextAsset.js"])
+		.pipe(gulp.dest("templates/template-export-html-v2/js/build"))
+		.pipe(gulp.dest("templates/template-export-html-v1/js/build"));
 });
+
+gulp.task("compileExport:build", shell.task("tsc -p ./src/export/", {cwd: __dirname}));
 
 gulp.task("compileSpec", ["compile"], shell.task("tsc", {cwd: path.join(__dirname, "spec")})); 
 
