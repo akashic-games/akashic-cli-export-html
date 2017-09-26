@@ -14,6 +14,8 @@ interface InnerHTMLAssetData {
 
 export async function promiseConvertBundle(options: ConvertTemplateParameterObject): Promise<void> {
 	var content = await cmn.ConfigurationFile.read(path.join(process.cwd(), "game.json"), options.logger);
+	if (!content.environment) content.environment = {};
+	content.environment["sandbox-runtime"] = content.environment["sandbox-runtime"] ? content.environment["sandbox-runtime"] : "1";
 	var conf = new cmn.Configuration({
 		content: content
 	});
@@ -38,7 +40,7 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 	}
 
 	let templatePath: string;
-	switch (options.use) {
+	switch (conf._content.environment["sandbox-runtime"]) {
 		case "1":
 			templatePath = "templates/template-export-html-v1";
 			break;

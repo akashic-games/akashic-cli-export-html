@@ -13,7 +13,6 @@ interface CommandParameterObject {
 	strip?: boolean;
 	bundle?: boolean;
 	magnify?: boolean;
-	use?: string;
 }
 
 function cli(param: CommandParameterObject): void {
@@ -27,8 +26,7 @@ function cli(param: CommandParameterObject): void {
 		logger: logger,
 		strip: param.strip,
 		bundle: param.bundle,
-		magnify: param.magnify,
-		use: param.use
+		magnify: param.magnify
 	};
 	Promise.resolve()
 		.then(() => promiseExportHTML(exportParam))
@@ -52,7 +50,6 @@ commander
 	.option("-s, --strip", "output stripped fileset")
 	.option("-b, --bundle", "bundle assets and scripts in index.html (to reduce the number of files)")
 	.option("-m, --magnify", "fit game area to outer element size")
-	.option("-u, --use <use>", "select Akashic Engine version, v1 or v2 (this option is provisional)")
 	.option("-e, --exclude [fileNames]", "Name of exclude file", (fileNames: string, list: string[]) => {
 		list.push(fileNames);
 		return list;
