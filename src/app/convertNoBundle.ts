@@ -8,6 +8,8 @@ import { ConvertTemplateParameterObject, copyAssetFilesStrip, copyAssetFiles, wr
 
 export async function promiseConvertNoBundle(options: ConvertTemplateParameterObject): Promise<void> {
 	var content = await cmn.ConfigurationFile.read(path.join(process.cwd(), "game.json"), options.logger);
+	if (!content.environment) content.environment = {};
+	content.environment["sandbox-runtime"] = content.environment["sandbox-runtime"] ? content.environment["sandbox-runtime"] : "1";
 	var conf = new cmn.Configuration({
 		content: content
 	});
@@ -76,8 +78,20 @@ function writeCommonFiles(outputPath: string, conf: cmn.Configuration, options: 
 	} else {
 		copyAssetFiles(outputPath, options);
 	}
+	let templatePath: string;
+	switch (conf._content.environment["sandbox-runtime"]) {
+		case "1":
+			templatePath = "templates/template-export-html-v1";
+			break;
+		case "2":
+			templatePath = "templates/template-export-html-v2";
+			break;
+		default:
+			throw Error("unknown Akashic Engine version selected");
+	}
+
 	fsx.copySync(
-		path.resolve(__dirname, "..", "templates/template-export-html"),
+		path.resolve(__dirname, "..", templatePath),
 		outputPath);
 }
 

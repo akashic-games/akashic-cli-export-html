@@ -14,6 +14,8 @@ interface InnerHTMLAssetData {
 
 export async function promiseConvertBundle(options: ConvertTemplateParameterObject): Promise<void> {
 	var content = await cmn.ConfigurationFile.read(path.join(process.cwd(), "game.json"), options.logger);
+	if (!content.environment) content.environment = {};
+	content.environment["sandbox-runtime"] = content.environment["sandbox-runtime"] ? content.environment["sandbox-runtime"] : "1";
 	var conf = new cmn.Configuration({
 		content: content
 	});
@@ -37,8 +39,20 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 		}));
 	}
 
-	writeEct(innerHTMLAssetArray, outputPath, conf, options);
-	writeCommonFiles(outputPath, conf, options);
+	let templatePath: string;
+	switch (conf._content.environment["sandbox-runtime"]) {
+		case "1":
+			templatePath = "templates/template-export-html-v1";
+			break;
+		case "2":
+			templatePath = "templates/template-export-html-v2";
+			break;
+		default:
+			throw Error("unknown Akashic Engine version selected");
+	}
+
+	writeEct(innerHTMLAssetArray, outputPath, conf, options, templatePath);
+	writeCommonFiles(outputPath, conf, options, templatePath);
 }
 
 function convertAssetToInnerHTMLObj(assetName: string, conf: cmn.Configuration): InnerHTMLAssetData {
@@ -69,8 +83,8 @@ function convertScriptNameToInnerHTMLObj(scriptName: string): InnerHTMLAssetData
 
 function writeEct(
 	innerHTMLAssetArray: InnerHTMLAssetData[], outputPath: string,
-	conf: cmn.Configuration, options: ConvertTemplateParameterObject): void {
-	var scripts = getDefaultBundleScripts();
+	conf: cmn.Configuration, options: ConvertTemplateParameterObject, templatePath: string): void {
+	var scripts = getDefaultBundleScripts(templatePath);
 	var ectRender = ect({root: __dirname + "/../templates", ext: ".ect"});
 	var html = ectRender.render("bundle-index", {
 		assets: innerHTMLAssetArray,
@@ -82,7 +96,9 @@ function writeEct(
 	fs.writeFileSync(path.resolve(outputPath, "./index.html"), html);
 }
 
-function writeCommonFiles(outputPath: string, conf: cmn.Configuration, options: ConvertTemplateParameterObject): void {
+function writeCommonFiles(
+	outputPath: string, conf: cmn.Configuration,
+	options: ConvertTemplateParameterObject, templatePath: string): void {
 	if (options.strip) {
 		copyAssetFilesStrip(outputPath, conf._content.assets, options);
 	} else {
@@ -92,9 +108,10 @@ function writeCommonFiles(outputPath: string, conf: cmn.Configuration, options: 
 	const filterFunc = (src: string, dest: string) => {
 		return  !(dest === path.resolve(outputPath, "js"));
 	};
+
 	// fs-extraのd.tsではCopyFilterにdest引数が定義されていないため、anyにキャストする
 	(<any>(fsx.copySync))(
-		path.resolve(__dirname, "..", "templates/template-export-html"),
+		path.resolve(__dirname, "..", templatePath),
 		outputPath,
 		{ filter: filterFunc});
 }

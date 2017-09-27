@@ -28,7 +28,13 @@ gulp.task("compile", ["compileApp", "compileExport"]);
 
 gulp.task("compileApp", shell.task("tsc -p ./", {cwd: __dirname}));
 
-gulp.task("compileExport", shell.task("tsc -p ./src/export/", {cwd: __dirname}));
+gulp.task("compileExport", ["compileExport:build"], function() {
+	return gulp.src(["tmp/export/build/LocalScriptAsset.js", "tmp/export/build/LocalTextAsset.js"])
+		.pipe(gulp.dest("templates/template-export-html-v2/js/build"))
+		.pipe(gulp.dest("templates/template-export-html-v1/js/build"));
+});
+
+gulp.task("compileExport:build", shell.task("tsc -p ./src/export/", {cwd: __dirname}));
 
 gulp.task("compileSpec", ["compile"], shell.task("tsc", {cwd: path.join(__dirname, "spec")})); 
 
@@ -63,12 +69,12 @@ gulp.task("test", ["compileSpec"], function(cb) {
 });
 
 gulp.task("copy", ["copy:minify"], function(cb){
-	del(["./templates/template-export-html/js/akashic-engine.js"], cb);
+	del(["./templates/template-export-html-v2/js/akashic-engine.js"], cb);
 });
 
 gulp.task("copy:minify", ["copy:browserify"], function () {
 	var files = [
-		"templates/template-export-html/js/akashic-engine.js",
+		"templates/template-export-html-v2/js/akashic-engine.js",
 		"node_modules/@akashic/game-driver/build/game-driver.js",
 		"node_modules/@akashic/game-storage/build/game-storage.js",
 		"node_modules/@akashic/pdi-browser/build/pdi-browser.js"
@@ -83,7 +89,7 @@ gulp.task("copy:minify", ["copy:browserify"], function () {
 			}
 		}))
         .pipe(rename({extname: ".strip.js"}))
-        .pipe(gulp.dest("./templates/template-export-html/js/"));
+        .pipe(gulp.dest("./templates/template-export-html-v2/js/"));
 });
 
 gulp.task("copy:browserify", function () {
@@ -92,7 +98,7 @@ gulp.task("copy:browserify", function () {
 		.bundle()
 		.pipe(source("akashic-engine.js"))
 		.on("error", gutil.log)
-		.pipe(gulp.dest("./templates/template-export-html/js/"));
+		.pipe(gulp.dest("./templates/template-export-html-v2/js/"));
 });
 
 gulp.task("default", ["compile"]);
