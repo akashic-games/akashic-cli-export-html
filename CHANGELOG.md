@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.1.9
+* 内部コンポーネントの更新
+  * akashic-engine@2.0.0 を利用するようになりました。
+
 ## 0.1.8
 * game.json の内容に応じて AkashicEngine のバージョンを自動的に出し分ける処理を追加
 
