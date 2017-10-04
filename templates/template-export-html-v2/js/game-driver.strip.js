@@ -915,17 +915,17 @@ require = function e(t, n, r) {
             }, GameLoop.prototype._onGotNextFrameTick = function() {
                 this._waitingNextTick && this._loopMode !== LoopMode_1.default.FrameByFrame && this._stopWaitingNextTick();
             }, GameLoop.prototype._onGotStartPoint = function(err, startPoint) {
-                if (this._waitingStartPoint = !1, err) throw new Error();
+                if (this._waitingStartPoint = !1, err) return void this.errorTrigger.fire(err);
                 if (this._targetTimeFunc && this._loopMode !== LoopMode_1.default.Realtime) {
                     var targetTime = this._targetTimeFunc() + this._realTargetTimeOffset;
                     if (targetTime < startPoint.timestamp) return;
                     var currentTime = this._currentTime;
-                    if (currentTime < targetTime && startPoint.timestamp < currentTime + this._jumpIgnoreThreshold * this._frameTime) return;
+                    if (currentTime <= targetTime && startPoint.timestamp < currentTime + this._jumpIgnoreThreshold * this._frameTime) return;
                 } else {
-                    var targetAge = this._loopMode === LoopMode_1.default.Realtime ? this._tickBuffer.knownLatestAge : this._targetAge;
+                    var targetAge = this._loopMode === LoopMode_1.default.Realtime ? this._tickBuffer.knownLatestAge + 1 : this._targetAge;
                     if (null === targetAge || targetAge < startPoint.frame) return;
                     var currentAge = this._tickBuffer.currentAge;
-                    if (currentAge < targetAge && startPoint.frame < currentAge + this._jumpIgnoreThreshold) return;
+                    if (currentAge <= targetAge && startPoint.frame < currentAge + this._jumpIgnoreThreshold) return;
                 }
                 this._clock.frameTrigger.remove(this._eventBuffer.processEvents, this._eventBuffer), 
                 this._tickBuffer.setCurrentAge(startPoint.frame), this._currentTime = startPoint.timestamp || startPoint.data.timestamp || 0, 
@@ -1903,11 +1903,10 @@ require = function e(t, n, r) {
         "@akashic/akashic-engine": "@akashic/akashic-engine"
     } ],
     22: [ function(require, module, exports) {
-        "use strict";
-        Object.defineProperty(exports, "__esModule", {
-            value: !0
-        });
-    }, {} ],
+        arguments[4][4][0].apply(exports, arguments);
+    }, {
+        dup: 4
+    } ],
     23: [ function(require, module, exports) {}, {} ],
     24: [ function(require, module, exports) {
         arguments[4][23][0].apply(exports, arguments);
