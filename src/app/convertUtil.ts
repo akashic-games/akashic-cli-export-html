@@ -115,10 +115,15 @@ export function getDefaultBundleScripts(templatePath: string, minify?: boolean):
 	};
 }
 
+export function getDefaultBundleStyle(templatePath: string): string {
+	const filepath = path.resolve(__dirname, "..", templatePath, "css", "style.css");
+	return fs.readFileSync(filepath, "utf8").replace(/\r\n|\r/g, "\n");
+}
+
 function loadScriptFile(fileName: string, templatePath: string): string {
 	try {
-		return fs.readFileSync(
-			path.resolve(__dirname, "..", templatePath, "js", fileName), "utf8").replace(/\r\n|\r/g, "\n");
+		const filepath = path.resolve(__dirname, "..", templatePath, "js", fileName);
+		return fs.readFileSync(filepath, "utf8").replace(/\r\n|\r/g, "\n");
 	} catch (e) {
 		if (e.code === "ENOENT") {
 			throw new Error(fileName + " is not found. Try re-install akashic-cli" + path.resolve(__dirname, "..", templatePath, fileName));

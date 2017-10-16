@@ -10,6 +10,7 @@ import {
 	encodeText,
 	wrap,
 	getDefaultBundleScripts,
+	getDefaultBundleStyle,
 	resolveOutputPath,
 	extractAssetDefinitions
 } from "./convertUtil";
@@ -98,6 +99,7 @@ function writeEct(
 		assets: innerHTMLAssetArray,
 		preloadScripts: scripts.preloadScripts,
 		postloadScripts: scripts.postloadScripts,
+		css: getDefaultBundleStyle(templatePath),
 		magnify: !!options.magnify
 	});
 	fs.writeFileSync(path.resolve(outputPath, "./index.html"), html);
@@ -112,13 +114,12 @@ function writeCommonFiles(
 		copyAssetFiles(outputPath, options);
 	}
 
-	const filterFunc = (src: string, dest: string) => {
-		return  !(dest === path.resolve(outputPath, "js"));
-	};
-
+	const jsDir = path.resolve(outputPath, "js");
+	const cssDir = path.resolve(outputPath, "css");
 	// fs-extraのd.tsではCopyFilterにdest引数が定義されていないため、anyにキャストする
 	(<any>(fsx.copySync))(
 		path.resolve(__dirname, "..", templatePath),
 		outputPath,
-		{ filter: filterFunc});
+		{ filter: (src: string, dest: string) => (dest !== jsDir && dest !== cssDir) }
+	);
 }
