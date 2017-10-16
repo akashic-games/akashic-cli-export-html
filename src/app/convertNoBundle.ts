@@ -28,12 +28,11 @@ export async function promiseConvertNoBundle(options: ConvertTemplateParameterOb
 	assetPaths.push("./js/game.json.js");
 
 	var assetNames = extractAssetDefinitions(conf, "script").concat(extractAssetDefinitions(conf, "text"));
-	assetPaths = assetPaths.concat(assetNames.map((assetName: string) => { return convertAssetAndOutput(assetName, conf, outputPath);
-	}));
+	assetPaths = assetPaths.concat(assetNames.map((assetName: string) => convertAssetAndOutput(assetName, conf, outputPath, options.minify)));
 
 	if (conf._content.globalScripts) {
 		assetPaths = assetPaths.concat(conf._content.globalScripts.map((scriptName: string) => {
-			return convertGlobalScriptAndOutput(scriptName, outputPath);
+			return convertGlobalScriptAndOutput(scriptName, outputPath, options.minify);
 		}));
 	}
 
@@ -42,12 +41,12 @@ export async function promiseConvertNoBundle(options: ConvertTemplateParameterOb
 	writeOptionScript(outputPath, options);
 }
 
-function convertAssetAndOutput(assetName: string, conf: cmn.Configuration, outputPath: string): string {
+function convertAssetAndOutput(assetName: string, conf: cmn.Configuration, outputPath: string, minify?: boolean): string {
 	var assets = conf._content.assets;
 	var isScript = assets[assetName].type === "script";
 	var assetString = fs.readFileSync(assets[assetName].path, "utf8").replace(/\r\n|\r/g, "\n");
 
-	var code = (isScript ? wrapScript(assetString, assetName) : wrapText(assetString, assetName));
+	var code = (isScript ? wrapScript(assetString, assetName, minify) : wrapText(assetString, assetName));
 	var assetPath = assets[assetName].path;
 	var relativePath = "./js/assets/" + path.dirname(assetPath) + "/" +
 		path.basename(assetPath, path.extname(assetPath)) + (isScript ? ".js" : ".json.js");
@@ -57,11 +56,11 @@ function convertAssetAndOutput(assetName: string, conf: cmn.Configuration, outpu
 	return relativePath;
 }
 
-function convertGlobalScriptAndOutput(scriptName: string, outputPath: string): string {
+function convertGlobalScriptAndOutput(scriptName: string, outputPath: string, minify?: boolean): string {
 	var scriptString = fs.readFileSync(scriptName, "utf8").replace(/\r\n|\r/g, "\n");
 	var isScript = /\.js$/i.test(scriptName);
 
-	var code = isScript ? wrapScript(scriptString, scriptName) : wrapText(scriptString, scriptName);
+	var code = isScript ? wrapScript(scriptString, scriptName, minify) : wrapText(scriptString, scriptName);
 	var relativePath = "./globalScripts/" + scriptName + (isScript ? "" : ".js");
 	var filePath = path.resolve(outputPath, relativePath);
 
@@ -111,8 +110,8 @@ window.optionProps.magnify = ${!!options.magnify};
 	fs.writeFileSync(path.resolve(outputPath, "./js/option.js"), script);
 }
 
-function wrapScript(code: string, name: string): string {
-	return "window.gLocalAssetContainer[\"" + name + "\"] = function(g) { " + wrap(code) + "}";
+function wrapScript(code: string, name: string, minify?: boolean): string {
+	return "window.gLocalAssetContainer[\"" + name + "\"] = function(g) { " + wrap(code, minify) + "}";
 }
 
 function wrapText(code: string, name: string): string {

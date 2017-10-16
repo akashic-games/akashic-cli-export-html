@@ -38,12 +38,12 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 
 	var innerHTMLAssetNames = extractAssetDefinitions(conf, "script").concat(extractAssetDefinitions(conf, "text"));
 	innerHTMLAssetArray = innerHTMLAssetArray.concat(innerHTMLAssetNames.map((assetName: string) => {
-		return convertAssetToInnerHTMLObj(assetName, conf);
+		return convertAssetToInnerHTMLObj(assetName, conf, options.minify);
 	}));
 
 	if (conf._content.globalScripts) {
 		innerHTMLAssetArray = innerHTMLAssetArray.concat(conf._content.globalScripts.map((scriptName: string) => {
-			return convertScriptNameToInnerHTMLObj(scriptName);
+			return convertScriptNameToInnerHTMLObj(scriptName, options.minify);
 		}));
 	}
 
@@ -63,18 +63,18 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 	writeCommonFiles(outputPath, conf, options, templatePath);
 }
 
-function convertAssetToInnerHTMLObj(assetName: string, conf: cmn.Configuration): InnerHTMLAssetData {
+function convertAssetToInnerHTMLObj(assetName: string, conf: cmn.Configuration, minify?: boolean): InnerHTMLAssetData {
 	var assets = conf._content.assets;
 	var isScript = assets[assetName].type === "script";
 	var assetString = fs.readFileSync(assets[assetName].path, "utf8").replace(/\r\n|\r/g, "\n");
 	return {
 		name: assetName,
 		type: assets[assetName].type,
-		code: (isScript ? wrap(assetString) : encodeText(assetString))
+		code: (isScript ? wrap(assetString, minify) : encodeText(assetString))
 	};
 }
 
-function convertScriptNameToInnerHTMLObj(scriptName: string): InnerHTMLAssetData {
+function convertScriptNameToInnerHTMLObj(scriptName: string, minify?: boolean): InnerHTMLAssetData {
 	var scriptString = fs.readFileSync(scriptName, "utf8").replace(/\r\n|\r/g, "\n");
 	var isScript = /\.js$/i.test(scriptName);
 
@@ -85,21 +85,20 @@ function convertScriptNameToInnerHTMLObj(scriptName: string): InnerHTMLAssetData
 	return {
 		name: scriptName,
 		type: isScript ? "script" : "text",
-		code: isScript ? wrap(scriptString) : scriptString
+		code: isScript ? wrap(scriptString, minify) : scriptString
 	};
 };
 
 function writeEct(
 	innerHTMLAssetArray: InnerHTMLAssetData[], outputPath: string,
 	conf: cmn.Configuration, options: ConvertTemplateParameterObject, templatePath: string): void {
-	var scripts = getDefaultBundleScripts(templatePath);
+	var scripts = getDefaultBundleScripts(templatePath, options.minify);
 	var ectRender = ect({root: __dirname + "/../templates", ext: ".ect"});
 	var html = ectRender.render("bundle-index", {
 		assets: innerHTMLAssetArray,
 		preloadScripts: scripts.preloadScripts,
 		postloadScripts: scripts.postloadScripts,
 		magnify: !!options.magnify
-
 	});
 	fs.writeFileSync(path.resolve(outputPath, "./index.html"), html);
 }

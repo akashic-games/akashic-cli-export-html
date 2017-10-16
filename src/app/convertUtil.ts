@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as cmn from "@akashic/akashic-cli-commons";
 import * as fsx from "fs-extra";
+import * as UglifyJS from "uglify-js";
 
 export interface ConvertTemplateParameterObject {
 	quiet?: boolean;
@@ -10,6 +11,7 @@ export interface ConvertTemplateParameterObject {
 	force?: boolean;
 	logger?: cmn.Logger;
 	strip?: boolean;
+	minify?: boolean;
 	bundle?: boolean;
 	magnify?: boolean;
 	use?: string;
@@ -88,13 +90,14 @@ export function encodeText(text: string): string {
 	return text.replace(/[\u2028\u2029'"\\\b\f\n\r\t\v]/g, encodeURIComponent);
 }
 
-export function wrap(code: string): string {
+export function wrap(code: string, minify?: boolean): string {
 	var PRE_SCRIPT = "(function(exports, require, module, __filename, __dirname) {";
 	var POST_SCRIPT = "})(g.module.exports, g.module.require, g.module, g.filename, g.dirname);";
-	return PRE_SCRIPT + "\n" + code + "\n" + POST_SCRIPT + "\n";
+	var ret = PRE_SCRIPT + "\n" + code + "\n" + POST_SCRIPT + "\n";
+	return minify ? UglifyJS.minify(ret, { fromString: true }).code : ret;
 }
 
-export function getDefaultBundleScripts(templatePath: string): any {
+export function getDefaultBundleScripts(templatePath: string, minify?: boolean): any {
 	var preloadScriptNames =
 		["akashic-engine.strip.js", "game-driver.strip.js", "pdi-browser.strip.js"];
 	var postloadScriptNames =
@@ -102,6 +105,10 @@ export function getDefaultBundleScripts(templatePath: string): any {
 
 	var preloadScripts = preloadScriptNames.map((fileName) => loadScriptFile(fileName, templatePath));
 	var postloadScripts = postloadScriptNames.map((fileName) => loadScriptFile(fileName, templatePath));
+	if (minify) {
+		preloadScripts = preloadScripts.map(script => UglifyJS.minify(script, { fromString: true }).code);
+		postloadScripts = postloadScripts.map(script => UglifyJS.minify(script, { fromString: true }).code);
+	}
 	return {
 		preloadScripts,
 		postloadScripts
