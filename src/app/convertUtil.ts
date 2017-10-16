@@ -84,6 +84,10 @@ export function copyAssetFiles(outputPath: string, options: ConvertTemplateParam
 	}
 }
 
+export function encodeText(text: string): string {
+	return text.replace(/[\u2028\u2029'"\\\b\f\n\r\t\v]/g, encodeURIComponent);
+}
+
 export function wrap(code: string): string {
 	var PRE_SCRIPT = "(function(exports, require, module, __filename, __dirname) {";
 	var POST_SCRIPT = "})(g.module.exports, g.module.require, g.module, g.filename, g.dirname);";

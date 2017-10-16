@@ -3,8 +3,16 @@ import * as path from "path";
 import * as cmn from "@akashic/akashic-cli-commons";
 import * as fsx from "fs-extra";
 import * as ect from "ect";
-import { ConvertTemplateParameterObject, copyAssetFilesStrip, copyAssetFiles, wrap,
-		getDefaultBundleScripts, resolveOutputPath, extractAssetDefinitions  } from "./convertUtil";
+import {
+	ConvertTemplateParameterObject,
+	copyAssetFilesStrip,
+	copyAssetFiles,
+	encodeText,
+	wrap,
+	getDefaultBundleScripts,
+	resolveOutputPath,
+	extractAssetDefinitions
+} from "./convertUtil";
 
 interface InnerHTMLAssetData {
 	name: string;
@@ -25,7 +33,7 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 	innerHTMLAssetArray.push({
 		name: "game.json",
 		type: "text",
-		code: encodeURIComponent(JSON.stringify(conf._content, null, "\t"))
+		code: encodeText(JSON.stringify(conf._content, null, "\t"))
 	});
 
 	var innerHTMLAssetNames = extractAssetDefinitions(conf, "script").concat(extractAssetDefinitions(conf, "text"));
@@ -48,7 +56,7 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 			templatePath = "templates/template-export-html-v2";
 			break;
 		default:
-			throw Error("unknown Akashic Engine version selected");
+			throw Error("Unknown engine version: `environment[\"sandbox-runtime\"]` field in game.json should be \"1\" or \"2\".");
 	}
 
 	writeEct(innerHTMLAssetArray, outputPath, conf, options, templatePath);
@@ -62,7 +70,7 @@ function convertAssetToInnerHTMLObj(assetName: string, conf: cmn.Configuration):
 	return {
 		name: assetName,
 		type: assets[assetName].type,
-		code: (isScript ? wrap(assetString) : encodeURIComponent(assetString))
+		code: (isScript ? wrap(assetString) : encodeText(assetString))
 	};
 }
 
@@ -72,7 +80,7 @@ function convertScriptNameToInnerHTMLObj(scriptName: string): InnerHTMLAssetData
 
 	var scriptPath = path.resolve("./", scriptName);
 	if (path.extname(scriptPath) === ".json") {
-		scriptString = encodeURIComponent(scriptString);
+		scriptString = encodeText(scriptString);
 	}
 	return {
 		name: scriptName,

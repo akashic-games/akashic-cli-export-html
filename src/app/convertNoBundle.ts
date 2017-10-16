@@ -3,8 +3,15 @@ import * as path from "path";
 import * as cmn from "@akashic/akashic-cli-commons";
 import * as fsx from "fs-extra";
 import * as ect from "ect";
-import { ConvertTemplateParameterObject, copyAssetFilesStrip, copyAssetFiles, wrap,
-	resolveOutputPath, extractAssetDefinitions } from "./convertUtil";
+import {
+	ConvertTemplateParameterObject,
+	copyAssetFilesStrip,
+	copyAssetFiles,
+	encodeText,
+	wrap,
+	resolveOutputPath,
+	extractAssetDefinitions
+} from "./convertUtil";
 
 export async function promiseConvertNoBundle(options: ConvertTemplateParameterObject): Promise<void> {
 	var content = await cmn.ConfigurationFile.read(path.join(process.cwd(), "game.json"), options.logger);
@@ -21,8 +28,7 @@ export async function promiseConvertNoBundle(options: ConvertTemplateParameterOb
 	assetPaths.push("./js/game.json.js");
 
 	var assetNames = extractAssetDefinitions(conf, "script").concat(extractAssetDefinitions(conf, "text"));
-	assetPaths = assetPaths.concat(assetNames.map((assetName: string) => {
-		return convertAssetAndOutput(assetName, conf, outputPath);
+	assetPaths = assetPaths.concat(assetNames.map((assetName: string) => { return convertAssetAndOutput(assetName, conf, outputPath);
 	}));
 
 	if (conf._content.globalScripts) {
@@ -87,7 +93,7 @@ function writeCommonFiles(outputPath: string, conf: cmn.Configuration, options: 
 			templatePath = "templates/template-export-html-v2";
 			break;
 		default:
-			throw Error("unknown Akashic Engine version selected");
+			throw Error("Unknown engine version: `environment[\"sandbox-runtime\"]` field in game.json should be \"1\" or \"2\".");
 	}
 
 	fsx.copySync(
@@ -112,5 +118,5 @@ function wrapScript(code: string, name: string): string {
 function wrapText(code: string, name: string): string {
 	var PRE_SCRIPT = "window.gLocalAssetContainer[\"" + name + "\"] = \"";
 	var POST_SCRIPT = "\"";
-	return PRE_SCRIPT + encodeURIComponent(code) + POST_SCRIPT + "\n";
+	return PRE_SCRIPT + encodeText(code) + POST_SCRIPT + "\n";
 }
