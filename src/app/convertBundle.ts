@@ -120,6 +120,6 @@ function writeCommonFiles(
 	(<any>(fsx.copySync))(
 		path.resolve(__dirname, "..", templatePath),
 		outputPath,
-		{ filter: (src: string, dest: string) => (dest !== jsDir && dest !== cssDir) }
+		{ filter: (src: string, dest: string): boolean => (dest !== jsDir && dest !== cssDir) }
 	);
 }
