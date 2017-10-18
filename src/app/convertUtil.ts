@@ -73,10 +73,10 @@ export function copyAssetFilesStrip(outputPath: string, assets: cmn.Assets, opti
 
 export function copyAssetFiles(outputPath: string, options: ConvertTemplateParameterObject ): void {
 	options.logger.info("copying files...");
-	const scriptPath = path.resolve(outputPath, "script");
-	const textPath = path.resolve(outputPath, "text");
+	const scriptPath = path.resolve(process.cwd(), "script");
+	const textPath = path.resolve(process.cwd(), "text");
 	const filterFunc = (src: string, dest: string) => {
-		return src.indexOf(scriptPath) === -1 && src.indexOf(textPath) === -1;
+		return path.relative(scriptPath, src)[0] === "." && path.relative(textPath, src)[0] === ".";
 	};
 	try {
 		// fs-extraのd.tsではCopyFilterにdest引数が定義されていないため、anyにキャストする
