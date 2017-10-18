@@ -3,8 +3,15 @@ import * as path from "path";
 import * as cmn from "@akashic/akashic-cli-commons";
 import * as fsx from "fs-extra";
 import * as ect from "ect";
-import { ConvertTemplateParameterObject, copyAssetFilesStrip, copyAssetFiles, wrap,
-	resolveOutputPath, extractAssetDefinitions } from "./convertUtil";
+import {
+	ConvertTemplateParameterObject,
+	copyAssetFilesStrip,
+	copyAssetFiles,
+	encodeText,
+	wrap,
+	resolveOutputPath,
+	extractAssetDefinitions
+} from "./convertUtil";
 
 export async function promiseConvertNoBundle(options: ConvertTemplateParameterObject): Promise<void> {
 	var content = await cmn.ConfigurationFile.read(path.join(process.cwd(), "game.json"), options.logger);
@@ -21,13 +28,11 @@ export async function promiseConvertNoBundle(options: ConvertTemplateParameterOb
 	assetPaths.push("./js/game.json.js");
 
 	var assetNames = extractAssetDefinitions(conf, "script").concat(extractAssetDefinitions(conf, "text"));
-	assetPaths = assetPaths.concat(assetNames.map((assetName: string) => {
-		return convertAssetAndOutput(assetName, conf, outputPath);
-	}));
+	assetPaths = assetPaths.concat(assetNames.map((assetName: string) => convertAssetAndOutput(assetName, conf, outputPath, options.minify)));
 
 	if (conf._content.globalScripts) {
 		assetPaths = assetPaths.concat(conf._content.globalScripts.map((scriptName: string) => {
-			return convertGlobalScriptAndOutput(scriptName, outputPath);
+			return convertGlobalScriptAndOutput(scriptName, outputPath, options.minify);
 		}));
 	}
 
@@ -36,12 +41,12 @@ export async function promiseConvertNoBundle(options: ConvertTemplateParameterOb
 	writeOptionScript(outputPath, options);
 }
 
-function convertAssetAndOutput(assetName: string, conf: cmn.Configuration, outputPath: string): string {
+function convertAssetAndOutput(assetName: string, conf: cmn.Configuration, outputPath: string, minify?: boolean): string {
 	var assets = conf._content.assets;
 	var isScript = assets[assetName].type === "script";
 	var assetString = fs.readFileSync(assets[assetName].path, "utf8").replace(/\r\n|\r/g, "\n");
 
-	var code = (isScript ? wrapScript(assetString, assetName) : wrapText(assetString, assetName));
+	var code = (isScript ? wrapScript(assetString, assetName, minify) : wrapText(assetString, assetName));
 	var assetPath = assets[assetName].path;
 	var relativePath = "./js/assets/" + path.dirname(assetPath) + "/" +
 		path.basename(assetPath, path.extname(assetPath)) + (isScript ? ".js" : ".json.js");
@@ -51,11 +56,11 @@ function convertAssetAndOutput(assetName: string, conf: cmn.Configuration, outpu
 	return relativePath;
 }
 
-function convertGlobalScriptAndOutput(scriptName: string, outputPath: string): string {
+function convertGlobalScriptAndOutput(scriptName: string, outputPath: string, minify?: boolean): string {
 	var scriptString = fs.readFileSync(scriptName, "utf8").replace(/\r\n|\r/g, "\n");
 	var isScript = /\.js$/i.test(scriptName);
 
-	var code = isScript ? wrapScript(scriptString, scriptName) : wrapText(scriptString, scriptName);
+	var code = isScript ? wrapScript(scriptString, scriptName, minify) : wrapText(scriptString, scriptName);
 	var relativePath = "./globalScripts/" + scriptName + (isScript ? "" : ".js");
 	var filePath = path.resolve(outputPath, relativePath);
 
@@ -87,7 +92,7 @@ function writeCommonFiles(outputPath: string, conf: cmn.Configuration, options: 
 			templatePath = "templates/template-export-html-v2";
 			break;
 		default:
-			throw Error("unknown Akashic Engine version selected");
+			throw Error("Unknown engine version: `environment[\"sandbox-runtime\"]` field in game.json should be \"1\" or \"2\".");
 	}
 
 	fsx.copySync(
@@ -105,12 +110,12 @@ window.optionProps.magnify = ${!!options.magnify};
 	fs.writeFileSync(path.resolve(outputPath, "./js/option.js"), script);
 }
 
-function wrapScript(code: string, name: string): string {
-	return "window.gLocalAssetContainer[\"" + name + "\"] = function(g) { " + wrap(code) + "}";
+function wrapScript(code: string, name: string, minify?: boolean): string {
+	return "window.gLocalAssetContainer[\"" + name + "\"] = function(g) { " + wrap(code, minify) + "}";
 }
 
 function wrapText(code: string, name: string): string {
 	var PRE_SCRIPT = "window.gLocalAssetContainer[\"" + name + "\"] = \"";
 	var POST_SCRIPT = "\"";
-	return PRE_SCRIPT + encodeURIComponent(code) + POST_SCRIPT + "\n";
+	return PRE_SCRIPT + encodeText(code) + POST_SCRIPT + "\n";
 }

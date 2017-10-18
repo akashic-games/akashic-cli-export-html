@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as cmn from "@akashic/akashic-cli-commons";
 import * as fsx from "fs-extra";
+import * as UglifyJS from "uglify-js";
 
 export interface ConvertTemplateParameterObject {
 	quiet?: boolean;
@@ -10,6 +11,7 @@ export interface ConvertTemplateParameterObject {
 	force?: boolean;
 	logger?: cmn.Logger;
 	strip?: boolean;
+	minify?: boolean;
 	bundle?: boolean;
 	magnify?: boolean;
 	use?: string;
@@ -71,10 +73,10 @@ export function copyAssetFilesStrip(outputPath: string, assets: cmn.Assets, opti
 
 export function copyAssetFiles(outputPath: string, options: ConvertTemplateParameterObject ): void {
 	options.logger.info("copying files...");
-	const scriptPath = path.resolve(outputPath, "script");
-	const textPath = path.resolve(outputPath, "text");
+	const scriptPath = path.resolve(process.cwd(), "script");
+	const textPath = path.resolve(process.cwd(), "text");
 	const filterFunc = (src: string, dest: string) => {
-		return src.indexOf(scriptPath) === -1 && src.indexOf(textPath) === -1;
+		return path.relative(scriptPath, src)[0] === "." && path.relative(textPath, src)[0] === ".";
 	};
 	try {
 		// fs-extraのd.tsではCopyFilterにdest引数が定義されていないため、anyにキャストする
@@ -84,13 +86,18 @@ export function copyAssetFiles(outputPath: string, options: ConvertTemplateParam
 	}
 }
 
-export function wrap(code: string): string {
-	var PRE_SCRIPT = "(function(exports, require, module, __filename, __dirname) {";
-	var POST_SCRIPT = "})(g.module.exports, g.module.require, g.module, g.filename, g.dirname);";
-	return PRE_SCRIPT + "\n" + code + "\n" + POST_SCRIPT + "\n";
+export function encodeText(text: string): string {
+	return text.replace(/[\u2028\u2029'"\\\b\f\n\r\t\v]/g, encodeURIComponent);
 }
 
-export function getDefaultBundleScripts(templatePath: string): any {
+export function wrap(code: string, minify?: boolean): string {
+	var PRE_SCRIPT = "(function(exports, require, module, __filename, __dirname) {";
+	var POST_SCRIPT = "})(g.module.exports, g.module.require, g.module, g.filename, g.dirname);";
+	var ret = PRE_SCRIPT + "\n" + code + "\n" + POST_SCRIPT + "\n";
+	return minify ? UglifyJS.minify(ret, { fromString: true }).code : ret;
+}
+
+export function getDefaultBundleScripts(templatePath: string, minify?: boolean): any {
 	var preloadScriptNames =
 		["akashic-engine.strip.js", "game-driver.strip.js", "pdi-browser.strip.js"];
 	var postloadScriptNames =
@@ -98,16 +105,25 @@ export function getDefaultBundleScripts(templatePath: string): any {
 
 	var preloadScripts = preloadScriptNames.map((fileName) => loadScriptFile(fileName, templatePath));
 	var postloadScripts = postloadScriptNames.map((fileName) => loadScriptFile(fileName, templatePath));
+	if (minify) {
+		preloadScripts = preloadScripts.map(script => UglifyJS.minify(script, { fromString: true }).code);
+		postloadScripts = postloadScripts.map(script => UglifyJS.minify(script, { fromString: true }).code);
+	}
 	return {
 		preloadScripts,
 		postloadScripts
 	};
 }
 
+export function getDefaultBundleStyle(templatePath: string): string {
+	const filepath = path.resolve(__dirname, "..", templatePath, "css", "style.css");
+	return fs.readFileSync(filepath, "utf8").replace(/\r\n|\r/g, "\n");
+}
+
 function loadScriptFile(fileName: string, templatePath: string): string {
 	try {
-		return fs.readFileSync(
-			path.resolve(__dirname, "..", templatePath, "js", fileName), "utf8").replace(/\r\n|\r/g, "\n");
+		const filepath = path.resolve(__dirname, "..", templatePath, "js", fileName);
+		return fs.readFileSync(filepath, "utf8").replace(/\r\n|\r/g, "\n");
 	} catch (e) {
 		if (e.code === "ENOENT") {
 			throw new Error(fileName + " is not found. Try re-install akashic-cli" + path.resolve(__dirname, "..", templatePath, fileName));

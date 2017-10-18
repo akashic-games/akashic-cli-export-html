@@ -11,6 +11,7 @@ interface CommandParameterObject {
 	output?: string;
 	exclude?: string[];
 	strip?: boolean;
+	minify?: boolean;
 	bundle?: boolean;
 	magnify?: boolean;
 }
@@ -25,6 +26,7 @@ function cli(param: CommandParameterObject): void {
 		exclude: param.exclude,
 		logger: logger,
 		strip: param.strip,
+		minify: param.minify,
 		bundle: param.bundle,
 		magnify: param.magnify
 	};
@@ -48,6 +50,7 @@ commander
 	.option("-q, --quiet", "Suppress output")
 	.option("-o, --output <fileName>", "Name of output file or directory")
 	.option("-s, --strip", "output stripped fileset")
+	.option("-M, --minify", "minify JavaScript files")
 	.option("-b, --bundle", "bundle assets and scripts in index.html (to reduce the number of files)")
 	.option("-m, --magnify", "fit game area to outer element size")
 	.option("-e, --exclude [fileNames]", "Name of exclude file", (fileNames: string, list: string[]) => {
