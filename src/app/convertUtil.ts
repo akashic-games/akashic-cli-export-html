@@ -3,6 +3,7 @@ import * as path from "path";
 import * as cmn from "@akashic/akashic-cli-commons";
 import * as fsx from "fs-extra";
 import * as UglifyJS from "uglify-js";
+import readdir = require("fs-readdir-recursive");
 
 export interface ConvertTemplateParameterObject {
 	quiet?: boolean;
@@ -28,11 +29,7 @@ export function resolveOutputPath(output: string): Promise<string> {
 		if (!output) {
 			return reject("output is not defined.");
 		}
-		var resolvedPath = path.resolve(output);
-		if (!/^\.\./.test(path.relative(process.cwd(), resolvedPath))) {
-			return reject("output path overlaps with source directory.");
-		}
-		return resolve(resolvedPath);
+		return resolve(path.resolve(output));
 	});
 }
 
@@ -79,8 +76,11 @@ export function copyAssetFiles(outputPath: string, options: ConvertTemplateParam
 		return path.relative(scriptPath, src)[0] === "." && path.relative(textPath, src)[0] === ".";
 	};
 	try {
-		// fs-extraのd.tsではCopyFilterにdest引数が定義されていないため、anyにキャストする
-		(<any>(fsx.copySync))(process.cwd(), outputPath, {overwrite: options.force, filter: filterFunc});
+		const files = readdir(process.cwd());
+		files.forEach(p => {
+			mkdirpSync(path.dirname(path.resolve(outputPath, p)));
+			fs.writeFileSync(path.resolve(outputPath, p), fs.readFileSync(path.resolve(process.cwd(), p)));
+		});
 	} catch (e) {
 		options.logger.error("Error while copying: " + e.message);
 	}
@@ -132,3 +132,24 @@ function loadScriptFile(fileName: string, templatePath: string): string {
 		}
 	}
 }
+
+function mkdirpSync(p: string): void {
+	p = path.resolve(p);
+	try {
+		fs.mkdirSync(p);
+	} catch (e) {
+		if (e.code === "ENOENT") {
+			mkdirpSync(path.dirname(p));
+			mkdirpSync(p);
+		} else {
+			var stat;
+			try {
+				stat = fs.statSync(p);
+			} catch (e1) {
+				throw e;
+			}
+			if (!stat.isDirectory())
+				throw e;
+		}
+	}
+};
