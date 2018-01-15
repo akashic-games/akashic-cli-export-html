@@ -18,23 +18,4 @@ describe("exportHTML", function () {
 			})
 		.then(done, done.fail);
 	});
-
-	it("promiseExportHTML", function (done) {
-		Promise.resolve()
-			.then(function () {
-				exp.promiseExportHTML({
-					logger: logger,
-					output: "./",
-					force: true
-				})
-				.then(() => done.fail())
-				.catch((err) => {
-					if (err.message === "output path overlaps with source directory.") {
-						done();
-					} else {
-						done.fail(err);
-					}
-				});
-			})
-	});
 });

@@ -27,23 +27,4 @@ describe("convert", function () {
 					});
 		})
 	});
-
-	it("promiseConvert outputpath same source directory", function (done) {
-		Promise.resolve()
-			.then(function () {
-				var param = {
-					logger: logger,
-					output: process.cwd()
-				}
-				cvnb.promiseConvertNoBundle(param)
-					.then(() => done.fail())
-					.catch((err) => {
-						if (err === "output path overlaps with source directory.") {
-							done();
-						} else {
-							done.fail(err);
-						}
-					});
-			})
-	});
 });
