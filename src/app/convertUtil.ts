@@ -72,11 +72,16 @@ export function copyAssetFiles(outputPath: string, options: ConvertTemplateParam
 	options.logger.info("copying files...");
 	const scriptPath = path.resolve(process.cwd(), "script");
 	const textPath = path.resolve(process.cwd(), "text");
+	const filterFunc = (src: string, dest: string) => {
+		return path.relative(scriptPath, src)[0] === "." && path.relative(textPath, src)[0] === ".";
+	};
 	try {
 		const files = readdir(process.cwd());
 		files.forEach(p => {
 			mkdirpSync(path.dirname(path.resolve(outputPath, p)));
-			fs.writeFileSync(path.resolve(outputPath, p), fs.readFileSync(path.resolve(process.cwd(), p)));
+			if (filterFunc(path.resolve(process.cwd(), p), path.resolve(outputPath, p))) {
+				fs.writeFileSync(path.resolve(outputPath, p), fs.readFileSync(path.resolve(process.cwd(), p)));
+			}
 		});
 	} catch (e) {
 		options.logger.error("Error while copying: " + e.message);
