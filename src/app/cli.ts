@@ -10,7 +10,7 @@ interface CommandParameterObject {
 	quiet?: boolean;
 	output?: string;
 	exclude?: string[];
-	strip?: boolean;
+	unstrip?: boolean;
 	minify?: boolean;
 	bundle?: boolean;
 	magnify?: boolean;
@@ -25,7 +25,7 @@ function cli(param: CommandParameterObject): void {
 		output: param.output,
 		exclude: param.exclude,
 		logger: logger,
-		strip: param.strip,
+		strip: !param.unstrip, // デフォルト挙動では strip する
 		minify: param.minify,
 		bundle: param.bundle,
 		magnify: param.magnify
@@ -49,7 +49,7 @@ commander
 	.option("-f, --force", "Overwrites existing files")
 	.option("-q, --quiet", "Suppress output")
 	.option("-o, --output <fileName>", "Name of output file or directory")
-	.option("-s, --strip", "output stripped fileset")
+	.option("-u, --unstrip", "output fileset without strip")
 	.option("-M, --minify", "minify JavaScript files")
 	.option("-b, --bundle", "bundle assets and scripts in index.html (to reduce the number of files)")
 	.option("-m, --magnify", "fit game area to outer element size")
