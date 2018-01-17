@@ -18,8 +18,8 @@ interface CommandParameterObject {
 }
 
 function cli(param: CommandParameterObject): void {
-	var logger = new ConsoleLogger({ quiet: param.quiet });
-	var exportParam = {
+	const logger = new ConsoleLogger({ quiet: param.quiet });
+	const exportParam = {
 		cwd: param.cwd,
 		force: param.force,
 		quiet: param.quiet,
@@ -32,7 +32,6 @@ function cli(param: CommandParameterObject): void {
 		bundle: param.bundle,
 		magnify: param.magnify
 	};
-	console.log("STRIP", param.strip);
 	Promise.resolve()
 		.then(() => promiseExportHTML(exportParam))
 		.catch((err: any) => {
@@ -41,7 +40,7 @@ function cli(param: CommandParameterObject): void {
 		});
 }
 
-var ver = JSON.parse(fs.readFileSync(path.resolve(__dirname, "..", "package.json"), "utf8")).version;
+const ver = JSON.parse(fs.readFileSync(path.resolve(__dirname, "..", "package.json"), "utf8")).version;
 
 commander
 	.version(ver);
@@ -52,8 +51,8 @@ commander
 	.option("-f, --force", "Overwrites existing files")
 	.option("-q, --quiet", "Suppress output")
 	.option("-o, --output <fileName>", "Name of output file or directory")
-	.option("-S, --no-strip [foo]", "output fileset without strip")
-	.option("-H, --no-filename [length]", "Rename asset files with their hash values")
+	.option("-S, --no-strip", "output fileset without strip")
+	.option("-H, --hash-filename [length]", "Rename asset files with their hash values")
 	.option("-M, --minify", "minify JavaScript files")
 	.option("-b, --bundle", "bundle assets and scripts in index.html (to reduce the number of files)")
 	.option("-m, --magnify", "fit game area to outer element size")
@@ -63,25 +62,16 @@ commander
 	}, []);
 
 export function run(argv: string[]): void {
-	// Commander の制約により --strip と --no-strip 引数を両立できないため、暫定対応として Commander 前に argv を処理する-
-	let useStripOption = false;
-	const argvCopy = argv.slice();
-
-	const stripElement = argvCopy.indexOf("--strip");
-	if (stripElement !== -1) {
-		argvCopy.splice(stripElement, 1);
-		useStripOption = true;
-	}
-
-	const stripShortElement = argvCopy.indexOf("-s");
-	if (stripShortElement !== -1) {
-		argvCopy.splice(stripShortElement, 1);
-		useStripOption = true;
-	}
-
-	if (useStripOption) console.log(
-		"--strip option is deprecated. strip is applied by default. If you do not need to apply it, use --no-strip option.");
+	// Commander の制約により --strip と --no-strip 引数を両立できないため、暫定対応として Commander 前に argv を処理する
+	const argvCopy = dropDeprecatedArgs(argv);
 
 	commander.parse(argvCopy);
 	cli(commander);
+}
+
+function dropDeprecatedArgs(argv: string[]): string[] {
+	const droppedArgv = argv.filter(v => !/^(-s|--strip)$/.test(v));
+	if (argv.length !== droppedArgv.length) console.log(
+		"--strip option is deprecated. strip is applied by default. If you do not need to apply it, use --no-strip option.");
+	return droppedArgv;
 }
