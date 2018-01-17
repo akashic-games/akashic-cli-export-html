@@ -78,7 +78,7 @@ export function copyAssetFiles(outputPath: string, options: ConvertTemplateParam
 	try {
 		const files = readdir(process.cwd());
 		files.forEach(p => {
-			mkdirpSync(path.dirname(path.resolve(outputPath, p)));
+			cmn.Util.mkdirpSync(path.dirname(path.resolve(outputPath, p)));
 			if (filterFunc(path.resolve(process.cwd(), p), path.resolve(outputPath, p))) {
 				fs.writeFileSync(path.resolve(outputPath, p), fs.readFileSync(path.resolve(process.cwd(), p)));
 			}
@@ -134,24 +134,3 @@ function loadScriptFile(fileName: string, templatePath: string): string {
 		}
 	}
 }
-
-function mkdirpSync(p: string): void {
-	p = path.resolve(p);
-	try {
-		fs.mkdirSync(p);
-	} catch (e) {
-		if (e.code === "ENOENT") {
-			mkdirpSync(path.dirname(p));
-			mkdirpSync(p);
-		} else {
-			var stat;
-			try {
-				stat = fs.statSync(p);
-			} catch (e1) {
-				throw e;
-			}
-			if (!stat.isDirectory())
-				throw e;
-		}
-	}
-};

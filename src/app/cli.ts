@@ -10,7 +10,8 @@ interface CommandParameterObject {
 	quiet?: boolean;
 	output?: string;
 	exclude?: string[];
-	unstrip?: boolean;
+	strip?: boolean;
+	hashFilename?: number | boolean;
 	minify?: boolean;
 	bundle?: boolean;
 	magnify?: boolean;
@@ -25,11 +26,13 @@ function cli(param: CommandParameterObject): void {
 		output: param.output,
 		exclude: param.exclude,
 		logger: logger,
-		strip: !param.unstrip, // デフォルト挙動では strip する
+		strip: !param.strip, // デフォルト挙動では strip する
+		hashLength: !param.hashFilename ? 0 : (param.hashFilename === true) ? 20 : Number(param.hashFilename),
 		minify: param.minify,
 		bundle: param.bundle,
 		magnify: param.magnify
 	};
+	console.log("STRIP", param.strip);
 	Promise.resolve()
 		.then(() => promiseExportHTML(exportParam))
 		.catch((err: any) => {
@@ -49,7 +52,8 @@ commander
 	.option("-f, --force", "Overwrites existing files")
 	.option("-q, --quiet", "Suppress output")
 	.option("-o, --output <fileName>", "Name of output file or directory")
-	.option("-u, --unstrip", "output fileset without strip")
+	.option("-S, --no-strip [foo]", "output fileset without strip")
+	.option("-H, --no-filename [length]", "Rename asset files with their hash values")
 	.option("-M, --minify", "minify JavaScript files")
 	.option("-b, --bundle", "bundle assets and scripts in index.html (to reduce the number of files)")
 	.option("-m, --magnify", "fit game area to outer element size")
@@ -59,6 +63,25 @@ commander
 	}, []);
 
 export function run(argv: string[]): void {
-	commander.parse(argv);
+	// Commander の制約により --strip と --no-strip 引数を両立できないため、暫定対応として Commander 前に argv を処理する-
+	let useStripOption = false;
+	const argvCopy = argv.slice();
+
+	const stripElement = argvCopy.indexOf("--strip");
+	if (stripElement !== -1) {
+		argvCopy.splice(stripElement, 1);
+		useStripOption = true;
+	}
+
+	const stripShortElement = argvCopy.indexOf("-s");
+	if (stripShortElement !== -1) {
+		argvCopy.splice(stripShortElement, 1);
+		useStripOption = true;
+	}
+
+	if (useStripOption) console.log(
+		"--strip option is deprecated. strip is applied by default. If you do not need to apply it, use --no-strip option.");
+
+	commander.parse(argvCopy);
 	cli(commander);
 }
