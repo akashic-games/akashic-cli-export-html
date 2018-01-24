@@ -21,7 +21,7 @@ export async function promiseConvertNoBundle(options: ConvertTemplateParameterOb
 		content: content
 	});
 	var assetPaths: string[] = [];
-	var outputPath = await resolveOutputPath(options.output, options.strip);
+	var outputPath = await resolveOutputPath(options.output, options.strip, options.logger);
 
 	writeCommonFiles(outputPath, conf, options);
 

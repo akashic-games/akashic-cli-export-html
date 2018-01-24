@@ -29,7 +29,7 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 		content: content
 	});
 	var innerHTMLAssetArray: InnerHTMLAssetData[] = [];
-	var outputPath = await resolveOutputPath(options.output, options.strip);
+	var outputPath = await resolveOutputPath(options.output, options.strip, options.logger);
 
 	innerHTMLAssetArray.push({
 		name: "game.json",

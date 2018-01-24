@@ -24,14 +24,15 @@ export function extractAssetDefinitions (conf: cmn.Configuration, type: string):
 	return assetNames.filter((assetName) => assets[assetName].type === type);
 }
 
-export function resolveOutputPath(output: string, strip: boolean): Promise<string> {
+export function resolveOutputPath(output: string, strip: boolean, logger: cmn.Logger): Promise<string> {
 	return new Promise<string>((resolve, reject) => {
 		if (!output) {
 			return reject("output is not defined.");
 		}
 		var resolvedPath = path.resolve(output);
-		if (strip && !/^\.\./.test(path.relative(process.cwd(), resolvedPath))) {
-			console.log("Output path overlaps with source directory.  These output files will be included next time.");
+		if (!strip && !/^\.\./.test(path.relative(process.cwd(), resolvedPath))) {
+			logger.warn("The output path overlaps with the game directory: files will be exported into the game directory.");
+			logger.warn("NOTE that after this, exporting this game with --no-strip option may include the files.");
 		}
 		return resolve(path.resolve(output));
 	});
