@@ -3,6 +3,7 @@ import * as path from "path";
 import * as cmn from "@akashic/akashic-cli-commons";
 import * as fsx from "fs-extra";
 import * as UglifyJS from "uglify-js";
+import readdir = require("fs-readdir-recursive");
 
 export interface ConvertTemplateParameterObject {
 	quiet?: boolean;
@@ -23,16 +24,17 @@ export function extractAssetDefinitions (conf: cmn.Configuration, type: string):
 	return assetNames.filter((assetName) => assets[assetName].type === type);
 }
 
-export function resolveOutputPath(output: string): Promise<string> {
+export function resolveOutputPath(output: string, strip: boolean, logger: cmn.Logger): Promise<string> {
 	return new Promise<string>((resolve, reject) => {
 		if (!output) {
 			return reject("output is not defined.");
 		}
 		var resolvedPath = path.resolve(output);
-		if (!/^\.\./.test(path.relative(process.cwd(), resolvedPath))) {
-			return reject("output path overlaps with source directory.");
+		if (!strip && !/^\.\./.test(path.relative(process.cwd(), resolvedPath))) {
+			logger.warn("The output path overlaps with the game directory: files will be exported into the game directory.");
+			logger.warn("NOTE that after this, exporting this game with --no-strip option may include the files.");
 		}
-		return resolve(resolvedPath);
+		return resolve(path.resolve(output));
 	});
 }
 
@@ -75,12 +77,17 @@ export function copyAssetFiles(outputPath: string, options: ConvertTemplateParam
 	options.logger.info("copying files...");
 	const scriptPath = path.resolve(process.cwd(), "script");
 	const textPath = path.resolve(process.cwd(), "text");
-	const filterFunc = (src: string, dest: string) => {
-		return path.relative(scriptPath, src)[0] === "." && path.relative(textPath, src)[0] === ".";
+	const isScriptOrTextAsset = (src: string) => {
+		return path.relative(scriptPath, src)[0] !== "." || path.relative(textPath, src)[0] !== ".";
 	};
 	try {
-		// fs-extraのd.tsではCopyFilterにdest引数が定義されていないため、anyにキャストする
-		(<any>(fsx.copySync))(process.cwd(), outputPath, {overwrite: options.force, filter: filterFunc});
+		const files = readdir(process.cwd());
+		files.forEach(p => {
+			cmn.Util.mkdirpSync(path.dirname(path.resolve(outputPath, p)));
+			if (!isScriptOrTextAsset(path.resolve(process.cwd(), p))) {
+				fs.writeFileSync(path.resolve(outputPath, p), fs.readFileSync(path.resolve(process.cwd(), p)));
+			}
+		});
 	} catch (e) {
 		options.logger.error("Error while copying: " + e.message);
 	}

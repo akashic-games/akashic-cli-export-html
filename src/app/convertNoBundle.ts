@@ -21,7 +21,9 @@ export async function promiseConvertNoBundle(options: ConvertTemplateParameterOb
 		content: content
 	});
 	var assetPaths: string[] = [];
-	var outputPath = await resolveOutputPath(options.output);
+	var outputPath = await resolveOutputPath(options.output, options.strip, options.logger);
+
+	writeCommonFiles(outputPath, conf, options);
 
 	var gamejsonPath = path.resolve(outputPath, "./js/game.json.js");
 	fsx.outputFileSync(gamejsonPath, wrapText(JSON.stringify(conf._content, null, "\t"), "game.json"));
@@ -37,7 +39,6 @@ export async function promiseConvertNoBundle(options: ConvertTemplateParameterOb
 	}
 
 	writeEct(assetPaths, outputPath, conf, options);
-	writeCommonFiles(outputPath, conf, options);
 	writeOptionScript(outputPath, options);
 }
 
