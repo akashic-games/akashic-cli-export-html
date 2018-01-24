@@ -24,10 +24,14 @@ export function extractAssetDefinitions (conf: cmn.Configuration, type: string):
 	return assetNames.filter((assetName) => assets[assetName].type === type);
 }
 
-export function resolveOutputPath(output: string): Promise<string> {
+export function resolveOutputPath(output: string, strip: boolean): Promise<string> {
 	return new Promise<string>((resolve, reject) => {
 		if (!output) {
 			return reject("output is not defined.");
+		}
+		var resolvedPath = path.resolve(output);
+		if (strip && !/^\.\./.test(path.relative(process.cwd(), resolvedPath))) {
+			console.log("Output path overlaps with source directory.  These output files will be included next time.");
 		}
 		return resolve(path.resolve(output));
 	});
@@ -72,14 +76,14 @@ export function copyAssetFiles(outputPath: string, options: ConvertTemplateParam
 	options.logger.info("copying files...");
 	const scriptPath = path.resolve(process.cwd(), "script");
 	const textPath = path.resolve(process.cwd(), "text");
-	const selectWithoutAsset = (src: string, dest: string) => {
-		return path.relative(scriptPath, src)[0] === "." && path.relative(textPath, src)[0] === ".";
+	const isScriptOrTextAsset = (src: string) => {
+		return path.relative(scriptPath, src)[0] !== "." || path.relative(textPath, src)[0] !== ".";
 	};
 	try {
 		const files = readdir(process.cwd());
 		files.forEach(p => {
 			cmn.Util.mkdirpSync(path.dirname(path.resolve(outputPath, p)));
-			if (selectWithoutAsset(path.resolve(process.cwd(), p), path.resolve(outputPath, p))) {
+			if (!isScriptOrTextAsset(path.resolve(process.cwd(), p))) {
 				fs.writeFileSync(path.resolve(outputPath, p), fs.readFileSync(path.resolve(process.cwd(), p)));
 			}
 		});
