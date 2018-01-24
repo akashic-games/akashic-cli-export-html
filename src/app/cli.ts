@@ -26,7 +26,7 @@ function cli(param: CommandParameterObject): void {
 		output: param.output,
 		exclude: param.exclude,
 		logger: logger,
-		strip: !param.strip, // デフォルト挙動では strip する
+		strip: (param.strip != null) ? param.strip : true,
 		hashLength: !param.hashFilename ? 0 : (param.hashFilename === true) ? 20 : Number(param.hashFilename),
 		minify: param.minify,
 		bundle: param.bundle,
@@ -69,8 +69,10 @@ export function run(argv: string[]): void {
 }
 
 function dropDeprecatedArgs(argv: string[]): string[] {
-	const droppedArgv = argv.filter(v => !/^(-s|--strip)$/.test(v));
-	if (argv.length !== droppedArgv.length) console.log(
-		"--strip option is deprecated. strip is applied by default. If you do not need to apply it, use --no-strip option.");
-	return droppedArgv;
+	const filteredArgv = argv.filter(v => !/^(-s|--strip)$/.test(v));
+	if (argv.length !== filteredArgv.length) {
+		console.log("WARN: --strip option is deprecated. strip is applied by default.");
+		console.log("WARN: If you do not need to apply it, use --no-strip option.");
+	}
+	return filteredArgv;
 }
