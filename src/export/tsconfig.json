@@ -1,15 +1,14 @@
 {
   "compilerOptions": {
     "target": "ES5",
-    "noLib": false,
-    "noImplicitAny": true,
+	"lib": ["es5", "dom"],
+	"noImplicitAny": true,
     "module": "commonjs",
     "outDir": "../../tmp/export/build",
     "newLine": "LF"
   },
   "files": [
     "./../../node_modules/@akashic/akashic-engine/lib/main.d.ts",
-    "../../typings/index.d.ts",
     "./LocalScriptAsset.ts",
     "./LocalTextAsset.ts"
   ]

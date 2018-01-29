@@ -65,7 +65,18 @@ export function run(argv: string[]): void {
 	// Commander の制約により --strip と --no-strip 引数を両立できないため、暫定対応として Commander 前に argv を処理する
 	const argvCopy = dropDeprecatedArgs(argv);
 	commander.parse(argvCopy);
-	cli(commander);
+	cli({
+		cwd: commander["cwd"],
+		force:commander["force"],
+		quiet: commander["quiet"],
+		output: commander["output"],
+		exclude: commander["exclude"],
+		strip: commander["strip"],
+		minify: commander["minify"],
+		bundle: commander["bundle"],
+		magnify: commander["magnify"],
+		hashFilename: commander["hashFilename"]
+	});
 }
 
 function dropDeprecatedArgs(argv: string[]): string[] {

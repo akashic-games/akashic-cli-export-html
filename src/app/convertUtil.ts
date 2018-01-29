@@ -16,6 +16,9 @@ export interface ConvertTemplateParameterObject {
 	bundle?: boolean;
 	magnify?: boolean;
 	use?: string;
+	hashLength?: number;
+	cwd?: string;
+	_cwd?: string;
 }
 
 export function extractAssetDefinitions (conf: cmn.Configuration, type: string): string[] {
@@ -24,17 +27,17 @@ export function extractAssetDefinitions (conf: cmn.Configuration, type: string):
 	return assetNames.filter((assetName) => assets[assetName].type === type);
 }
 
-export function resolveOutputPath(output: string, strip: boolean, logger: cmn.Logger): Promise<string> {
+export function resolveOutputPath(cwd: string, output: string, strip: boolean, logger: cmn.Logger): Promise<string> {
 	return new Promise<string>((resolve, reject) => {
 		if (!output) {
 			return reject("output is not defined.");
 		}
 		var resolvedPath = path.resolve(output);
-		if (!strip && !/^\.\./.test(path.relative(process.cwd(), resolvedPath))) {
+		if (!strip && !/^\.\./.test(path.relative(cwd, resolvedPath))) {
 			logger.warn("The output path overlaps with the game directory: files will be exported into the game directory.");
 			logger.warn("NOTE that after this, exporting this game with --no-strip option may include the files.");
 		}
-		return resolve(path.resolve(output));
+		return resolve(resolvedPath);
 	});
 }
 
@@ -55,7 +58,7 @@ export function copyAssetFilesStrip(outputPath: string, assets: cmn.Assets, opti
 					fsx.copySync(
 						path.resolve(process.cwd(), assetPath) + "." + type,
 						dst + "." + type,
-						{clobber: options.force}
+						{overwrite: options.force}
 					);
 				} catch (e) {
 					if (e.code !== "ENOENT") {
@@ -67,7 +70,7 @@ export function copyAssetFilesStrip(outputPath: string, assets: cmn.Assets, opti
 			fsx.copySync(
 				path.resolve(process.cwd(), assetPath),
 				dst,
-				{clobber: options.force}
+				{overwrite: options.force}
 			);
 		}
 	});

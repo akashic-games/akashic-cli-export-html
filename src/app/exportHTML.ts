@@ -4,14 +4,19 @@ import { promiseConvertNoBundle } from "./convertNoBundle";
 import { promiseConvertBundle } from "./convertBundle";
 
 import * as fs from "fs";
+import * as fsx from "fs-extra";
 import * as path from "path";
+import * as os from "os";
+import { resolve } from "url";
 
 export interface ExportHTMLParameterObject extends ConvertTemplateParameterObject {
-	cwd?: string;
+	_cwd?: string; // 本来のコンテンツのパス
 };
 
 export function _completeExportHTMLParameterObject(param: ExportHTMLParameterObject): void {
 	param.cwd = param.cwd || process.cwd();
+	param._cwd = param.cwd;
+	param.output = path.resolve(param.cwd, param.output);
 	param.logger = param.logger || new cmn.ConsoleLogger();
 }
 export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<void> {
@@ -45,6 +50,19 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 			}
 		});
 	})
+	.then(async (param: ExportHTMLParameterObject) => {
+		if (param.hashLength === 0)	return param;
+
+		const copyDirPath = path.resolve(fs.mkdtempSync(path.join(os.tmpdir(), "akashic-export-html-")));
+		fsx.copySync(param.cwd, copyDirPath);
+		process.chdir(copyDirPath);
+		param.cwd = copyDirPath;
+		
+		let gamejson: cmn.GameConfiguration = await cmn.ConfigurationFile.read(path.join(copyDirPath, "game.json"), param.logger);
+		cmn.Renamer.renameAssetFilenames(gamejson, copyDirPath, param.hashLength);
+		cmn.ConfigurationFile.write(gamejson, path.resolve(path.join(copyDirPath, "game.json")), param.logger);
+		return param;
+	})
 	.then((param: ExportHTMLParameterObject) => {
 		if (param.bundle) {
 			return promiseConvertBundle(param);
@@ -61,5 +79,5 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 };
 
 export function exportHTML(param: ConvertTemplateParameterObject, cb: (err?: any) => void): void {
-	promiseExportHTML(param).then<void>(cb, cb);
+	promiseExportHTML(param).then<void>(cb, (e?: any) => Promise.reject(e));
 }
