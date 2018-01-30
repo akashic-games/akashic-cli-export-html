@@ -12,6 +12,7 @@ describe("exportHTML", function () {
 		.then(function () {
 			var param = {
 				logger: undefined,
+				output: process.cwd()
 			}
 			exp._completeExportHTMLParameterObject(param);
 			expect(param.logger).not.toBe(undefined);

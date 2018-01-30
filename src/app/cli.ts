@@ -67,7 +67,7 @@ export function run(argv: string[]): void {
 	commander.parse(argvCopy);
 	cli({
 		cwd: commander["cwd"],
-		force:commander["force"],
+		force: commander["force"],
 		quiet: commander["quiet"],
 		output: commander["output"],
 		exclude: commander["exclude"],

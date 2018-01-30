@@ -7,10 +7,8 @@ import * as fs from "fs";
 import * as fsx from "fs-extra";
 import * as path from "path";
 import * as os from "os";
-import { resolve } from "url";
 
 export interface ExportHTMLParameterObject extends ConvertTemplateParameterObject {
-	_cwd?: string; // 本来のコンテンツのパス
 };
 
 export function _completeExportHTMLParameterObject(param: ExportHTMLParameterObject): void {
@@ -57,7 +55,7 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 		fsx.copySync(param.cwd, copyDirPath);
 		process.chdir(copyDirPath);
 		param.cwd = copyDirPath;
-		
+
 		let gamejson: cmn.GameConfiguration = await cmn.ConfigurationFile.read(path.join(copyDirPath, "game.json"), param.logger);
 		cmn.Renamer.renameAssetFilenames(gamejson, copyDirPath, param.hashLength);
 		cmn.ConfigurationFile.write(gamejson, path.resolve(path.join(copyDirPath, "game.json")), param.logger);

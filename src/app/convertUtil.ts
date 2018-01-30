@@ -17,8 +17,8 @@ export interface ConvertTemplateParameterObject {
 	magnify?: boolean;
 	use?: string;
 	hashLength?: number;
-	cwd?: string;
-	_cwd?: string;
+	cwd?: string; // source を元に加工しているコンテンツが置かれているパス
+	_cwd?: string; // source が置かれているパス
 }
 
 export function extractAssetDefinitions (conf: cmn.Configuration, type: string): string[] {
