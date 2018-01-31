@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES5",
-	"lib": ["es5", "dom"],
-	"noImplicitAny": true,
+    "lib": ["es5", "dom"],
+    "noImplicitAny": true,
     "module": "commonjs",
     "outDir": "../../tmp/export/build",
     "newLine": "LF"

@@ -67,7 +67,13 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 		} else {
 			return promiseConvertNoBundle(param);
 		}})
-	.then(restoreDirectory)
+	.then(() => {
+		restoreDirectory();
+
+		if (param.hashLength === 0) return;
+		param.logger.info("removing temp files...");
+		fsx.removeSync(param.cwd);
+	})
 	.catch((error) => {
 		param.logger.error(error);
 		restoreDirectory();
