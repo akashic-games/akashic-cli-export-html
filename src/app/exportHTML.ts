@@ -49,7 +49,7 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 		});
 	})
 	.then(async (param: ExportHTMLParameterObject) => {
-		if (param.hashLength === 0)	return param;
+		if (param.hashLength === 0) return param;
 
 		const copyDirPath = path.resolve(fs.mkdtempSync(path.join(os.tmpdir(), "akashic-export-html-")));
 		fsx.copySync(param.cwd, copyDirPath);
@@ -68,11 +68,11 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 			return promiseConvertNoBundle(param);
 		}})
 	.then(() => {
-		restoreDirectory();
-
-		if (param.hashLength === 0) return;
-		param.logger.info("removing temp files...");
-		fsx.removeSync(param.cwd);
+		if (param.hashLength > 0) {
+			param.logger.info("removing temp files...");
+			fsx.removeSync(param.cwd);
+		}
+		return restoreDirectory();
 	})
 	.catch((error) => {
 		param.logger.error(error);
