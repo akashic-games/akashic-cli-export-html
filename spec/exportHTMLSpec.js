@@ -19,4 +19,23 @@ describe("exportHTML", function () {
 			})
 		.then(done, done.fail);
 	});
+
+	it("promiseExportHTML", function (done) {
+		Promise.resolve()
+		.then(function () {
+			var param = {
+				logger: undefined,
+				cwd: "./",
+			}
+			return exp.promiseExportHTML(param);
+		})
+		.then(() => done.fail())
+		.catch((err) => {
+			if (err === "--output option must be specified.") {
+				done();
+			} else {
+				done.fail(err);
+			}
+		});
+	});
 });

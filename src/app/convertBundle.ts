@@ -11,7 +11,6 @@ import {
 	wrap,
 	getDefaultBundleScripts,
 	getDefaultBundleStyle,
-	resolveOutputPath,
 	extractAssetDefinitions
 } from "./convertUtil";
 
@@ -29,7 +28,7 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 		content: content
 	});
 	var innerHTMLAssetArray: InnerHTMLAssetData[] = [];
-	var outputPath = await resolveOutputPath(options._cwd, options.output, options.strip, options.logger);
+	var outputPath = path.resolve(options.output);
 
 	innerHTMLAssetArray.push({
 		name: "game.json",

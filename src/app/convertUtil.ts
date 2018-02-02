@@ -6,39 +6,19 @@ import * as UglifyJS from "uglify-js";
 import readdir = require("fs-readdir-recursive");
 
 export interface ConvertTemplateParameterObject {
-	quiet?: boolean;
-	exclude?: string[];
-	output?: string;
-	force?: boolean;
-	logger?: cmn.Logger;
-	strip?: boolean;
-	minify?: boolean;
-	bundle?: boolean;
-	magnify?: boolean;
-	use?: string;
-	hashLength?: number;
-	cwd?: string; // source を元に加工しているコンテンツが置かれているパス
-	_cwd?: string; // source が置かれているパス
+	output: string;
+	logger: cmn.Logger;
+	strip: boolean;
+	minify: boolean;
+	magnify: boolean;
+	force: boolean;
+	cwd: string; // source を元に加工しているコンテンツが置かれているパス
 }
 
 export function extractAssetDefinitions (conf: cmn.Configuration, type: string): string[] {
 	var assets = conf._content.assets;
 	var assetNames = Object.keys(assets);
 	return assetNames.filter((assetName) => assets[assetName].type === type);
-}
-
-export function resolveOutputPath(cwd: string, output: string, strip: boolean, logger: cmn.Logger): Promise<string> {
-	return new Promise<string>((resolve, reject) => {
-		if (!output) {
-			return reject("output is not defined.");
-		}
-		var resolvedPath = path.resolve(output);
-		if (!strip && !/^\.\./.test(path.relative(cwd, resolvedPath))) {
-			logger.warn("The output path overlaps with the game directory: files will be exported into the game directory.");
-			logger.warn("NOTE that after this, exporting this game with --no-strip option may include the files.");
-		}
-		return resolve(resolvedPath);
-	});
 }
 
 export function copyAssetFilesStrip(outputPath: string, assets: cmn.Assets, options: ConvertTemplateParameterObject): void {

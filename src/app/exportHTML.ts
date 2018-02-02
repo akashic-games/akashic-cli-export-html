@@ -7,24 +7,33 @@ import * as fs from "fs";
 import * as fsx from "fs-extra";
 import * as path from "path";
 import * as os from "os";
+import { currentId } from "async_hooks";
 
 export interface ExportHTMLParameterObject extends ConvertTemplateParameterObject {
+	quiet?: boolean;
+	exclude?: string[];
+	bundle?: boolean;
+	use?: string;
+	hashLength?: number;
 };
 
 export function _completeExportHTMLParameterObject(param: ExportHTMLParameterObject): void {
 	param.cwd = param.cwd || process.cwd();
-	param._cwd = param.cwd;
-	param.output = path.resolve(param.cwd, param.output);
 	param.logger = param.logger || new cmn.ConsoleLogger();
 }
 export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<void> {
 	_completeExportHTMLParameterObject(param);
 	const restoreDirectory: (err?: any) => Promise<void> = cmn.Util.chdir(param.cwd);
+	let gamepath: string;
 
 	if (!param.output) {
 		return Promise.reject("--output option must be specified.");
 	}
 
+	if (!param.strip && !/^\.\./.test(path.relative(param.cwd, param.output))) {
+		param.logger.warn("The output path overlaps with the game directory: files will be exported into the game directory.");
+		param.logger.warn("NOTE that after this, exporting this game with --no-strip option may include the files.");
+	}
 	return new Promise((resolve, reject) => {
 		fs.stat(path.resolve(param.output), (error: any, stat: any) => {
 			if (error) {
@@ -35,7 +44,7 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 					if (err) {
 						return reject("Create " + param.output + " directory failed.");
 					}
-					resolve(param);
+					resolve();
 				});
 			} else if (stat) {
 				if (!stat.isDirectory()) {
@@ -44,35 +53,37 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 				if (!param.force) {
 					return reject("The output directory " + param.output + " already exists. Cannot overwrite without force option.");
 				}
-				resolve(param);
+				resolve();
 			}
 		});
 	})
-	.then(async (param: ExportHTMLParameterObject) => {
-		if (param.hashLength === 0) return param;
-
-		const copyDirPath = path.resolve(fs.mkdtempSync(path.join(os.tmpdir(), "akashic-export-html-")));
-		fsx.copySync(param.cwd, copyDirPath);
-		process.chdir(copyDirPath);
-		param.cwd = copyDirPath;
-
-		let gamejson: cmn.GameConfiguration = await cmn.ConfigurationFile.read(path.join(copyDirPath, "game.json"), param.logger);
-		cmn.Renamer.renameAssetFilenames(gamejson, copyDirPath, param.hashLength);
-		cmn.ConfigurationFile.write(gamejson, path.resolve(path.join(copyDirPath, "game.json")), param.logger);
-		return param;
+	.then(() => {
+		if (param.hashLength === 0) return param.cwd;
+		return createRenamedGame(param.cwd, param.hashLength, param.logger);
 	})
-	.then((param: ExportHTMLParameterObject) => {
+	.then((currentGamepath: string) => {
+		gamepath = currentGamepath;
+		const convertParam = {
+			output: param.output,
+			logger: param.logger,
+			strip: param.strip,
+			minify: param.minify,
+			magnify: param.magnify,
+			force: param.force,
+			cwd: gamepath
+		};
 		if (param.bundle) {
-			return promiseConvertBundle(param);
+			return promiseConvertBundle(convertParam);
 		} else {
-			return promiseConvertNoBundle(param);
+			return promiseConvertNoBundle(convertParam);
 		}})
+	.then(restoreDirectory)
 	.then(() => {
 		if (param.hashLength > 0) {
 			param.logger.info("removing temp files...");
-			fsx.removeSync(param.cwd);
+			fsx.removeSync(gamepath);
 		}
-		return restoreDirectory();
+		return Promise.resolve();
 	})
 	.catch((error) => {
 		param.logger.error(error);
@@ -83,5 +94,19 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 };
 
 export function exportHTML(param: ConvertTemplateParameterObject, cb: (err?: any) => void): void {
-	promiseExportHTML(param).then<void>(cb, (e?: any) => Promise.reject(e));
+	promiseExportHTML(param).then<void>(cb).catch(cb);
+}
+
+function createRenamedGame(cwd: string, hashLength: number, logger: cmn.Logger): Promise<string> {
+	const copyDirPath = path.resolve(fs.mkdtempSync(path.join(os.tmpdir(), "akashic-export-html-")));
+	fsx.copySync(cwd, copyDirPath);
+
+	return Promise.resolve()
+		.then(() => cmn.ConfigurationFile.read(path.join(copyDirPath, "game.json"), logger))
+		.then((gamejson: cmn.GameConfiguration) => {
+			cmn.Renamer.renameAssetFilenames(gamejson, copyDirPath, hashLength);
+			return cmn.ConfigurationFile.write(gamejson, path.resolve(path.join(copyDirPath, "game.json")), logger);
+		}).then(() => {
+			return copyDirPath;
+		});
 }

@@ -9,7 +9,6 @@ import {
 	copyAssetFiles,
 	encodeText,
 	wrap,
-	resolveOutputPath,
 	extractAssetDefinitions
 } from "./convertUtil";
 
@@ -21,7 +20,7 @@ export async function promiseConvertNoBundle(options: ConvertTemplateParameterOb
 		content: content
 	});
 	var assetPaths: string[] = [];
-	var outputPath = await resolveOutputPath(options._cwd, options.output, options.strip, options.logger);
+	var outputPath = path.resolve(options.output);
 
 	writeCommonFiles(outputPath, conf, options);
 
