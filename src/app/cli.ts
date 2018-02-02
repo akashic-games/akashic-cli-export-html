@@ -55,11 +55,8 @@ commander
 	.option("-H, --hash-filename [length]", "Rename asset files with their hash values")
 	.option("-M, --minify", "minify JavaScript files")
 	.option("-b, --bundle", "bundle assets and scripts in index.html (to reduce the number of files)")
-	.option("-m, --magnify", "fit game area to outer element size")
-	.option("-e, --exclude [fileNames]", "Name of exclude file", (fileNames: string, list: string[]) => {
-		list.push(fileNames);
-		return list;
-	}, []);
+	.option("-m, --magnify", "fit game area to outer element size");
+
 
 export function run(argv: string[]): void {
 	// Commander の制約により --strip と --no-strip 引数を両立できないため、暫定対応として Commander 前に argv を処理する
@@ -70,7 +67,6 @@ export function run(argv: string[]): void {
 		force: commander["force"],
 		quiet: commander["quiet"],
 		output: commander["output"],
-		exclude: commander["exclude"],
 		strip: commander["strip"],
 		minify: commander["minify"],
 		bundle: commander["bundle"],

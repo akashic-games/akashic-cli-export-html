@@ -10,8 +10,10 @@
     "clean": "gulp clean",
     "start": "npm run build && node bin/run",
     "build": "gulp compile",
-    "lint": "gulp lint lint-md",
-    "test": "gulp test && gulp lint && gulp lint-md"
+    "lint": "npm run lint:ts && npm run lint:md",
+    "lint:ts": "tslint --type-check -c tslint.json --project ./tsconfig.json",
+    "lint:md": "remark ./*.md --frail --no-stdout --quiet --rc-path ./.remarkrc",
+    "test": "gulp test && npm run lint && npm run lint-md"
   },
   "author": "DWANGO Co., Ltd.",
   "license": "MIT",
@@ -45,10 +47,10 @@
     "jasmine": "~2.1.1",
     "jasmine-reporters": "~2.0.4",
     "jasmine-terminal-reporter": "~0.9.1",
-    "mdast": "~2.0.0",
-    "mdast-lint": "~1.1.1",
+    "remark-cli": "~2.0.0",
+    "remark-lint": "~5.0.1",
     "mock-fs": "3.12.1",
-    "tslint": "~3.7.4",
+    "tslint": "~5.9.0",
     "typescript": "~2.6.1",
     "vinyl-source-stream": "^1.1.0"
   },

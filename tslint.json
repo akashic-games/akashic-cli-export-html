@@ -16,17 +16,18 @@
     "interface-name": false,
     "jsdoc-format": true,
     "label-position": true,
-    "label-undefined": true,
     "max-line-length": [true, 140],
-    "member-ordering": [true,
-      "public-before-private",
-      "static-before-instance",
-      "variables-before-functions"
+    "member-ordering": [true, {
+       "order": [
+         "public-static-field",
+         "public-static-method",
+         "public-instance-field",
+         "private-instance-field",
+         "public-constructor",
+         "public-instance-method",
+         "private-instance-method"
+       ]}
     ],
-    "trailing-comma": [true, {
-      "multiline": "never",
-      "singleline": "never"
-    }],
     "no-arg": true,
     "no-bitwise": false,
     "no-console": [true,
@@ -37,20 +38,18 @@
       "trace"
     ],
     "no-construct": true,
-    "no-constructor-vars": true,
     "no-debugger": true,
-    "no-duplicate-key": true,
-    "no-duplicate-variable": true,
+    "no-duplicate-variable": false,
     "no-empty": true,
     "no-eval": true,
-    "no-string-literal": false,
     "no-switch-case-fall-through": true,
+    "trailing-comma": [true, {"multiline": "never", "singleline": "never"}],
     "no-trailing-whitespace": true,
     "no-unused-expression": true,
     "no-unused-variable": true,
-    "no-unreachable": true,
     "no-use-before-declare": true,
     "no-var-requires": true,
+    "no-floating-promises": true,
     "one-line": [true,
       "check-open-brace",
       "check-catch",

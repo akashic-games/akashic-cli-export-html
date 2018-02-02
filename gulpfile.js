@@ -1,7 +1,6 @@
 var gulp = require("gulp");
 var path = require("path");
 var del = require("del");
-var tslint = require("gulp-tslint");
 var jasmine = require("gulp-jasmine");
 var istanbul = require("gulp-istanbul");
 var shell = require("gulp-shell");
@@ -37,17 +36,6 @@ gulp.task("compileExport", ["compileExport:build"], function() {
 gulp.task("compileExport:build", shell.task("tsc -p ./src/export/", {cwd: __dirname}));
 
 gulp.task("compileSpec", ["compile"], shell.task("tsc", {cwd: path.join(__dirname, "spec")})); 
-
-gulp.task("lint", function(){
-	return gulp.src("src/**/*.ts")
-		.pipe(tslint())
-		.pipe(tslint.report());
-});
-
-gulp.task("lint-md", function(){
-	return gulp.src(["**/*.md", "!node_modules/**/*.md"])
-		.pipe(shell(["mdast <%= file.path %> --frail --no-stdout --quiet"]));
-});
 
 gulp.task("test", ["compileSpec"], function(cb) {
 	var jasmineReporters = [ new Reporter({

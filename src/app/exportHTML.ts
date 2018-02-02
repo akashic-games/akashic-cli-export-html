@@ -10,11 +10,9 @@ import * as os from "os";
 
 export interface ExportHTMLParameterObject extends ConvertTemplateParameterObject {
 	quiet?: boolean;
-	exclude?: string[];
 	bundle?: boolean;
-	use?: string;
 	hashLength?: number;
-};
+}
 
 export function _completeExportHTMLParameterObject(param: ExportHTMLParameterObject): void {
 	param.source = param.source || process.cwd();
@@ -86,11 +84,12 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 	})
 	.catch((error) => {
 		param.logger.error(error);
-		restoreDirectory();
-		throw new Error(error);
+		return restoreDirectory().then(() => {
+			throw new Error(error);
+		});
 	})
 	.then(() => param.logger.info("Done!"));
-};
+}
 
 export function exportHTML(param: ConvertTemplateParameterObject, cb: (err?: any) => void): void {
 	promiseExportHTML(param).then<void>(cb).catch(cb);

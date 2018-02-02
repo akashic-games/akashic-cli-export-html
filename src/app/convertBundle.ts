@@ -87,7 +87,7 @@ function convertScriptNameToInnerHTMLObj(scriptName: string, minify?: boolean): 
 		type: isScript ? "script" : "text",
 		code: isScript ? wrap(scriptString, minify) : scriptString
 	};
-};
+}
 
 function writeEct(
 	innerHTMLAssetArray: InnerHTMLAssetData[], outputPath: string,

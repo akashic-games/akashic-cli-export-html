@@ -54,7 +54,7 @@ export function copyAssetFilesStrip(outputPath: string, assets: cmn.Assets, opti
 			);
 		}
 	});
-};
+}
 
 export function copyAssetFiles(outputPath: string, options: ConvertTemplateParameterObject ): void {
 	options.logger.info("copying files...");
