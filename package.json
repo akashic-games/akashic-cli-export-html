@@ -13,7 +13,7 @@
     "lint": "npm run lint:ts && npm run lint:md",
     "lint:ts": "tslint --type-check -c tslint.json --project ./tsconfig.json",
     "lint:md": "remark ./*.md --frail --no-stdout --quiet --rc-path ./.remarkrc",
-    "test": "gulp test && npm run lint && npm run lint-md"
+    "test": "gulp test && npm run lint"
   },
   "author": "DWANGO Co., Ltd.",
   "license": "MIT",
