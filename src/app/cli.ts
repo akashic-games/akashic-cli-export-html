@@ -20,7 +20,7 @@ interface CommandParameterObject {
 function cli(param: CommandParameterObject): void {
 	const logger = new ConsoleLogger({ quiet: param.quiet });
 	const exportParam = {
-		cwd: param.cwd,
+		source: param.cwd,
 		force: param.force,
 		quiet: param.quiet,
 		output: param.output,

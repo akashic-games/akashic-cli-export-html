@@ -7,7 +7,6 @@ import * as fs from "fs";
 import * as fsx from "fs-extra";
 import * as path from "path";
 import * as os from "os";
-import { currentId } from "async_hooks";
 
 export interface ExportHTMLParameterObject extends ConvertTemplateParameterObject {
 	quiet?: boolean;
@@ -18,19 +17,19 @@ export interface ExportHTMLParameterObject extends ConvertTemplateParameterObjec
 };
 
 export function _completeExportHTMLParameterObject(param: ExportHTMLParameterObject): void {
-	param.cwd = param.cwd || process.cwd();
+	param.source = param.source || process.cwd();
 	param.logger = param.logger || new cmn.ConsoleLogger();
 }
 export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<void> {
 	_completeExportHTMLParameterObject(param);
-	const restoreDirectory: (err?: any) => Promise<void> = cmn.Util.chdir(param.cwd);
+	const restoreDirectory: (err?: any) => Promise<void> = cmn.Util.chdir(param.source);
 	let gamepath: string;
 
 	if (!param.output) {
 		return Promise.reject("--output option must be specified.");
 	}
 
-	if (!param.strip && !/^\.\./.test(path.relative(param.cwd, param.output))) {
+	if (!param.strip && !/^\.\./.test(path.relative(param.source, param.output))) {
 		param.logger.warn("The output path overlaps with the game directory: files will be exported into the game directory.");
 		param.logger.warn("NOTE that after this, exporting this game with --no-strip option may include the files.");
 	}
@@ -58,8 +57,8 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 		});
 	})
 	.then(() => {
-		if (param.hashLength === 0) return param.cwd;
-		return createRenamedGame(param.cwd, param.hashLength, param.logger);
+		if (param.hashLength === 0) return param.source;
+		return createRenamedGame(param.source, param.hashLength, param.logger);
 	})
 	.then((currentGamepath: string) => {
 		gamepath = currentGamepath;
@@ -70,7 +69,7 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 			minify: param.minify,
 			magnify: param.magnify,
 			force: param.force,
-			cwd: gamepath
+			source: gamepath
 		};
 		if (param.bundle) {
 			return promiseConvertBundle(convertParam);

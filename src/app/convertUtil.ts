@@ -12,7 +12,7 @@ export interface ConvertTemplateParameterObject {
 	minify: boolean;
 	magnify: boolean;
 	force: boolean;
-	cwd: string; // source を元に加工しているコンテンツが置かれているパス
+	source: string;
 }
 
 export function extractAssetDefinitions (conf: cmn.Configuration, type: string): string[] {
