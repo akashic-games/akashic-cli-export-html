@@ -20,7 +20,7 @@ export function _completeExportHTMLParameterObject(param: ExportHTMLParameterObj
 }
 export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<void> {
 	_completeExportHTMLParameterObject(param);
-	const restoreDirectory: (err?: any) => Promise<void> = cmn.Util.chdir(param.source);
+	const restoreDirectory = cmn.Util.chdir(param.source);
 	let gamepath: string;
 
 	if (!param.output) {
@@ -76,6 +76,7 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 		}})
 	.then(restoreDirectory)
 	.then(() => {
+		// ハッシュ化した場合一時ファイルが生成されるため削除する
 		if (param.hashLength > 0) {
 			param.logger.info("removing temp files...");
 			fsx.removeSync(gamepath);
@@ -85,7 +86,7 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 	.catch((error) => {
 		param.logger.error(error);
 		return restoreDirectory().then(() => {
-			throw new Error(error);
+			throw error;
 		});
 	})
 	.then(() => param.logger.info("Done!"));
@@ -95,16 +96,14 @@ export function exportHTML(param: ConvertTemplateParameterObject, cb: (err?: any
 	promiseExportHTML(param).then<void>(cb).catch(cb);
 }
 
-function createRenamedGame(cwd: string, hashLength: number, logger: cmn.Logger): Promise<string> {
-	const copyDirPath = path.resolve(fs.mkdtempSync(path.join(os.tmpdir(), "akashic-export-html-")));
-	fsx.copySync(cwd, copyDirPath);
+function createRenamedGame(sourcePath: string, hashLength: number, logger: cmn.Logger): Promise<string> {
+	const destDirPath = path.resolve(fs.mkdtempSync(path.join(os.tmpdir(), "akashic-export-html-")));
+	fsx.copySync(sourcePath, destDirPath);
 
 	return Promise.resolve()
-		.then(() => cmn.ConfigurationFile.read(path.join(copyDirPath, "game.json"), logger))
+		.then(() => cmn.ConfigurationFile.read(path.join(destDirPath, "game.json"), logger))
 		.then((gamejson: cmn.GameConfiguration) => {
-			cmn.Renamer.renameAssetFilenames(gamejson, copyDirPath, hashLength);
-			return cmn.ConfigurationFile.write(gamejson, path.resolve(path.join(copyDirPath, "game.json")), logger);
-		}).then(() => {
-			return copyDirPath;
-		});
+			cmn.Renamer.renameAssetFilenames(gamejson, destDirPath, hashLength);
+			return cmn.ConfigurationFile.write(gamejson, path.resolve(path.join(destDirPath, "game.json")), logger);
+		}).then(() => destDirPath);
 }
