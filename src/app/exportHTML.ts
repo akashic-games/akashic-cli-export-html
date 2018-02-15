@@ -86,7 +86,6 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 			param.logger.info("removing temp files...");
 			fsx.removeSync(gamepath);
 		}
-		return Promise.resolve();
 	})
 	.catch((error) => {
 		param.logger.error(error);
