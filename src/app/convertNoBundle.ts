@@ -13,7 +13,7 @@ import {
 } from "./convertUtil";
 
 export async function promiseConvertNoBundle(options: ConvertTemplateParameterObject): Promise<void> {
-	var content = await cmn.ConfigurationFile.read(path.join(process.cwd(), "game.json"), options.logger);
+	var content = await cmn.ConfigurationFile.read(path.join(options.source, "game.json"), options.logger);
 	if (!content.environment) content.environment = {};
 	content.environment["sandbox-runtime"] = content.environment["sandbox-runtime"] ? content.environment["sandbox-runtime"] : "1";
 	var conf = new cmn.Configuration({
@@ -22,7 +22,7 @@ export async function promiseConvertNoBundle(options: ConvertTemplateParameterOb
 	var assetPaths: string[] = [];
 	var outputPath = path.resolve(options.output);
 
-	writeCommonFiles(outputPath, conf, options);
+	writeCommonFiles(options.source, outputPath, conf, options);
 
 	var gamejsonPath = path.resolve(outputPath, "./js/game.json.js");
 	fsx.outputFileSync(gamejsonPath, wrapText(JSON.stringify(conf._content, null, "\t"), "game.json"));
@@ -77,11 +77,14 @@ function writeEct(assetPaths: string[], outputPath: string, conf: cmn.Configurat
 	fs.writeFileSync(path.resolve(outputPath, "./index.html"), html);
 }
 
-function writeCommonFiles(outputPath: string, conf: cmn.Configuration, options: ConvertTemplateParameterObject): void {
+function writeCommonFiles(
+	inputPath: string,
+	outputPath: string, conf: cmn.Configuration,
+	options: ConvertTemplateParameterObject): void {
 	if (options.strip) {
-		copyAssetFilesStrip(outputPath, conf._content.assets, options);
+		copyAssetFilesStrip(inputPath, outputPath, conf._content.assets, options);
 	} else {
-		copyAssetFiles(outputPath, options);
+		copyAssetFiles(inputPath, outputPath, options);
 	}
 	let templatePath: string;
 	switch (conf._content.environment["sandbox-runtime"]) {

@@ -15,17 +15,18 @@ export interface ExportHTMLParameterObject extends ConvertTemplateParameterObjec
 }
 
 export function _completeExportHTMLParameterObject(param: ExportHTMLParameterObject): void {
-	param.source = param.source || process.cwd();
+	param.source = param.source ? path.resolve(param.source) : process.cwd();
+	param.output = path.resolve(param.output);
 	param.logger = param.logger || new cmn.ConsoleLogger();
 }
 export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<void> {
-	_completeExportHTMLParameterObject(param);
-	const restoreDirectory = cmn.Util.chdir(param.source);
-	let gamepath: string;
-
 	if (!param.output) {
 		return Promise.reject("--output option must be specified.");
 	}
+
+	_completeExportHTMLParameterObject(param);
+	const restoreDirectory = cmn.Util.chdir(param.source);
+	let gamepath: string;
 
 	if (!param.strip && !/^\.\./.test(path.relative(param.source, param.output))) {
 		param.logger.warn("The output path overlaps with the game directory: files will be exported into the game directory.");
@@ -56,7 +57,11 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 	})
 	.then(() => {
 		if (param.hashLength === 0) return param.source;
-		return createRenamedGame(param.source, param.hashLength, param.logger);
+		return createRenamedGame(param.source, param.hashLength, param.logger)
+			.then((tmpGamePath) => {
+				process.chdir(tmpGamePath);
+				return tmpGamePath;
+			});
 	})
 	.then((currentGamepath: string) => {
 		gamepath = currentGamepath;

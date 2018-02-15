@@ -21,7 +21,7 @@ interface InnerHTMLAssetData {
 }
 
 export async function promiseConvertBundle(options: ConvertTemplateParameterObject): Promise<void> {
-	var content = await cmn.ConfigurationFile.read(path.join(process.cwd(), "game.json"), options.logger);
+	var content = await cmn.ConfigurationFile.read(path.join(options.source, "game.json"), options.logger);
 	if (!content.environment) content.environment = {};
 	content.environment["sandbox-runtime"] = content.environment["sandbox-runtime"] ? content.environment["sandbox-runtime"] : "1";
 	var conf = new cmn.Configuration({
@@ -60,7 +60,7 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 	}
 
 	writeEct(innerHTMLAssetArray, outputPath, conf, options, templatePath);
-	writeCommonFiles(outputPath, conf, options, templatePath);
+	writeCommonFiles(options.source, outputPath, conf, options, templatePath);
 }
 
 function convertAssetToInnerHTMLObj(assetName: string, conf: cmn.Configuration, minify?: boolean): InnerHTMLAssetData {
@@ -105,12 +105,13 @@ function writeEct(
 }
 
 function writeCommonFiles(
+	inputPath: string,
 	outputPath: string, conf: cmn.Configuration,
 	options: ConvertTemplateParameterObject, templatePath: string): void {
 	if (options.strip) {
-		copyAssetFilesStrip(outputPath, conf._content.assets, options);
+		copyAssetFilesStrip(inputPath, outputPath, conf._content.assets, options);
 	} else {
-		copyAssetFiles(outputPath, options);
+		copyAssetFiles(inputPath, outputPath, options);
 	}
 
 	const jsDir = path.resolve(outputPath, "js");

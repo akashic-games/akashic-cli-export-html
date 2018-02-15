@@ -21,7 +21,9 @@ export function extractAssetDefinitions (conf: cmn.Configuration, type: string):
 	return assetNames.filter((assetName) => assets[assetName].type === type);
 }
 
-export function copyAssetFilesStrip(outputPath: string, assets: cmn.Assets, options: ConvertTemplateParameterObject): void {
+export function copyAssetFilesStrip(
+	inputPath: string, outputPath: string,
+	assets: cmn.Assets, options: ConvertTemplateParameterObject): void {
 	options.logger.info("copying stripped fileset...");
 	var assetNames = Object.keys(assets);
 	assetNames.filter((assetName) => {
@@ -36,7 +38,7 @@ export function copyAssetFilesStrip(outputPath: string, assets: cmn.Assets, opti
 			audioTypes.forEach((type) => {
 				try {
 					fsx.copySync(
-						path.resolve(process.cwd(), assetPath) + "." + type,
+						path.resolve(inputPath, assetPath) + "." + type,
 						dst + "." + type,
 						{overwrite: options.force}
 					);
@@ -48,7 +50,7 @@ export function copyAssetFilesStrip(outputPath: string, assets: cmn.Assets, opti
 			});
 		} else {
 			fsx.copySync(
-				path.resolve(process.cwd(), assetPath),
+				path.resolve(inputPath, assetPath),
 				dst,
 				{overwrite: options.force}
 			);
@@ -56,19 +58,19 @@ export function copyAssetFilesStrip(outputPath: string, assets: cmn.Assets, opti
 	});
 }
 
-export function copyAssetFiles(outputPath: string, options: ConvertTemplateParameterObject ): void {
+export function copyAssetFiles(inputPath: string, outputPath: string, options: ConvertTemplateParameterObject ): void {
 	options.logger.info("copying files...");
-	const scriptPath = path.resolve(process.cwd(), "script");
-	const textPath = path.resolve(process.cwd(), "text");
+	const scriptPath = path.resolve(inputPath, "script");
+	const textPath = path.resolve(inputPath, "text");
 	const isScriptOrTextAsset = (src: string) => {
 		return path.relative(scriptPath, src)[0] !== "." || path.relative(textPath, src)[0] !== ".";
 	};
 	try {
-		const files = readdir(process.cwd());
+		const files = readdir(inputPath);
 		files.forEach(p => {
 			cmn.Util.mkdirpSync(path.dirname(path.resolve(outputPath, p)));
-			if (!isScriptOrTextAsset(path.resolve(process.cwd(), p))) {
-				fs.writeFileSync(path.resolve(outputPath, p), fs.readFileSync(path.resolve(process.cwd(), p)));
+			if (!isScriptOrTextAsset(path.resolve(inputPath, p))) {
+				fs.writeFileSync(path.resolve(outputPath, p), fs.readFileSync(path.resolve(inputPath, p)));
 			}
 		});
 	} catch (e) {
