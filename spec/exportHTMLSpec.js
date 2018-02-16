@@ -12,6 +12,7 @@ describe("exportHTML", function () {
 		.then(function () {
 			var param = {
 				logger: undefined,
+				cwd: process.cwd(),
 				output: process.cwd()
 			}
 			exp._completeExportHTMLParameterObject(param);
@@ -31,11 +32,8 @@ describe("exportHTML", function () {
 		})
 		.then(() => done.fail())
 		.catch((err) => {
-			if (err === "--output option must be specified.") {
-				done();
-			} else {
-				done.fail(err);
-			}
+			expect(err).toBe("--output option must be specified.");
+			done();
 		});
 	});
 });

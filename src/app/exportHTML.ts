@@ -12,11 +12,13 @@ export interface ExportHTMLParameterObject extends ConvertTemplateParameterObjec
 	quiet?: boolean;
 	bundle?: boolean;
 	hashLength?: number;
+	cwd: string;
 }
 
 export function _completeExportHTMLParameterObject(param: ExportHTMLParameterObject): void {
-	param.source = param.source ? path.resolve(param.source) : process.cwd();
-	param.output = path.resolve(param.output);
+	const source = param.source ? param.source : "./";
+	param.source = path.join(param.cwd, source);
+	param.output = path.join(param.cwd, param.output);
 	param.logger = param.logger || new cmn.ConsoleLogger();
 }
 export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<void> {
@@ -25,7 +27,7 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 	}
 
 	_completeExportHTMLParameterObject(param);
-	const restoreDirectory = cmn.Util.chdir(param.source);
+	// const restoreDirectory = cmn.Util.chdir(param.source);
 	let gamepath: string;
 
 	if (!param.strip && !/^\.\./.test(path.relative(param.source, param.output))) {
@@ -57,11 +59,7 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 	})
 	.then(() => {
 		if (param.hashLength === 0) return param.source;
-		return createRenamedGame(param.source, param.hashLength, param.logger)
-			.then((tmpGamePath) => {
-				process.chdir(tmpGamePath);
-				return tmpGamePath;
-			});
+		return createRenamedGame(param.source, param.hashLength, param.logger);
 	})
 	.then((currentGamepath: string) => {
 		gamepath = currentGamepath;
@@ -79,7 +77,6 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 		} else {
 			return promiseConvertNoBundle(convertParam);
 		}})
-	.then(restoreDirectory)
 	.then(() => {
 		// ハッシュ化した場合一時ファイルが生成されるため削除する
 		if (param.hashLength > 0) {
@@ -89,14 +86,12 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 	})
 	.catch((error) => {
 		param.logger.error(error);
-		return restoreDirectory().then(() => {
-			throw error;
-		});
+		throw error;
 	})
 	.then(() => param.logger.info("Done!"));
 }
 
-export function exportHTML(param: ConvertTemplateParameterObject, cb: (err?: any) => void): void {
+export function exportHTML(param: ExportHTMLParameterObject, cb: (err?: any) => void): void {
 	promiseExportHTML(param).then<void>(cb).catch(cb);
 }
 

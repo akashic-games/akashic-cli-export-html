@@ -28,7 +28,6 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 		content: content
 	});
 	var innerHTMLAssetArray: InnerHTMLAssetData[] = [];
-	var outputPath = path.resolve(options.output);
 
 	innerHTMLAssetArray.push({
 		name: "game.json",
@@ -38,12 +37,12 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 
 	var innerHTMLAssetNames = extractAssetDefinitions(conf, "script").concat(extractAssetDefinitions(conf, "text"));
 	innerHTMLAssetArray = innerHTMLAssetArray.concat(innerHTMLAssetNames.map((assetName: string) => {
-		return convertAssetToInnerHTMLObj(assetName, conf, options.minify);
+		return convertAssetToInnerHTMLObj(assetName, options.source, conf, options.minify);
 	}));
 
 	if (conf._content.globalScripts) {
 		innerHTMLAssetArray = innerHTMLAssetArray.concat(conf._content.globalScripts.map((scriptName: string) => {
-			return convertScriptNameToInnerHTMLObj(scriptName, options.minify);
+			return convertScriptNameToInnerHTMLObj(scriptName, options.source, options.minify);
 		}));
 	}
 
@@ -59,14 +58,14 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 			throw Error("Unknown engine version: `environment[\"sandbox-runtime\"]` field in game.json should be \"1\" or \"2\".");
 	}
 
-	writeEct(innerHTMLAssetArray, outputPath, conf, options, templatePath);
-	writeCommonFiles(options.source, outputPath, conf, options, templatePath);
+	writeEct(innerHTMLAssetArray, options.output, conf, options, templatePath);
+	writeCommonFiles(options.source, options.output, conf, options, templatePath);
 }
 
-function convertAssetToInnerHTMLObj(assetName: string, conf: cmn.Configuration, minify?: boolean): InnerHTMLAssetData {
+function convertAssetToInnerHTMLObj(assetName: string, inputPath: string, conf: cmn.Configuration, minify?: boolean): InnerHTMLAssetData {
 	var assets = conf._content.assets;
 	var isScript = assets[assetName].type === "script";
-	var assetString = fs.readFileSync(assets[assetName].path, "utf8").replace(/\r\n|\r/g, "\n");
+	var assetString = fs.readFileSync(path.join(inputPath, assets[assetName].path), "utf8").replace(/\r\n|\r/g, "\n");
 	return {
 		name: assetName,
 		type: assets[assetName].type,
@@ -74,8 +73,8 @@ function convertAssetToInnerHTMLObj(assetName: string, conf: cmn.Configuration, 
 	};
 }
 
-function convertScriptNameToInnerHTMLObj(scriptName: string, minify?: boolean): InnerHTMLAssetData {
-	var scriptString = fs.readFileSync(scriptName, "utf8").replace(/\r\n|\r/g, "\n");
+function convertScriptNameToInnerHTMLObj(scriptName: string, inputPath: string, minify?: boolean): InnerHTMLAssetData {
+	var scriptString = fs.readFileSync(path.join(inputPath, scriptName), "utf8").replace(/\r\n|\r/g, "\n");
 	var isScript = /\.js$/i.test(scriptName);
 
 	var scriptPath = path.resolve("./", scriptName);

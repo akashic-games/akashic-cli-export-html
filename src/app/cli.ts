@@ -6,6 +6,7 @@ import { promiseExportHTML } from "./exportHTML";
 
 interface CommandParameterObject {
 	cwd?: string;
+	source?: string;
 	force?: boolean;
 	quiet?: boolean;
 	output?: string;
@@ -20,7 +21,8 @@ interface CommandParameterObject {
 function cli(param: CommandParameterObject): void {
 	const logger = new ConsoleLogger({ quiet: param.quiet });
 	const exportParam = {
-		source: param.cwd,
+		cwd: !param.cwd ? process.cwd() : path.resolve(param.cwd),
+		source: param.source,
 		force: param.force,
 		quiet: param.quiet,
 		output: param.output,
@@ -48,6 +50,7 @@ commander
 commander
 	.description("convert your Akashic game runnable standalone.")
 	.option("-C, --cwd <dir>", "The directory to export from")
+	.option("-s, --source <dir>", "Source directory to export from cwd/current directory")
 	.option("-f, --force", "Overwrites existing files")
 	.option("-q, --quiet", "Suppress output")
 	.option("-o, --output <fileName>", "Name of output file or directory")
@@ -67,6 +70,7 @@ export function run(argv: string[]): void {
 		force: commander["force"],
 		quiet: commander["quiet"],
 		output: commander["output"],
+		source: commander["source"],
 		strip: commander["strip"],
 		minify: commander["minify"],
 		bundle: commander["bundle"],
