@@ -27,7 +27,6 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 	}
 
 	_completeExportHTMLParameterObject(param);
-	// const restoreDirectory = cmn.Util.chdir(param.source);
 	let gamepath: string;
 
 	if (!param.strip && !/^\.\./.test(path.relative(param.source, param.output))) {
