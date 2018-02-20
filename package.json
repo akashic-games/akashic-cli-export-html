@@ -19,10 +19,10 @@
     "lint:md": "remark ./*.md --frail --no-stdout --quiet --rc-path ./.remarkrc",
     "test": "npm run test:jasmine && npm run lint",
 	"test:jasmine": "istanbul cover --report text --report html --colors -i ./lib/main.node.js ./node_modules/jasmine/bin/jasmine.js",
-    "copy": "npm run copy:browserify && npm run copy:minify",
+    "copy": "npm run copy:browserify && npm run copy:minify && npm run copy:delete",
     "copy:browserify": "browserify --require ./node_modules/@akashic/akashic-engine/lib/main.node.js:@akashic/akashic-engine --outfile ./templates/template-export-html-v2/js/akashic-engine.js",
     "copy:minify": "node build/copyfiles.js",
-    "copy:delete": ""
+    "copy:delete": "shx rm -rf ./templates/template-export-html-v2/js/akashic-engine.js"
 },
   "author": "DWANGO Co., Ltd.",
   "license": "MIT",
@@ -45,7 +45,8 @@
     "browserify": "^13.0.0",
     "del": "~1.1.1",
     "cpx": "^1.5.0",
-	"gulp": "~3.9.1",
+    "shx": "~0.2.2",
+    "gulp": "~3.9.1",
     "gulp-expect-file": "0.0.7",
     "gulp-istanbul": "~0.10.4",
     "gulp-jasmine": "~2.3.0",
