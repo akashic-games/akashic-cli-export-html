@@ -8,7 +8,6 @@ function minify(filepath) {
 		preserveComments: "license",
 		output: {
 			beautify: true
-//			comments: saveLicense
 		}
 	});
 };
