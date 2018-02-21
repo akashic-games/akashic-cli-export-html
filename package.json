@@ -5,7 +5,7 @@
   "main": "lib/index.js",
   "scripts": {
     "prepublish": "npm run clean && npm run build",
-    "clean": "rimraf lib && rimraf spec/build",
+    "clean": "shx rm -rf lib && shx rm -rf spec/build",
     "start": "npm run build && node bin/run",
     "build": "npm run build:app && npm run build:export",
     "build:app": "tsc -p ./",
@@ -43,7 +43,6 @@
     "@types/node": "~8.0.53",
     "@types/uglify-js": "~2.6.29",
     "browserify": "^13.0.0",
-    "del": "~1.1.1",
     "cpx": "^1.5.0",
     "shx": "~0.2.2",
     "jasmine": "^2.1.1",
