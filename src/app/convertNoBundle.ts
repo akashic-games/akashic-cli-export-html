@@ -9,43 +9,44 @@ import {
 	copyAssetFiles,
 	encodeText,
 	wrap,
-	resolveOutputPath,
 	extractAssetDefinitions
 } from "./convertUtil";
 
 export async function promiseConvertNoBundle(options: ConvertTemplateParameterObject): Promise<void> {
-	var content = await cmn.ConfigurationFile.read(path.join(process.cwd(), "game.json"), options.logger);
+	var content = await cmn.ConfigurationFile.read(path.join(options.source, "game.json"), options.logger);
 	if (!content.environment) content.environment = {};
 	content.environment["sandbox-runtime"] = content.environment["sandbox-runtime"] ? content.environment["sandbox-runtime"] : "1";
 	var conf = new cmn.Configuration({
 		content: content
 	});
 	var assetPaths: string[] = [];
-	var outputPath = await resolveOutputPath(options.output, options.strip, options.logger);
 
-	writeCommonFiles(outputPath, conf, options);
+	writeCommonFiles(options.source, options.output, conf, options);
 
-	var gamejsonPath = path.resolve(outputPath, "./js/game.json.js");
+	var gamejsonPath = path.resolve(options.output, "./js/game.json.js");
 	fsx.outputFileSync(gamejsonPath, wrapText(JSON.stringify(conf._content, null, "\t"), "game.json"));
 	assetPaths.push("./js/game.json.js");
 
 	var assetNames = extractAssetDefinitions(conf, "script").concat(extractAssetDefinitions(conf, "text"));
-	assetPaths = assetPaths.concat(assetNames.map((assetName: string) => convertAssetAndOutput(assetName, conf, outputPath, options.minify)));
 
+	assetPaths = assetPaths.concat(
+		assetNames.map((assetName: string) => convertAssetAndOutput(assetName, conf, options.source, options.output, options.minify)));
 	if (conf._content.globalScripts) {
 		assetPaths = assetPaths.concat(conf._content.globalScripts.map((scriptName: string) => {
-			return convertGlobalScriptAndOutput(scriptName, outputPath, options.minify);
+			return convertGlobalScriptAndOutput(scriptName, options.source, options.output, options.minify);
 		}));
 	}
 
-	writeEct(assetPaths, outputPath, conf, options);
-	writeOptionScript(outputPath, options);
+	writeEct(assetPaths, options.output, conf, options);
+	writeOptionScript(options.output, options);
 }
 
-function convertAssetAndOutput(assetName: string, conf: cmn.Configuration, outputPath: string, minify?: boolean): string {
+function convertAssetAndOutput(
+	assetName: string, conf: cmn.Configuration,
+	inputPath: string, outputPath: string, minify?: boolean): string {
 	var assets = conf._content.assets;
 	var isScript = assets[assetName].type === "script";
-	var assetString = fs.readFileSync(assets[assetName].path, "utf8").replace(/\r\n|\r/g, "\n");
+	var assetString = fs.readFileSync(path.join(inputPath, assets[assetName].path), "utf8").replace(/\r\n|\r/g, "\n");
 
 	var code = (isScript ? wrapScript(assetString, assetName, minify) : wrapText(assetString, assetName));
 	var assetPath = assets[assetName].path;
@@ -57,8 +58,8 @@ function convertAssetAndOutput(assetName: string, conf: cmn.Configuration, outpu
 	return relativePath;
 }
 
-function convertGlobalScriptAndOutput(scriptName: string, outputPath: string, minify?: boolean): string {
-	var scriptString = fs.readFileSync(scriptName, "utf8").replace(/\r\n|\r/g, "\n");
+function convertGlobalScriptAndOutput(scriptName: string, inputPath: string, outputPath: string, minify?: boolean): string {
+	var scriptString = fs.readFileSync(path.join(inputPath, scriptName), "utf8").replace(/\r\n|\r/g, "\n");
 	var isScript = /\.js$/i.test(scriptName);
 
 	var code = isScript ? wrapScript(scriptString, scriptName, minify) : wrapText(scriptString, scriptName);
@@ -78,11 +79,14 @@ function writeEct(assetPaths: string[], outputPath: string, conf: cmn.Configurat
 	fs.writeFileSync(path.resolve(outputPath, "./index.html"), html);
 }
 
-function writeCommonFiles(outputPath: string, conf: cmn.Configuration, options: ConvertTemplateParameterObject): void {
+function writeCommonFiles(
+	inputPath: string,
+	outputPath: string, conf: cmn.Configuration,
+	options: ConvertTemplateParameterObject): void {
 	if (options.strip) {
-		copyAssetFilesStrip(outputPath, conf._content.assets, options);
+		copyAssetFilesStrip(inputPath, outputPath, conf._content.assets, options);
 	} else {
-		copyAssetFiles(outputPath, options);
+		copyAssetFiles(inputPath, outputPath, options);
 	}
 	let templatePath: string;
 	switch (conf._content.environment["sandbox-runtime"]) {

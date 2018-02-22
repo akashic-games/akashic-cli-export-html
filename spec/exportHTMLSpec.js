@@ -12,10 +12,28 @@ describe("exportHTML", function () {
 		.then(function () {
 			var param = {
 				logger: undefined,
+				cwd: process.cwd(),
+				output: process.cwd()
 			}
 			exp._completeExportHTMLParameterObject(param);
 			expect(param.logger).not.toBe(undefined);
 			})
 		.then(done, done.fail);
+	});
+
+	it("promiseExportHTML", function (done) {
+		Promise.resolve()
+		.then(function () {
+			var param = {
+				logger: undefined,
+				cwd: "./",
+			}
+			return exp.promiseExportHTML(param);
+		})
+		.then(() => done.fail())
+		.catch((err) => {
+			expect(err).toBe("--output option must be specified.");
+			done();
+		});
 	});
 });

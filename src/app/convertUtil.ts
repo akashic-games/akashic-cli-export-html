@@ -6,16 +6,13 @@ import * as UglifyJS from "uglify-js";
 import readdir = require("fs-readdir-recursive");
 
 export interface ConvertTemplateParameterObject {
-	quiet?: boolean;
-	exclude?: string[];
-	output?: string;
-	force?: boolean;
-	logger?: cmn.Logger;
-	strip?: boolean;
-	minify?: boolean;
-	bundle?: boolean;
-	magnify?: boolean;
-	use?: string;
+	output: string;
+	logger: cmn.Logger;
+	strip: boolean;
+	minify: boolean;
+	magnify: boolean;
+	force: boolean;
+	source: string;
 }
 
 export function extractAssetDefinitions (conf: cmn.Configuration, type: string): string[] {
@@ -24,21 +21,9 @@ export function extractAssetDefinitions (conf: cmn.Configuration, type: string):
 	return assetNames.filter((assetName) => assets[assetName].type === type);
 }
 
-export function resolveOutputPath(output: string, strip: boolean, logger: cmn.Logger): Promise<string> {
-	return new Promise<string>((resolve, reject) => {
-		if (!output) {
-			return reject("output is not defined.");
-		}
-		var resolvedPath = path.resolve(output);
-		if (!strip && !/^\.\./.test(path.relative(process.cwd(), resolvedPath))) {
-			logger.warn("The output path overlaps with the game directory: files will be exported into the game directory.");
-			logger.warn("NOTE that after this, exporting this game with --no-strip option may include the files.");
-		}
-		return resolve(path.resolve(output));
-	});
-}
-
-export function copyAssetFilesStrip(outputPath: string, assets: cmn.Assets, options: ConvertTemplateParameterObject): void {
+export function copyAssetFilesStrip(
+	inputPath: string, outputPath: string,
+	assets: cmn.Assets, options: ConvertTemplateParameterObject): void {
 	options.logger.info("copying stripped fileset...");
 	var assetNames = Object.keys(assets);
 	assetNames.filter((assetName) => {
@@ -53,9 +38,9 @@ export function copyAssetFilesStrip(outputPath: string, assets: cmn.Assets, opti
 			audioTypes.forEach((type) => {
 				try {
 					fsx.copySync(
-						path.resolve(process.cwd(), assetPath) + "." + type,
+						path.resolve(inputPath, assetPath) + "." + type,
 						dst + "." + type,
-						{clobber: options.force}
+						{overwrite: options.force}
 					);
 				} catch (e) {
 					if (e.code !== "ENOENT") {
@@ -65,27 +50,27 @@ export function copyAssetFilesStrip(outputPath: string, assets: cmn.Assets, opti
 			});
 		} else {
 			fsx.copySync(
-				path.resolve(process.cwd(), assetPath),
+				path.resolve(inputPath, assetPath),
 				dst,
-				{clobber: options.force}
+				{overwrite: options.force}
 			);
 		}
 	});
-};
+}
 
-export function copyAssetFiles(outputPath: string, options: ConvertTemplateParameterObject ): void {
+export function copyAssetFiles(inputPath: string, outputPath: string, options: ConvertTemplateParameterObject ): void {
 	options.logger.info("copying files...");
-	const scriptPath = path.resolve(process.cwd(), "script");
-	const textPath = path.resolve(process.cwd(), "text");
+	const scriptPath = path.resolve(inputPath, "script");
+	const textPath = path.resolve(inputPath, "text");
 	const isScriptOrTextAsset = (src: string) => {
 		return path.relative(scriptPath, src)[0] !== "." || path.relative(textPath, src)[0] !== ".";
 	};
 	try {
-		const files = readdir(process.cwd());
+		const files = readdir(inputPath);
 		files.forEach(p => {
 			cmn.Util.mkdirpSync(path.dirname(path.resolve(outputPath, p)));
-			if (!isScriptOrTextAsset(path.resolve(process.cwd(), p))) {
-				fs.writeFileSync(path.resolve(outputPath, p), fs.readFileSync(path.resolve(process.cwd(), p)));
+			if (!isScriptOrTextAsset(path.resolve(inputPath, p))) {
+				fs.writeFileSync(path.resolve(outputPath, p), fs.readFileSync(path.resolve(inputPath, p)));
 			}
 		});
 	} catch (e) {
