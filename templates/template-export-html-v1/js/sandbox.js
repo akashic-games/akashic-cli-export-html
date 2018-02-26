@@ -60,7 +60,31 @@ window.addEventListener("load", function() {
 		});
 
 		driver.gameCreatedTrigger.handle(function () {
-			if (window.optionProps.magnify) pf.fitToWindow(true);
+			if (window.optionProps.magnify) {
+				if (!pf.containerController) return;
+				var parentView = pf.containerView.parentElement;
+				parentView.style.margin = "0px";
+				parentView.style.padding = "0px";
+				parentView.style.overflow = "hidden";
+				var viewportSize = {
+					width: window.innerWidth || document.documentElement.clientWidth,
+					height: window.innerHeight || document.documentElement.clientHeight
+				};
+				var gameScale = Math.min(
+					viewportSize.width / pf.containerController._rendererReq.primarySurfaceWidth,
+					viewportSize.height / pf.containerController._rendererReq.primarySurfaceHeight
+				);
+				var gameSize = {
+					width: Math.floor(pf.containerController._rendererReq.primarySurfaceWidth * gameScale),
+					height: Math.floor(pf.containerController._rendererReq.primarySurfaceHeight * gameScale)
+				};
+				pf.containerController.changeScale(gameScale, gameScale);
+				var gameOffset = {
+					x: Math.floor((viewportSize.width - gameSize.width) / 2),
+					y: Math.floor((viewportSize.height - gameSize.height) / 2)
+				};
+				pf.containerController.inputHandlerLayer.setOffset(gameOffset);
+			}
 		});
 
 		driver.initialize({
