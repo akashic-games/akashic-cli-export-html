@@ -82,7 +82,7 @@
                     return readKeys.forEach(function(readKey) {
                         validator.validateStorageReadKey(readKey), _this.expandVariables(readKey);
                         var values = [];
-                        if (readKey.regionKey.indexOf("*") !== -1 || "*" === readKey.userId) {
+                        if (-1 !== readKey.regionKey.indexOf("*") || "*" === readKey.userId) {
                             var regexp = _this.storageReadKeyToRegExp(readKey);
                             Object.keys(allValues).forEach(function(key) {
                                 if (regexp.test(key)) {
@@ -205,10 +205,10 @@
                     return s[1] && (res.gameId = s[1]), s[2] && (res.userId = s[2]), res;
                 }, GameStorage.prototype.storageReadKeyToRegExp = function(key) {
                     var region = key.region || "", gameId = null != key.gameId ? String(key.gameId) : "", userId = null != key.userId ? String(key.userId) : "", regionKey = "";
-                    if ("*" === userId && (userId = "[0-9]+"), key.regionKey.indexOf("*") !== -1) {
+                    if ("*" === userId && (userId = "[0-9]+"), -1 !== key.regionKey.indexOf("*")) {
                         var layerKeys = key.regionKey.split(".");
                         layerKeys.forEach(function(layerKey, index) {
-                            regionKey += "*" === layerKey ? "[.a-z0-9]*" : layerKey.indexOf("*") !== -1 ? layerKey.replace("*", "[a-z0-9]*") : layerKey, 
+                            regionKey += "*" === layerKey ? "[.a-z0-9]*" : -1 !== layerKey.indexOf("*") ? layerKey.replace("*", "[a-z0-9]*") : layerKey, 
                             index !== layerKeys.length - 1 && (regionKey += ".");
                         });
                     } else regionKey = key.regionKey.replace(".", ".");
@@ -217,10 +217,10 @@
                     values.sort(function(a, b) {
                         var va = a.data, vb = b.data;
                         if (order === g.StorageOrder.Asc) {
-                            if (va < vb) return -1;
+                            if (vb > va) return -1;
                             if (va > vb) return 1;
                         } else if (order === g.StorageOrder.Desc) {
-                            if (va < vb) return 1;
+                            if (vb > va) return 1;
                             if (va > vb) return -1;
                         }
                         return 0;
@@ -229,16 +229,16 @@
                     values.sort(function(a, b) {
                         var ka = a.storageKey.regionKey, kb = b.storageKey.regionKey;
                         if (order === g.StorageOrder.Asc) {
-                            if (ka < kb) return -1;
+                            if (kb > ka) return -1;
                             if (ka > kb) return 1;
                         } else if (order === g.StorageOrder.Desc) {
-                            if (ka < kb) return 1;
+                            if (kb > ka) return 1;
                             if (ka > kb) return -1;
                         }
                         return 0;
                     });
                 }, GameStorage.prototype.expandVariables = function(key) {
-                    key.gameId && key.gameId.indexOf("$gameId") !== -1 && this._metaData.gameId && (key.gameId = key.gameId.replace(/\$gameId/g, this._metaData.gameId));
+                    key.gameId && -1 !== key.gameId.indexOf("$gameId") && this._metaData.gameId && (key.gameId = key.gameId.replace(/\$gameId/g, this._metaData.gameId));
                 }, GameStorage;
             }();
             exports.GameStorage = GameStorage;
@@ -269,7 +269,7 @@
                 null != key.gameId && (assert.equal(typeof key.gameId, "string", "gameId must be a string type."), 
                 assert(key.gameId.length > 0, "gameId is empty.")), null != key.userId && (assert.equal(typeof key.userId, "string", "userId must be a string type."), 
                 assert(key.userId.length > 0, "userId is empty."), forReading ? "*" === key.userId && (assert(key.gameId, 'gameId for reading must be set when userId is "*".'), 
-                assert(key.regionKey.indexOf("*") === -1, 'regionKey for reading must not include "*" when userId is "*".')) : assert("*" !== key.userId, 'userId for writing must not include "*".'));
+                assert(-1 === key.regionKey.indexOf("*"), 'regionKey for reading must not include "*" when userId is "*".')) : assert("*" !== key.userId, 'userId for writing must not include "*".'));
             }
             function validateStorageReadKey(key) {
                 if (validateStorageKey(key, !0), null != key.option) {
@@ -289,19 +289,13 @@
         4: [ function(require, module, exports) {
             (function(global) {
                 "use strict";
-                /*!
- * The buffer module from node.js, for the browser.
- *
- * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
- * @license  MIT
- */
                 function compare(a, b) {
                     if (a === b) return 0;
-                    for (var x = a.length, y = b.length, i = 0, len = Math.min(x, y); i < len; ++i) if (a[i] !== b[i]) {
+                    for (var x = a.length, y = b.length, i = 0, len = Math.min(x, y); len > i; ++i) if (a[i] !== b[i]) {
                         x = a[i], y = b[i];
                         break;
                     }
-                    return x < y ? -1 : y < x ? 1 : 0;
+                    return y > x ? -1 : x > y ? 1 : 0;
                 }
                 function isBuffer(b) {
                     return global.Buffer && "function" == typeof global.Buffer.isBuffer ? global.Buffer.isBuffer(b) : !(null == b || !b._isBuffer);
@@ -310,7 +304,7 @@
                     return Object.prototype.toString.call(obj);
                 }
                 function isView(arrbuf) {
-                    return !isBuffer(arrbuf) && ("function" == typeof global.ArrayBuffer && ("function" == typeof ArrayBuffer.isView ? ArrayBuffer.isView(arrbuf) : !!arrbuf && (arrbuf instanceof DataView || !!(arrbuf.buffer && arrbuf.buffer instanceof ArrayBuffer))));
+                    return isBuffer(arrbuf) ? !1 : "function" != typeof global.ArrayBuffer ? !1 : "function" == typeof ArrayBuffer.isView ? ArrayBuffer.isView(arrbuf) : arrbuf ? arrbuf instanceof DataView ? !0 : arrbuf.buffer && arrbuf.buffer instanceof ArrayBuffer ? !0 : !1 : !1;
                 }
                 function getName(func) {
                     if (util.isFunction(func)) {
@@ -355,7 +349,7 @@
                             expected: []
                         };
                         var actualIndex = memos.actual.indexOf(actual);
-                        return actualIndex !== -1 && actualIndex === memos.expected.indexOf(expected) || (memos.actual.push(actual), 
+                        return -1 !== actualIndex && actualIndex === memos.expected.indexOf(expected) ? !0 : (memos.actual.push(actual), 
                         memos.expected.push(expected), objEquiv(actual, expected, strict, memos));
                     }
                     return strict ? actual === expected : actual == expected;
@@ -385,7 +379,7 @@
                     try {
                         if (actual instanceof expected) return !0;
                     } catch (e) {}
-                    return !Error.isPrototypeOf(expected) && expected.call({}, actual) === !0;
+                    return Error.isPrototypeOf(expected) ? !1 : expected.call({}, actual) === !0;
                 }
                 function _tryBlock(block) {
                     var error;
@@ -406,24 +400,6 @@
                     if ((isUnwantedException && userProvidedMessage && expectedException(actual, expected) || isUnexpectedException) && fail(actual, expected, "Got unwanted exception" + message), 
                     shouldThrow && actual && expected && !expectedException(actual, expected) || !shouldThrow && actual) throw actual;
                 }
-                // Copyright (c) 2009 Thomas Robinson <280north.com>
-                //
-                // Permission is hereby granted, free of charge, to any person obtaining a copy
-                // of this software and associated documentation files (the 'Software'), to
-                // deal in the Software without restriction, including without limitation the
-                // rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-                // sell copies of the Software, and to permit persons to whom the Software is
-                // furnished to do so, subject to the following conditions:
-                //
-                // The above copyright notice and this permission notice shall be included in
-                // all copies or substantial portions of the Software.
-                //
-                // THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-                // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-                // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-                // AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
-                // ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-                // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                 var util = require("util/"), hasOwn = Object.prototype.hasOwnProperty, pSlice = Array.prototype.slice, functionsHaveNames = function() {
                     return "foo" === function() {}.name;
                 }(), assert = module.exports = ok, regex = /\s*function\s+([^\(\s]*)\s*/;
@@ -458,7 +434,7 @@
                     actual !== expected && fail(actual, expected, message, "===", assert.strictEqual);
                 }, assert.notStrictEqual = function(actual, expected, message) {
                     actual === expected && fail(actual, expected, message, "!==", assert.notStrictEqual);
-                }, assert.throws = function(block, error, message) {
+                }, assert["throws"] = function(block, error, message) {
                     _throws(!0, block, error, message);
                 }, assert.doesNotThrow = function(block, error, message) {
                     _throws(!1, block, error, message);
@@ -633,7 +609,7 @@
                     }
                     if (isRegExp(value) && (base = " " + RegExp.prototype.toString.call(value)), isDate(value) && (base = " " + Date.prototype.toUTCString.call(value)), 
                     isError(value) && (base = " " + formatError(value)), 0 === keys.length && (!array || 0 == value.length)) return braces[0] + base + braces[1];
-                    if (recurseTimes < 0) return isRegExp(value) ? ctx.stylize(RegExp.prototype.toString.call(value), "regexp") : ctx.stylize("[Object]", "special");
+                    if (0 > recurseTimes) return isRegExp(value) ? ctx.stylize(RegExp.prototype.toString.call(value), "regexp") : ctx.stylize("[Object]", "special");
                     ctx.seen.push(value);
                     var output;
                     return output = array ? formatArray(ctx, value, recurseTimes, visibleKeys, keys) : keys.map(function(key) {
@@ -652,7 +628,7 @@
                     return "[" + Error.prototype.toString.call(value) + "]";
                 }
                 function formatArray(ctx, value, recurseTimes, visibleKeys, keys) {
-                    for (var output = [], i = 0, l = value.length; i < l; ++i) hasOwnProperty(value, String(i)) ? output.push(formatProperty(ctx, value, recurseTimes, visibleKeys, String(i), !0)) : output.push("");
+                    for (var output = [], i = 0, l = value.length; l > i; ++i) hasOwnProperty(value, String(i)) ? output.push(formatProperty(ctx, value, recurseTimes, visibleKeys, String(i), !0)) : output.push("");
                     return keys.forEach(function(key) {
                         key.match(/^\d+$/) || output.push(formatProperty(ctx, value, recurseTimes, visibleKeys, key, !0));
                     }), output;
@@ -727,7 +703,7 @@
                     return Object.prototype.toString.call(o);
                 }
                 function pad(n) {
-                    return n < 10 ? "0" + n.toString(10) : n.toString(10);
+                    return 10 > n ? "0" + n.toString(10) : n.toString(10);
                 }
                 function timestamp() {
                     var d = new Date(), time = [ pad(d.getHours()), pad(d.getMinutes()), pad(d.getSeconds()) ].join(":");
@@ -736,26 +712,6 @@
                 function hasOwnProperty(obj, prop) {
                     return Object.prototype.hasOwnProperty.call(obj, prop);
                 }
-                // Copyright Joyent, Inc. and other Node contributors.
-                //
-                // Permission is hereby granted, free of charge, to any person obtaining a
-                // copy of this software and associated documentation files (the
-                // "Software"), to deal in the Software without restriction, including
-                // without limitation the rights to use, copy, modify, merge, publish,
-                // distribute, sublicense, and/or sell copies of the Software, and to permit
-                // persons to whom the Software is furnished to do so, subject to the
-                // following conditions:
-                //
-                // The above copyright notice and this permission notice shall be included
-                // in all copies or substantial portions of the Software.
-                //
-                // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-                // OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-                // MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-                // NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-                // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-                // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-                // USE OR OTHER DEALINGS IN THE SOFTWARE.
                 var formatRegExp = /%[sdj%]/g;
                 exports.format = function(f) {
                     if (!isString(f)) {
@@ -782,7 +738,7 @@
                           default:
                             return x;
                         }
-                    }), x = args[i]; i < len; x = args[++i]) str += isNull(x) || !isObject(x) ? " " + x : " " + inspect(x);
+                    }), x = args[i]; len > i; x = args[++i]) str += isNull(x) || !isObject(x) ? " " + x : " " + inspect(x);
                     return str;
                 }, exports.deprecate = function(fn, msg) {
                     function deprecated() {
@@ -827,9 +783,9 @@
                 }, inspect.styles = {
                     special: "cyan",
                     number: "yellow",
-                    boolean: "yellow",
+                    "boolean": "yellow",
                     undefined: "grey",
-                    null: "bold",
+                    "null": "bold",
                     string: "green",
                     date: "magenta",
                     regexp: "red"

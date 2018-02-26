@@ -1,26 +1,29 @@
-require = function e(t, n, r) {
-    function s(o, u) {
-        if (!n[o]) {
-            if (!t[o]) {
-                var a = "function" == typeof require && require;
-                if (!u && a) return a(o, !0);
-                if (i) return i(o, !0);
-                var f = new Error("Cannot find module '" + o + "'");
-                throw f.code = "MODULE_NOT_FOUND", f;
+require = function() {
+    function e(t, n, r) {
+        function s(o, u) {
+            if (!n[o]) {
+                if (!t[o]) {
+                    var a = "function" == typeof require && require;
+                    if (!u && a) return a(o, !0);
+                    if (i) return i(o, !0);
+                    var f = new Error("Cannot find module '" + o + "'");
+                    throw f.code = "MODULE_NOT_FOUND", f;
+                }
+                var l = n[o] = {
+                    exports: {}
+                };
+                t[o][0].call(l.exports, function(e) {
+                    var n = t[o][1][e];
+                    return s(n ? n : e);
+                }, l, l.exports, e, t, n, r);
             }
-            var l = n[o] = {
-                exports: {}
-            };
-            t[o][0].call(l.exports, function(e) {
-                var n = t[o][1][e];
-                return s(n ? n : e);
-            }, l, l.exports, e, t, n, r);
+            return n[o].exports;
         }
-        return n[o].exports;
+        for (var i = "function" == typeof require && require, o = 0; o < r.length; o++) s(r[o]);
+        return s;
     }
-    for (var i = "function" == typeof require && require, o = 0; o < r.length; o++) s(r[o]);
-    return s;
-}({
+    return e;
+}()({
     "@akashic/akashic-engine": [ function(require, module, exports) {
         (function() {
             "use strict";
@@ -209,10 +212,11 @@ require = function e(t, n, r) {
                     }
                     return AssetLoadingInfo;
                 }(), AssetManager = function() {
-                    function AssetManager(game, conf, audioSystemConfMap) {
+                    function AssetManager(game, conf, audioSystemConfMap, moduleMainScripts) {
                         this.game = game, this.configuration = this._normalize(conf || {}, normalizeAudioSystemConfMap(audioSystemConfMap)), 
                         this._assets = {}, this._liveAssetVirtualPathTable = {}, this._liveAbsolutePathTable = {}, 
-                        this._refCounts = {}, this._loadings = {};
+                        this._moduleMainScripts = moduleMainScripts ? moduleMainScripts : {}, this._refCounts = {}, 
+                        this._loadings = {};
                     }
                     return AssetManager.prototype.destroy = function() {
                         for (var assetIds = Object.keys(this._refCounts), i = 0; i < assetIds.length; ++i) this._releaseAsset(assetIds[i]);
@@ -245,10 +249,10 @@ require = function e(t, n, r) {
                         var assetId = "string" == typeof assetOrId ? assetOrId : assetOrId.id;
                         --this._refCounts[assetId] > 0 || this._releaseAsset(assetId);
                     }, AssetManager.prototype.requestAssets = function(assetIdOrConfs, handler) {
-                        for (var waitingCount = 0, i = 0, len = assetIdOrConfs.length; i < len; ++i) this.requestAsset(assetIdOrConfs[i], handler) && ++waitingCount;
+                        for (var waitingCount = 0, i = 0, len = assetIdOrConfs.length; len > i; ++i) this.requestAsset(assetIdOrConfs[i], handler) && ++waitingCount;
                         return waitingCount;
                     }, AssetManager.prototype.unrefAssets = function(assetOrIds) {
-                        for (var i = 0, len = assetOrIds.length; i < len; ++i) this.unrefAsset(assetOrIds[i]);
+                        for (var i = 0, len = assetOrIds.length; len > i; ++i) this.unrefAsset(assetOrIds[i]);
                     }, AssetManager.prototype._normalize = function(configuration, audioSystemConfMap) {
                         var ret = {};
                         if (!(configuration instanceof Object)) throw g.ExceptionFactory.createAssertionError("AssetManager#_normalize: invalid arguments.");
@@ -344,8 +348,8 @@ require = function e(t, n, r) {
             var g;
             !function(g) {
                 function _require(game, path, currentModule) {
-                    var targetScriptAsset, resolvedPath, resolvedVirtualPath, basedir = currentModule ? currentModule._dirname : game.assetBase, liveAssetVirtualPathTable = game._assetManager._liveAssetVirtualPathTable;
-                    if (path.indexOf("/") === -1 && game._assetManager._assets.hasOwnProperty(path) && (targetScriptAsset = game._assetManager._assets[path]), 
+                    var targetScriptAsset, resolvedPath, resolvedVirtualPath, basedir = currentModule ? currentModule._dirname : game.assetBase, liveAssetVirtualPathTable = game._assetManager._liveAssetVirtualPathTable, moduleMainScripts = game._assetManager._moduleMainScripts;
+                    if (-1 === path.indexOf("/") && game._assetManager._assets.hasOwnProperty(path) && (targetScriptAsset = game._assetManager._assets[path]), 
                     /^\.\/|^\.\.\/|^\//.test(path)) {
                         if (resolvedPath = g.PathUtil.resolvePath(basedir, path), game._scriptCaches.hasOwnProperty(resolvedPath)) return game._scriptCaches[resolvedPath]._cachedValue();
                         if (game._scriptCaches.hasOwnProperty(resolvedPath + ".js")) return game._scriptCaches[resolvedPath + ".js"]._cachedValue();
@@ -358,7 +362,8 @@ require = function e(t, n, r) {
                         }
                         targetScriptAsset || (targetScriptAsset = g.Util.findAssetByPathAsFile(resolvedVirtualPath, liveAssetVirtualPathTable)), 
                         targetScriptAsset || (targetScriptAsset = g.Util.findAssetByPathAsDirectory(resolvedVirtualPath, liveAssetVirtualPathTable));
-                    } else if (!targetScriptAsset) {
+                    } else if (moduleMainScripts[path] && (targetScriptAsset = game._assetManager._assets[moduleMainScripts[path]]), 
+                    !targetScriptAsset) {
                         var dirs = currentModule ? currentModule.paths : [];
                         dirs.push("node_modules");
                         for (var i = 0; i < dirs.length; ++i) {
@@ -540,15 +545,15 @@ require = function e(t, n, r) {
                                 if (asset) return asset;
                             }
                         }
-                        if (path = resolvedPath + "/index.js", liveAssetPathTable.hasOwnProperty(path)) return liveAssetPathTable[path];
+                        return path = resolvedPath + "/index.js", liveAssetPathTable.hasOwnProperty(path) ? liveAssetPathTable[path] : void 0;
                     }
                     function charCodeAt(str, idx) {
                         var code = str.charCodeAt(idx);
-                        if (55296 <= code && code <= 56319) {
+                        if (code >= 55296 && 56319 >= code) {
                             var hi = code, low = str.charCodeAt(idx + 1);
                             return hi << 16 | low;
                         }
-                        return 56320 <= code && code <= 57343 ? null : code;
+                        return code >= 56320 && 57343 >= code ? null : code;
                     }
                     function setupAnimatingHandler(animatingHandler, surface) {
                         surface.isDynamic && (surface.animatingStarted.add(animatingHandler._onAnimatingStarted, animatingHandler), 
@@ -575,7 +580,7 @@ require = function e(t, n, r) {
                 var Collision;
                 !function(Collision) {
                     function intersect(x1, y1, width1, height1, x2, y2, width2, height2) {
-                        return x1 <= x2 + width2 && x2 <= x1 + width1 && y1 <= y2 + height2 && y2 <= y1 + height1;
+                        return x2 + width2 >= x1 && x1 + width1 >= x2 && y2 + height2 >= y1 && y1 + height1 >= y2;
                     }
                     function intersectAreas(t1, t2) {
                         return Collision.intersect(t1.x, t1.y, t1.width, t1.height, t2.x, t2.y, t2.width, t2.height);
@@ -652,7 +657,7 @@ require = function e(t, n, r) {
                                 var handler = handlers[i];
                                 if (handler.func.call(handler.owner, arg) || handler.once) {
                                     var index = this._handlers.indexOf(handler);
-                                    index !== -1 && this._handlers.splice(index, 1);
+                                    -1 !== index && this._handlers.splice(index, 1);
                                 }
                             }
                             this._handlers && (this.length = this._handlers.length);
@@ -684,7 +689,7 @@ require = function e(t, n, r) {
                     }, Trigger.prototype.destroyed = function() {
                         return null === this._handlers;
                     }, Trigger.prototype._comparePartial = function(target, compare) {
-                        return (void 0 === target.func || target.func === compare.func) && ((void 0 === target.owner || target.owner === compare.owner) && (void 0 === target.name || target.name === compare.name));
+                        return void 0 !== target.func && target.func !== compare.func ? !1 : void 0 !== target.owner && target.owner !== compare.owner ? !1 : void 0 !== target.name && target.name !== compare.name ? !1 : !0;
                     }, Trigger;
                 }();
                 g.Trigger = Trigger;
@@ -710,7 +715,7 @@ require = function e(t, n, r) {
                         _super.prototype.destroy.call(this), this.chain.remove(this._onChainTriggerFired, this), 
                         this.filter = null, this.filterOwner = null, this._isActivated = !1;
                     }, ChainTrigger.prototype._onChainTriggerFired = function(args) {
-                        this.filter && !this.filter.call(this.filterOwner, args) || this.fire(args);
+                        (!this.filter || this.filter.call(this.filterOwner, args)) && this.fire(args);
                     }, ChainTrigger;
                 }(Trigger);
                 g.ChainTrigger = ChainTrigger;
@@ -766,15 +771,15 @@ require = function e(t, n, r) {
                         return void 0 === this._timers;
                     }, TimerManager.prototype.createTimer = function(interval) {
                         if (this._registered || (this._trigger.add(this._tick, this), this._registered = !0), 
-                        interval < 0) throw g.ExceptionFactory.createAssertionError("TimerManager#createTimer: invalid interval");
-                        interval < 1 && (interval = 1);
+                        0 > interval) throw g.ExceptionFactory.createAssertionError("TimerManager#createTimer: invalid interval");
+                        1 > interval && (interval = 1);
                         for (var acceptableMargin = Math.min(1e3, interval * this._fps), i = 0; i < this._timers.length; ++i) if (this._timers[i].interval === interval && this._timers[i]._scaledElapsed < acceptableMargin) return this._timers[i];
                         var timer = new g.Timer(interval, this._fps);
                         return this._timers.push(timer), timer;
                     }, TimerManager.prototype.deleteTimer = function(timer) {
                         if (timer.canDelete()) {
                             var index = this._timers.indexOf(timer);
-                            if (index < 0) throw g.ExceptionFactory.createAssertionError("TimerManager#deleteTimer: can not find timer");
+                            if (0 > index) throw g.ExceptionFactory.createAssertionError("TimerManager#deleteTimer: can not find timer");
                             if (this._timers.splice(index, 1), timer.destroy(), !this._timers.length) {
                                 if (!this._registered) throw g.ExceptionFactory.createAssertionError("TimerManager#deleteTimer: handler is not handled");
                                 this._trigger.remove(this._tick, this), this._registered = !1;
@@ -794,13 +799,13 @@ require = function e(t, n, r) {
                         for (var timers = this._timers.concat(), i = 0; i < timers.length; ++i) timers[i].tick();
                     }, TimerManager.prototype._onTimeoutFired = function(identifier) {
                         var index = this._identifiers.indexOf(identifier);
-                        if (index < 0) throw g.ExceptionFactory.createAssertionError("TimerManager#_onTimeoutFired: can not find identifier");
+                        if (0 > index) throw g.ExceptionFactory.createAssertionError("TimerManager#_onTimeoutFired: can not find identifier");
                         this._identifiers.splice(index, 1);
                         var timer = identifier._timer;
                         identifier.destroy(), this.deleteTimer(timer);
                     }, TimerManager.prototype._clear = function(identifier) {
                         var index = this._identifiers.indexOf(identifier);
-                        if (index < 0) throw g.ExceptionFactory.createAssertionError("TimerManager#_clear: can not find identifier");
+                        if (0 > index) throw g.ExceptionFactory.createAssertionError("TimerManager#_clear: can not find identifier");
                         if (identifier.destroyed()) throw g.ExceptionFactory.createAssertionError("TimerManager#_clear: invalid identifier");
                         this._identifiers.splice(index, 1);
                         var timer = identifier._timer;
@@ -855,7 +860,7 @@ require = function e(t, n, r) {
                             return this._volume;
                         },
                         set: function(value) {
-                            if (value < 0 || value > 1 || isNaN(value) || "number" != typeof value) throw g.ExceptionFactory.createAssertionError("AudioSystem#volume: expected: 0.0-1.0, actual: " + value);
+                            if (0 > value || value > 1 || isNaN(value) || "number" != typeof value) throw g.ExceptionFactory.createAssertionError("AudioSystem#volume: expected: 0.0-1.0, actual: " + value);
                             this._volume = value, this._onVolumeChanged();
                         },
                         enumerable: !0,
@@ -866,7 +871,7 @@ require = function e(t, n, r) {
                         var before = this._muted;
                         this._muted = !!value, this._muted !== before && this._onMutedChanged();
                     }, AudioSystem.prototype._setPlaybackRate = function(value) {
-                        if (value < 0 || isNaN(value) || "number" != typeof value) throw g.ExceptionFactory.createAssertionError("AudioSystem#playbackRate: expected: greater or equal to 0.0, actual: " + value);
+                        if (0 > value || isNaN(value) || "number" != typeof value) throw g.ExceptionFactory.createAssertionError("AudioSystem#playbackRate: expected: greater or equal to 0.0, actual: " + value);
                         var before = this._playbackRate;
                         this._playbackRate = value, this._playbackRate !== before && this._onPlaybackRateChanged();
                     }, AudioSystem;
@@ -938,7 +943,7 @@ require = function e(t, n, r) {
                         e.player._supportsPlaybackRate() || 1 !== this._playbackRate && e.player.stop();
                     }, SoundAudioSystem.prototype._onPlayerStopped = function(e) {
                         var index = this.players.indexOf(e.player);
-                        index < 0 || (e.player.stopped.remove({
+                        0 > index || (e.player.stopped.remove({
                             owner: this,
                             func: this._onPlayerStopped
                         }), this.players.splice(index, 1), this._destroyRequestedAssets[e.audio.id] && (delete this._destroyRequestedAssets[e.audio.id], 
@@ -1087,11 +1092,11 @@ require = function e(t, n, r) {
                     }), E.prototype.render = function(renderer, camera) {
                         if (this.state &= -5, !(1 & this.state)) {
                             var cams = this._targetCameras;
-                            if (!(cams && cams.length > 0) || camera && cams.indexOf(camera) !== -1) {
+                            if (!(cams && cams.length > 0) || camera && -1 !== cams.indexOf(camera)) {
                                 if (8 & this.state) {
                                     renderer.translate(this.x, this.y);
                                     var goDown = this.renderSelf(renderer, camera);
-                                    if (goDown && this.children) for (var children = this.children, len = children.length, i = 0; i < len; ++i) children[i].render(renderer, camera);
+                                    if (goDown && this.children) for (var children = this.children, len = children.length, i = 0; len > i; ++i) children[i].render(renderer, camera);
                                     return void renderer.translate(-this.x, -this.y);
                                 }
                                 renderer.save(), this.angle || 1 !== this.scaleX || 1 !== this.scaleY ? renderer.transform(this.getMatrix()._matrix) : renderer.translate(this.x, this.y), 
@@ -1116,7 +1121,7 @@ require = function e(t, n, r) {
                     }, E.prototype.remove = function(e) {
                         if (void 0 === e) return void this.parent.remove(this);
                         var index = this.children ? this.children.indexOf(e) : -1;
-                        if (index < 0) throw g.ExceptionFactory.createAssertionError("E#remove: invalid child");
+                        if (0 > index) throw g.ExceptionFactory.createAssertionError("E#remove: invalid child");
                         this.children[index].parent = void 0, this.children.splice(index, 1), (e._touchable || e._hasTouchableChildren) && (this._findTouchableChildren(this) || (this._hasTouchableChildren = !1, 
                         this._disableTouchPropagation())), this.modified(!0);
                     }, E.prototype.destroy = function() {
@@ -1138,7 +1143,7 @@ require = function e(t, n, r) {
                     }, E.prototype.findPointSourceByPoint = function(point, m, force, camera) {
                         if (!(1 & this.state)) {
                             var cams = this._targetCameras;
-                            if (!(cams && cams.length > 0) || camera && cams.indexOf(camera) !== -1) {
+                            if (!(cams && cams.length > 0) || camera && -1 !== cams.indexOf(camera)) {
                                 m = m ? m.multiplyNew(this.getMatrix()) : this.getMatrix().clone();
                                 var p = m.multiplyInverseForPoint(point);
                                 if ((this._hasTouchableChildren || force && this.children && this.children.length) && this.shouldFindChildrenByPoint(p)) for (var i = this.children.length - 1; i >= 0; --i) {
@@ -1164,7 +1169,7 @@ require = function e(t, n, r) {
                         return this._calculateBoundingRect(void 0, c);
                     }, E.prototype._calculateBoundingRect = function(m, c) {
                         var matrix = this.getMatrix();
-                        if (m && (matrix = m.multiplyNew(matrix)), this.visible() && (!c || this._targetCameras && this._targetCameras.indexOf(c) !== -1)) {
+                        if (m && (matrix = m.multiplyNew(matrix)), this.visible() && (!c || this._targetCameras && -1 !== this._targetCameras.indexOf(c))) {
                             for (var thisBoundingRect = {
                                 left: 0,
                                 right: this.width,
@@ -1204,7 +1209,7 @@ require = function e(t, n, r) {
                         for (var p = this.parent; p instanceof E && p._hasTouchableChildren && !this._findTouchableChildren(p); ) p._hasTouchableChildren = !1, 
                         p = p.parent;
                     }, E.prototype._isTargetOperation = function(e) {
-                        return !(1 & this.state) && (e instanceof g.PointEvent && (this._touchable && e.target === this));
+                        return 1 & this.state ? !1 : e instanceof g.PointEvent ? this._touchable && e.target === this : !1;
                     }, E.prototype._findTouchableChildren = function(e) {
                         if (e.children) for (var i = 0; i < e.children.length; ++i) {
                             if (e.children[i].touchable) return e.children[i];
@@ -1270,7 +1275,7 @@ require = function e(t, n, r) {
                         if (void 0 === this._values) return [];
                         if ("number" == typeof keyOrIndex) return this._values[keyOrIndex];
                         var index = this._keys.indexOf(keyOrIndex);
-                        if (index !== -1) return this._values[index];
+                        if (-1 !== index) return this._values[index];
                         for (var i = 0; i < this._keys.length; ++i) {
                             var target = this._keys[i];
                             if (target.region === keyOrIndex.region && target.regionKey === keyOrIndex.regionKey && target.userId === keyOrIndex.userId && target.gameId === keyOrIndex.gameId) return this._values[i];
@@ -1325,8 +1330,8 @@ require = function e(t, n, r) {
                         this._requested = !1;
                     }
                     return SceneAssetHolder.prototype.request = function() {
-                        return 0 !== this.waitingAssetsCount && (!!this._requested || (this._requested = !0, 
-                        this._assetManager.requestAssets(this._assetIds, this), !0));
+                        return 0 === this.waitingAssetsCount ? !1 : this._requested ? !0 : (this._requested = !0, 
+                        this._assetManager.requestAssets(this._assetIds, this), !0);
                     }, SceneAssetHolder.prototype.destroy = function() {
                         this._requested && this._assetManager.unrefAssets(this._assets), this.waitingAssetsCount = 0, 
                         this._scene = void 0, this._assetIds = void 0, this._handler = void 0, this._requested = !1;
@@ -1442,7 +1447,7 @@ require = function e(t, n, r) {
                         this.modified(!0);
                     }, Scene.prototype.remove = function(e) {
                         var index = this.children.indexOf(e);
-                        index !== -1 && (this.children[index].parent = void 0, this.children.splice(index, 1), 
+                        -1 !== index && (this.children[index].parent = void 0, this.children.splice(index, 1), 
                         this.modified(!0));
                     }, Scene.prototype.findPointSourceByPoint = function(point, force, camera) {
                         var mayConsumeLocalTick = this.local !== g.LocalTickMode.NonLocal, children = this.children, m = void 0;
@@ -1459,7 +1464,7 @@ require = function e(t, n, r) {
                     }, Scene.prototype.prefetch = function() {
                         this._loaded || this._prefetchRequested || (this._prefetchRequested = !0, this._sceneAssetHolder.request());
                     }, Scene.prototype.serializeStorageValues = function() {
-                        if (this._storageLoader) return this._storageLoader._valueStoreSerialization;
+                        return this._storageLoader ? this._storageLoader._valueStoreSerialization : void 0;
                     }, Scene.prototype.requestAssets = function(assetIds, handler) {
                         if (this._loadingState < SceneLoadState.ReadyFired) throw g.ExceptionFactory.createAssertionError("Scene#requestAsset(): can be called after loaded.");
                         var holder = new SceneAssetHolder({
@@ -1482,7 +1487,7 @@ require = function e(t, n, r) {
                             this._storageLoader && (this._storageLoader._load(this), needsWait = !0), needsWait || this._notifySceneReady();
                         }
                     }, Scene.prototype._onSceneAssetsLoad = function() {
-                        this._loaded && (this._storageLoader && !this._storageLoader._loaded || this._notifySceneReady());
+                        this._loaded && (!this._storageLoader || this._storageLoader._loaded) && this._notifySceneReady();
                     }, Scene.prototype._onStorageLoadError = function(error) {
                         this.game.terminateGame();
                     }, Scene.prototype._onStorageLoaded = function() {
@@ -1546,7 +1551,7 @@ require = function e(t, n, r) {
                         if (!this.children) return !1;
                         if (camera) {
                             var c = camera, canceller = this._canceller;
-                            c.x === canceller.x && c.y === canceller.y && c.angle === canceller.angle && c.scaleX === canceller.scaleX && c.scaleY === canceller.scaleY || (canceller.x = c.x, 
+                            (c.x !== canceller.x || c.y !== canceller.y || c.angle !== canceller.angle || c.scaleX !== canceller.scaleX || c.scaleY !== canceller.scaleY) && (canceller.x = c.x, 
                             canceller.y = c.y, canceller.angle = c.angle, canceller.scaleX = c.scaleX, canceller.scaleY = c.scaleY, 
                             canceller._matrix && (canceller._matrix._modified = !0)), renderer.save(), renderer.transform(canceller.getMatrix()._matrix);
                         }
@@ -1622,7 +1627,7 @@ require = function e(t, n, r) {
                     }, Sprite.prototype._onAnimatingStopped = function() {
                         this.destroyed() || this.update.remove(this._onUpdate, this);
                     }, Sprite.prototype.renderSelf = function(renderer, camera) {
-                        return this.srcWidth <= 0 || this.srcHeight <= 0 || (this._stretchMatrix && (renderer.save(), 
+                        return this.srcWidth <= 0 || this.srcHeight <= 0 ? !0 : (this._stretchMatrix && (renderer.save(), 
                         renderer.transform(this._stretchMatrix._matrix)), renderer.drawImage(this.surface, this.srcX, this.srcY, this.srcWidth, this.srcHeight, 0, 0), 
                         this._stretchMatrix && renderer.restore(), !0);
                     }, Sprite.prototype.invalidate = function() {
@@ -1835,7 +1840,7 @@ require = function e(t, n, r) {
                         this._loaded = new g.Trigger(), this._started = new g.Trigger(), this.isLoaded = !1, 
                         this.snapshotRequest = new g.Trigger(), this.external = {}, this.logger = new g.Logger(this), 
                         this._main = gameConfiguration.main, this._mainParameter = void 0, this._configuration = gameConfiguration, 
-                        this._assetManager = new g.AssetManager(this, gameConfiguration.assets, gameConfiguration.audio);
+                        this._assetManager = new g.AssetManager(this, gameConfiguration.assets, gameConfiguration.audio, gameConfiguration.moduleMainScripts);
                         var operationPluginsField = gameConfiguration.operationPlugins || [];
                         this._operationPluginManager = new g.OperationPluginManager(this, operationPluginViewInfo, operationPluginsField), 
                         this._operationPluginOperated = new g.Trigger(), this._operationPluginManager.operated.add(this._operationPluginOperated.fire, this._operationPluginOperated), 
@@ -1876,7 +1881,7 @@ require = function e(t, n, r) {
                             preserveCurrent: preserveCurrent
                         });
                     }, Game.prototype.scene = function() {
-                        if (this.scenes.length) return this.scenes[this.scenes.length - 1];
+                        return this.scenes.length ? this.scenes[this.scenes.length - 1] : void 0;
                     }, Game.prototype.tick = function(advanceAge) {
                         var scene = void 0;
                         if (this._isTerminated) return !1;
@@ -1891,8 +1896,7 @@ require = function e(t, n, r) {
                             }
                             scene.update.fire(), (advanceAge === !0 || void 0 === advanceAge && scene.local !== g.LocalTickMode.FullLocal) && ++this.age;
                         }
-                        return !!this._sceneChangeRequests.length && (this._flushSceneChangeRequests(), 
-                        scene !== this.scenes[this.scenes.length - 1]);
+                        return this._sceneChangeRequests.length ? (this._flushSceneChangeRequests(), scene !== this.scenes[this.scenes.length - 1]) : !1;
                     }, Game.prototype.render = function(camera) {
                         camera || (camera = this.focusingCamera);
                         for (var renderers = this.renderers, i = 0; i < renderers.length; ++i) renderers[i].draw(this, camera);
@@ -2147,7 +2151,7 @@ require = function e(t, n, r) {
                         var _this = _super.call(this, param) || this;
                         return _this.text = param.text, _this.font = param.font, _this.textAlign = "textAlign" in param ? param.textAlign : g.TextAlign.Left, 
                         _this.glyphs = new Array(param.text.length), _this.fontSize = param.fontSize, _this.maxWidth = param.maxWidth, 
-                        _this.widthAutoAdjust = !("widthAutoAdjust" in param) || param.widthAutoAdjust, 
+                        _this.widthAutoAdjust = "widthAutoAdjust" in param ? param.widthAutoAdjust : !0, 
                         _this.textColor = param.textColor, _this._textWidth = 0, _this._game = void 0, _this._invalidateSelf(), 
                         _this;
                     }
@@ -2196,7 +2200,7 @@ require = function e(t, n, r) {
                                     if (!(glyph.width < 0 || glyph.height < 0 || glyph.x < 0 || glyph.y < 0)) {
                                         this.glyphs.push(glyph), this._textWidth += glyph.advanceWidth * glyphScale;
                                         var height = glyph.offsetY + glyph.height;
-                                        maxHeight < height && (maxHeight = height);
+                                        height > maxHeight && (maxHeight = height);
                                     }
                                 } else {
                                     var str = 4294901760 & code ? String.fromCharCode((4294901760 & code) >>> 16, 65535 & code) : String.fromCharCode(code);
@@ -2262,12 +2266,12 @@ require = function e(t, n, r) {
                         isBubbling && (this.state &= -3), _super.prototype.modified.call(this);
                     }, Pane.prototype.shouldFindChildrenByPoint = function(point) {
                         var p = this._normalizedPadding;
-                        return p.left < point.x && this.width - p.right > point.x && p.top < point.y && this.height - p.bottom > point.y;
+                        return p.left < point.x && this.width - p.right > point.x && p.top < point.y && this.height - p.bottom > point.y ? !0 : !1;
                     }, Pane.prototype.renderCache = function(renderer, camera) {
                         this.width <= 0 || this.height <= 0 || (this._renderBackground(), this._renderChildren(camera), 
                         this._bgSurface ? renderer.drawImage(this._bgSurface, 0, 0, this.width, this.height, 0, 0) : this.backgroundImage && renderer.drawImage(this.backgroundImage, 0, 0, this.width, this.height, 0, 0), 
                         this._childrenArea.width <= 0 || this._childrenArea.height <= 0 || (renderer.save(), 
-                        0 === this._childrenArea.x && 0 === this._childrenArea.y || renderer.translate(this._childrenArea.x, this._childrenArea.y), 
+                        (0 !== this._childrenArea.x || 0 !== this._childrenArea.y) && renderer.translate(this._childrenArea.x, this._childrenArea.y), 
                         renderer.drawImage(this._childrenSurface, 0, 0, this._childrenArea.width, this._childrenArea.height, 0, 0), 
                         renderer.restore()));
                     }, Pane.prototype.destroy = function(destroySurface) {
@@ -2302,7 +2306,7 @@ require = function e(t, n, r) {
                         this._childrenRenderer = this._childrenSurface.renderer(), this._normalizedPadding = r;
                     }, Pane.prototype._calculateBoundingRect = function(m, c) {
                         var matrix = this.getMatrix();
-                        if (m && (matrix = m.multiplyNew(matrix)), this.visible() && (!c || this._targetCameras && this._targetCameras.indexOf(c) !== -1)) {
+                        if (m && (matrix = m.multiplyNew(matrix)), this.visible() && (!c || this._targetCameras && -1 !== this._targetCameras.indexOf(c))) {
                             for (var thisBoundingRect = {
                                 left: 0,
                                 right: this.width,
@@ -2428,7 +2432,7 @@ require = function e(t, n, r) {
                         var slot = getSurfaceAtlasSlot(this._emptySurfaceAtlasSlotHead, width, height);
                         if (!slot) return null;
                         var left, right, remainWidth = slot.width - width, remainHeight = slot.height - height;
-                        remainWidth <= remainHeight ? (left = new SurfaceAtlasSlot(slot.x + width, slot.y, remainWidth, height), 
+                        remainHeight >= remainWidth ? (left = new SurfaceAtlasSlot(slot.x + width, slot.y, remainWidth, height), 
                         right = new SurfaceAtlasSlot(slot.x, slot.y + height, slot.width, remainHeight)) : (left = new SurfaceAtlasSlot(slot.x, slot.y + height, width, remainHeight), 
                         right = new SurfaceAtlasSlot(slot.x + width, slot.y, remainWidth, slot.height)), 
                         left.prev = slot.prev, left.next = right, null === left.prev ? this._emptySurfaceAtlasSlotHead = left : left.prev.next = left, 
@@ -2461,7 +2465,7 @@ require = function e(t, n, r) {
                         if (this.fontFamily = param.fontFamily, this.size = param.size, this.hint = "hint" in param ? param.hint : {}, 
                         this.fontColor = "fontColor" in param ? param.fontColor : "black", this.fontWeight = "fontWeight" in param ? param.fontWeight : FontWeight.Normal, 
                         this.strokeWidth = "strokeWidth" in param ? param.strokeWidth : 0, this.strokeColor = "strokeColor" in param ? param.strokeColor : "black", 
-                        this.strokeOnly = "strokeOnly" in param && param.strokeOnly, this._resourceFactory = param.game.resourceFactory, 
+                        this.strokeOnly = "strokeOnly" in param ? param.strokeOnly : !1, this._resourceFactory = param.game.resourceFactory, 
                         this._glyphFactory = this._resourceFactory.createGlyphFactory(this.fontFamily, this.size, this.hint.baselineHeight, this.fontColor, this.strokeWidth, this.strokeColor, this.strokeOnly, this.fontWeight), 
                         this._glyphs = {}, this._atlases = [], this._currentAtlasIndex = 0, this._destroyed = !1, 
                         this.hint.initialAtlasWidth = this.hint.initialAtlasWidth ? this.hint.initialAtlasWidth : 2048, 
@@ -2470,7 +2474,7 @@ require = function e(t, n, r) {
                         this.hint.maxAtlasHeight = this.hint.maxAtlasHeight ? this.hint.maxAtlasHeight : 2048, 
                         this.hint.maxAtlasNum = this.hint.maxAtlasNum ? this.hint.maxAtlasNum : 1, this._atlasSize = calcAtlasSize(this.hint), 
                         this._atlases.push(this._resourceFactory.createSurfaceAtlas(this._atlasSize.width, this._atlasSize.height)), 
-                        this.hint.presetChars) for (var i = 0, len = this.hint.presetChars.length; i < len; i++) {
+                        this.hint.presetChars) for (var i = 0, len = this.hint.presetChars.length; len > i; i++) {
                             var code = g.Util.charCodeAt(this.hint.presetChars, i);
                             code && this.glyphForCharacter(code);
                         }
@@ -2586,7 +2590,13 @@ require = function e(t, n, r) {
                 var CompositeOperation;
                 !function(CompositeOperation) {
                     CompositeOperation[CompositeOperation.SourceOver = 0] = "SourceOver", CompositeOperation[CompositeOperation.SourceAtop = 1] = "SourceAtop", 
-                    CompositeOperation[CompositeOperation.Lighter = 2] = "Lighter", CompositeOperation[CompositeOperation.Copy = 3] = "Copy";
+                    CompositeOperation[CompositeOperation.Lighter = 2] = "Lighter", CompositeOperation[CompositeOperation.Copy = 3] = "Copy", 
+                    CompositeOperation[CompositeOperation.ExperimentalSourceIn = 4] = "ExperimentalSourceIn", 
+                    CompositeOperation[CompositeOperation.ExperimentalSourceOut = 5] = "ExperimentalSourceOut", 
+                    CompositeOperation[CompositeOperation.ExperimentalDestinationAtop = 6] = "ExperimentalDestinationAtop", 
+                    CompositeOperation[CompositeOperation.ExperimentalDestinationIn = 7] = "ExperimentalDestinationIn", 
+                    CompositeOperation[CompositeOperation.DestinationOut = 8] = "DestinationOut", CompositeOperation[CompositeOperation.DestinationOver = 9] = "DestinationOver", 
+                    CompositeOperation[CompositeOperation.Xor = 10] = "Xor";
                 }(CompositeOperation = g.CompositeOperation || (g.CompositeOperation = {}));
             }(g || (g = {}));
             var g;
@@ -2752,7 +2762,7 @@ require = function e(t, n, r) {
                     }
                     function resolveDirname(path) {
                         var index = path.lastIndexOf("/");
-                        return index === -1 ? path : path.substr(0, index);
+                        return -1 === index ? path : path.substr(0, index);
                     }
                     function resolveExtname(path) {
                         for (var i = path.length - 1; i >= 0; --i) {
@@ -2775,7 +2785,7 @@ require = function e(t, n, r) {
                     }
                     function addExtname(path, ext) {
                         var index = path.indexOf("?");
-                        return index === -1 ? path + "." + ext : path.substring(0, index) + "." + ext + path.substring(index, path.length);
+                        return -1 === index ? path + "." + ext : path.substring(0, index) + "." + ext + path.substring(index, path.length);
                     }
                     function splitPath(path) {
                         var host = "", doubleSlashIndex = path.indexOf("//");
@@ -2838,7 +2848,7 @@ require = function e(t, n, r) {
                         _this.maxWidth = param.maxWidth, _this.textColor = "textColor" in param ? param.textColor : "black", 
                         _this.fontFamily = "fontFamily" in param ? param.fontFamily : g.FontFamily.SansSerif, 
                         _this.strokeWidth = "strokeWidth" in param ? param.strokeWidth : 0, _this.strokeColor = "strokeColor" in param ? param.strokeColor : "black", 
-                        _this.strokeOnly = "strokeOnly" in param && param.strokeOnly, _this;
+                        _this.strokeOnly = "strokeOnly" in param ? param.strokeOnly : !1, _this;
                     }
                     return __extends(SystemLabel, _super), SystemLabel.prototype.renderSelf = function(renderer, camera) {
                         if (this.text) {
@@ -2879,10 +2889,6 @@ require = function e(t, n, r) {
             }(g || (g = {}));
             var g;
             !function(g) {
-                // Copyright (c) 2014 Andreas Madsen & Emil Bay
-                // From https://github.com/AndreasMadsen/xorshift
-                // https://github.com/AndreasMadsen/xorshift/blob/master/LICENSE.md
-                // Arranged by DWANGO Co., Ltd.
                 var Xorshift = function() {
                     function Xorshift(seed) {
                         this.initState(seed);
