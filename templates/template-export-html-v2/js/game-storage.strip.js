@@ -34,6 +34,15 @@
                 function GameStorage(localStorage, metaData) {
                     this._localStorage = localStorage, this._metaData = metaData;
                 }
+                // 同期メソッド
+                // 適当に非同期化して呼び出してもらう
+                // localStorage#setItem wrapper
+                // localStorage#getItem wrapper
+                // :region/:gameId/:userId/:regionKey
+                // 以下の様な制限のチェックは行っていないのでできなりに動くだろう
+                // - userId === "*" のときはregionKeyに*は含まれてはいけない
+                // - 全体が"*"となるlayerKeyは1つしか許されない
+                // - layerKeyの一部が*となるケースはv*、*v、*v*しか許されない
                 return GameStorage.prototype.set = function(key, value, option) {
                     validator.validateStorageKey(key), this.expandVariables(key);
                     var strKey = this.storageKeyToStringKey(key), current = this.getValue(strKey), newValue = null;
@@ -83,6 +92,7 @@
                         validator.validateStorageReadKey(readKey), _this.expandVariables(readKey);
                         var values = [];
                         if (-1 !== readKey.regionKey.indexOf("*") || "*" === readKey.userId) {
+                            // 一括取得
                             var regexp = _this.storageReadKeyToRegExp(readKey);
                             Object.keys(allValues).forEach(function(key) {
                                 if (regexp.test(key)) {
@@ -92,9 +102,11 @@
                                     };
                                     null != lv.tag && (sv.tag = lv.tag), values.push(sv);
                                 }
-                            }), readKey.option && (void 0 !== readKey.option.valueOrder && _this.sortByValue(values, readKey.option.valueOrder), 
+                            }), // 先にcreatedAtで並び替えしたほう安心かも
+                            readKey.option && (void 0 !== readKey.option.valueOrder && _this.sortByValue(values, readKey.option.valueOrder), 
                             void 0 !== readKey.option.keyOrder && _this.sortByRegionKey(values, readKey.option.keyOrder));
                         } else {
+                            // 単一取得
                             var readStrKey = _this.storageKeyToStringKey(readKey), v = allValues[readStrKey];
                             if (v) {
                                 var sv = {
@@ -119,6 +131,7 @@
                 }, GameStorage.prototype.createValuesValue = function(current, value, option) {
                     if (!value) return null;
                     if (option && null != option.condition && null != option.comparisonValue && current && null != current.data) {
+                        // NOTE: ValuesはEqualのみサポート。
                         if (option.condition !== g.StorageCondition.Equal) throw new Error("Invalid condition.");
                         if (current.data !== option.comparisonValue) return null;
                     }
@@ -129,6 +142,8 @@
                     result;
                 }, GameStorage.prototype.createScoresValue = function(current, value, option) {
                     if (!value) return null;
+                    // currentが存在する場合に比較に失敗したら値更新しない
+                    // currentが存在しない場合には比較を行わずに値をそのままセットする
                     if (option && null != option.condition && null != option.comparisonValue && current && null != current.data) switch (option.condition) {
                       case g.StorageCondition.Equal:
                         if (current.data !== option.comparisonValue) return null;
@@ -150,6 +165,7 @@
                     var result = {
                         data: 0
                     }, currentCount = 0;
+                    // optionがnullはありえない
                     if (current && (currentCount = Number(current.data)), null != option.condition && null != option.comparisonValue) switch (option.condition) {
                       case g.StorageCondition.Equal:
                         if (currentCount !== option.comparisonValue) return current ? null : result;
@@ -170,7 +186,8 @@
                     result;
                 }, GameStorage.prototype.createCountsValue = function(current, value, option) {
                     if (option) {
-                        if (option.operation === g.StorageCountsOperation.Incr || option.operation === g.StorageCountsOperation.Decr) return this.createCountsIncrDecrValue(current, value, option);
+                        if (option.operation === g.StorageCountsOperation.Incr || option.operation === g.StorageCountsOperation.Decr) // インクリメント、デクリメントは丸投げする
+                        return this.createCountsIncrDecrValue(current, value, option);
                         if (null != option.condition && null != option.comparisonValue && current && null != current.data) switch (option.condition) {
                           case g.StorageCondition.Equal:
                             if (current.data !== option.comparisonValue) return null;
@@ -206,6 +223,10 @@
                 }, GameStorage.prototype.storageReadKeyToRegExp = function(key) {
                     var region = key.region || "", gameId = null != key.gameId ? String(key.gameId) : "", userId = null != key.userId ? String(key.userId) : "", regionKey = "";
                     if ("*" === userId && (userId = "[0-9]+"), -1 !== key.regionKey.indexOf("*")) {
+                        // a*0.b*1 => a[a-z0-9]*0\.b[a-z0-9]*1
+                        // a001.*.b001 => a001\.[.a-z0-9.]*\.b001
+                        // a001.* => a001\.[.a-z0-9]*
+                        // *.b001 => [.a-z0-9]*\.b001
                         var layerKeys = key.regionKey.split(".");
                         layerKeys.forEach(function(layerKey, index) {
                             regionKey += "*" === layerKey ? "[.a-z0-9]*" : -1 !== layerKey.indexOf("*") ? layerKey.replace("*", "[a-z0-9]*") : layerKey, 
@@ -289,6 +310,14 @@
         4: [ function(require, module, exports) {
             (function(global) {
                 "use strict";
+                // compare and isBuffer taken from https://github.com/feross/buffer/blob/680e9e5e488f22aac27599a57dc844a6315928dd/index.js
+                // original notice:
+                /*!
+ * The buffer module from node.js, for the browser.
+ *
+ * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
+ * @license  MIT
+ */
                 function compare(a, b) {
                     if (a === b) return 0;
                     for (var x = a.length, y = b.length, i = 0, len = Math.min(x, y); len > i; ++i) if (a[i] !== b[i]) {
@@ -306,6 +335,7 @@
                 function isView(arrbuf) {
                     return isBuffer(arrbuf) ? !1 : "function" != typeof global.ArrayBuffer ? !1 : "function" == typeof ArrayBuffer.isView ? ArrayBuffer.isView(arrbuf) : arrbuf ? arrbuf instanceof DataView ? !0 : arrbuf.buffer && arrbuf.buffer instanceof ArrayBuffer ? !0 : !1 : !1;
                 }
+                // based on https://github.com/ljharb/function.prototype.name/blob/adeeeec8bfcc6068b187d7d9fb3d5bb1d3a30899/implementation.js
                 function getName(func) {
                     if (util.isFunction(func)) {
                         if (functionsHaveNames) return func.name;
@@ -324,6 +354,15 @@
                 function getMessage(self) {
                     return truncate(inspect(self.actual), 128) + " " + self.operator + " " + truncate(inspect(self.expected), 128);
                 }
+                // At present only the three keys mentioned above are used and
+                // understood by the spec. Implementations or sub modules can pass
+                // other keys to the AssertionError's constructor - they will be
+                // ignored.
+                // 3. All of the following functions must throw an AssertionError
+                // when a corresponding condition is not met, with a message that
+                // may be undefined if not provided.  All assertion methods provide
+                // both the actual and expected values to the assertion error for
+                // display purposes.
                 function fail(actual, expected, message, operator, stackStartFunction) {
                     throw new assert.AssertionError({
                         message: message,
@@ -333,10 +372,17 @@
                         stackStartFunction: stackStartFunction
                     });
                 }
+                // 4. Pure assertion tests whether a value is truthy, as determined
+                // by !!guard.
+                // assert.ok(guard, message_opt);
+                // This statement is equivalent to assert.equal(true, !!guard,
+                // message_opt);. To test strictly for the value true, use
+                // assert.strictEqual(true, guard, message_opt);.
                 function ok(value, message) {
                     value || fail(value, !0, message, "==", assert.ok);
                 }
                 function _deepEqual(actual, expected, strict, memos) {
+                    // 7.1. All identical values are equivalent, as determined by ===.
                     if (actual === expected) return !0;
                     if (isBuffer(actual) && isBuffer(expected)) return 0 === compare(actual, expected);
                     if (util.isDate(actual) && util.isDate(expected)) return actual.getTime() === expected.getTime();
@@ -359,14 +405,21 @@
                 }
                 function objEquiv(a, b, strict, actualVisitedObjects) {
                     if (null === a || void 0 === a || null === b || void 0 === b) return !1;
+                    // if one is a primitive, the other must be same
                     if (util.isPrimitive(a) || util.isPrimitive(b)) return a === b;
                     if (strict && Object.getPrototypeOf(a) !== Object.getPrototypeOf(b)) return !1;
                     var aIsArgs = isArguments(a), bIsArgs = isArguments(b);
                     if (aIsArgs && !bIsArgs || !aIsArgs && bIsArgs) return !1;
                     if (aIsArgs) return a = pSlice.call(a), b = pSlice.call(b), _deepEqual(a, b, strict);
                     var key, i, ka = objectKeys(a), kb = objectKeys(b);
+                    // having the same number of owned properties (keys incorporates
+                    // hasOwnProperty)
                     if (ka.length !== kb.length) return !1;
-                    for (ka.sort(), kb.sort(), i = ka.length - 1; i >= 0; i--) if (ka[i] !== kb[i]) return !1;
+                    //~~~cheap key test
+                    for (//the same set of keys (although not necessarily the same order),
+                    ka.sort(), kb.sort(), i = ka.length - 1; i >= 0; i--) if (ka[i] !== kb[i]) return !1;
+                    //equivalent values for every corresponding key, and
+                    //~~~possibly expensive deep test
                     for (i = ka.length - 1; i >= 0; i--) if (key = ka[i], !_deepEqual(a[key], b[key], strict, actualVisitedObjects)) return !1;
                     return !0;
                 }
@@ -400,6 +453,30 @@
                     if ((isUnwantedException && userProvidedMessage && expectedException(actual, expected) || isUnexpectedException) && fail(actual, expected, "Got unwanted exception" + message), 
                     shouldThrow && actual && expected && !expectedException(actual, expected) || !shouldThrow && actual) throw actual;
                 }
+                // based on node assert, original notice:
+                // http://wiki.commonjs.org/wiki/Unit_Testing/1.0
+                //
+                // THIS IS NOT TESTED NOR LIKELY TO WORK OUTSIDE V8!
+                //
+                // Originally from narwhal.js (http://narwhaljs.org)
+                // Copyright (c) 2009 Thomas Robinson <280north.com>
+                //
+                // Permission is hereby granted, free of charge, to any person obtaining a copy
+                // of this software and associated documentation files (the 'Software'), to
+                // deal in the Software without restriction, including without limitation the
+                // rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+                // sell copies of the Software, and to permit persons to whom the Software is
+                // furnished to do so, subject to the following conditions:
+                //
+                // The above copyright notice and this permission notice shall be included in
+                // all copies or substantial portions of the Software.
+                //
+                // THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+                // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+                // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+                // AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+                // ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+                // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                 var util = require("util/"), hasOwn = Object.prototype.hasOwnProperty, pSlice = Array.prototype.slice, functionsHaveNames = function() {
                     return "foo" === function() {}.name;
                 }(), assert = module.exports = ok, regex = /\s*function\s+([^\(\s]*)\s*/;
@@ -409,34 +486,54 @@
                     this.generatedMessage = !1) : (this.message = getMessage(this), this.generatedMessage = !0);
                     var stackStartFunction = options.stackStartFunction || fail;
                     if (Error.captureStackTrace) Error.captureStackTrace(this, stackStartFunction); else {
+                        // non v8 browsers so we can have a stacktrace
                         var err = new Error();
                         if (err.stack) {
                             var out = err.stack, fn_name = getName(stackStartFunction), idx = out.indexOf("\n" + fn_name);
                             if (idx >= 0) {
+                                // once we have located the function frame
+                                // we need to strip out everything before it (and its line)
                                 var next_line = out.indexOf("\n", idx + 1);
                                 out = out.substring(next_line + 1);
                             }
                             this.stack = out;
                         }
                     }
-                }, util.inherits(assert.AssertionError, Error), assert.fail = fail, assert.ok = ok, 
+                }, // assert.AssertionError instanceof Error
+                util.inherits(assert.AssertionError, Error), // EXTENSION! allows for well behaved errors defined elsewhere.
+                assert.fail = fail, assert.ok = ok, // 5. The equality assertion tests shallow, coercive equality with
+                // ==.
+                // assert.equal(actual, expected, message_opt);
                 assert.equal = function(actual, expected, message) {
                     actual != expected && fail(actual, expected, message, "==", assert.equal);
-                }, assert.notEqual = function(actual, expected, message) {
+                }, // 6. The non-equality assertion tests for whether two objects are not equal
+                // with != assert.notEqual(actual, expected, message_opt);
+                assert.notEqual = function(actual, expected, message) {
                     actual == expected && fail(actual, expected, message, "!=", assert.notEqual);
-                }, assert.deepEqual = function(actual, expected, message) {
+                }, // 7. The equivalence assertion tests a deep equality relation.
+                // assert.deepEqual(actual, expected, message_opt);
+                assert.deepEqual = function(actual, expected, message) {
                     _deepEqual(actual, expected, !1) || fail(actual, expected, message, "deepEqual", assert.deepEqual);
                 }, assert.deepStrictEqual = function(actual, expected, message) {
                     _deepEqual(actual, expected, !0) || fail(actual, expected, message, "deepStrictEqual", assert.deepStrictEqual);
-                }, assert.notDeepEqual = function(actual, expected, message) {
+                }, // 8. The non-equivalence assertion tests for any deep inequality.
+                // assert.notDeepEqual(actual, expected, message_opt);
+                assert.notDeepEqual = function(actual, expected, message) {
                     _deepEqual(actual, expected, !1) && fail(actual, expected, message, "notDeepEqual", assert.notDeepEqual);
-                }, assert.notDeepStrictEqual = notDeepStrictEqual, assert.strictEqual = function(actual, expected, message) {
+                }, assert.notDeepStrictEqual = notDeepStrictEqual, // 9. The strict equality assertion tests strict equality, as determined by ===.
+                // assert.strictEqual(actual, expected, message_opt);
+                assert.strictEqual = function(actual, expected, message) {
                     actual !== expected && fail(actual, expected, message, "===", assert.strictEqual);
-                }, assert.notStrictEqual = function(actual, expected, message) {
+                }, // 10. The strict non-equality assertion tests for strict inequality, as
+                // determined by !==.  assert.notStrictEqual(actual, expected, message_opt);
+                assert.notStrictEqual = function(actual, expected, message) {
                     actual === expected && fail(actual, expected, message, "!==", assert.notStrictEqual);
-                }, assert["throws"] = function(block, error, message) {
+                }, // 11. Expected to throw an error:
+                // assert.throws(block, Error_opt, message_opt);
+                assert["throws"] = function(block, /*optional*/ error, /*optional*/ message) {
                     _throws(!0, block, error, message);
-                }, assert.doesNotThrow = function(block, error, message) {
+                }, // EXTENSION! This is annoying to write outside this module.
+                assert.doesNotThrow = function(block, /*optional*/ error, /*optional*/ message) {
                     _throws(!1, block, error, message);
                 }, assert.ifError = function(err) {
                     if (err) throw err;
@@ -458,29 +555,40 @@
                 throw new Error("clearTimeout has not been defined");
             }
             function runTimeout(fun) {
-                if (cachedSetTimeout === setTimeout) return setTimeout(fun, 0);
+                if (cachedSetTimeout === setTimeout) //normal enviroments in sane situations
+                return setTimeout(fun, 0);
+                // if setTimeout wasn't available but was latter defined
                 if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) return cachedSetTimeout = setTimeout, 
                 setTimeout(fun, 0);
                 try {
+                    // when when somebody has screwed with setTimeout but no I.E. maddness
                     return cachedSetTimeout(fun, 0);
                 } catch (e) {
                     try {
+                        // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
                         return cachedSetTimeout.call(null, fun, 0);
                     } catch (e) {
+                        // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
                         return cachedSetTimeout.call(this, fun, 0);
                     }
                 }
             }
             function runClearTimeout(marker) {
-                if (cachedClearTimeout === clearTimeout) return clearTimeout(marker);
+                if (cachedClearTimeout === clearTimeout) //normal enviroments in sane situations
+                return clearTimeout(marker);
+                // if clearTimeout wasn't available but was latter defined
                 if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) return cachedClearTimeout = clearTimeout, 
                 clearTimeout(marker);
                 try {
+                    // when when somebody has screwed with setTimeout but no I.E. maddness
                     return cachedClearTimeout(marker);
                 } catch (e) {
                     try {
+                        // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
                         return cachedClearTimeout.call(null, marker);
                     } catch (e) {
+                        // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+                        // Some versions of I.E. have different rules for clearTimeout vs setTimeout
                         return cachedClearTimeout.call(this, marker);
                     }
                 }
@@ -500,10 +608,12 @@
                     currentQueue = null, draining = !1, runClearTimeout(timeout);
                 }
             }
+            // v8 likes predictible objects
             function Item(fun, array) {
                 this.fun = fun, this.array = array;
             }
             function noop() {}
+            // shim for using process in browser
             var cachedSetTimeout, cachedClearTimeout, process = module.exports = {};
             !function() {
                 try {
@@ -525,8 +635,9 @@
             }, Item.prototype.run = function() {
                 this.fun.apply(null, this.array);
             }, process.title = "browser", process.browser = !0, process.env = {}, process.argv = [], 
-            process.version = "", process.versions = {}, process.on = noop, process.addListener = noop, 
-            process.once = noop, process.off = noop, process.removeListener = noop, process.removeAllListeners = noop, 
+            process.version = "", // empty string to avoid regexp issues
+            process.versions = {}, process.on = noop, process.addListener = noop, process.once = noop, 
+            process.off = noop, process.removeListener = noop, process.removeAllListeners = noop, 
             process.emit = noop, process.binding = function(name) {
                 throw new Error("process.binding is not supported");
             }, process.cwd = function() {
@@ -560,11 +671,24 @@
         }, {} ],
         8: [ function(require, module, exports) {
             (function(process, global) {
+                /**
+ * Echos the value of a value. Trys to print the value out
+ * in the best way possible given the different types.
+ *
+ * @param {Object} obj The object to print out.
+ * @param {Object} opts Optional options object that alters the output.
+ */
+                /* legacy: obj, showHidden, depth, colors*/
                 function inspect(obj, opts) {
+                    // default options
                     var ctx = {
                         seen: [],
                         stylize: stylizeNoColor
                     };
+                    // legacy...
+                    // legacy...
+                    // got an "options" object
+                    // set default options
                     return arguments.length >= 3 && (ctx.depth = arguments[2]), arguments.length >= 4 && (ctx.colors = arguments[3]), 
                     isBoolean(opts) ? ctx.showHidden = opts : opts && exports._extend(ctx, opts), isUndefined(ctx.showHidden) && (ctx.showHidden = !1), 
                     isUndefined(ctx.depth) && (ctx.depth = 2), isUndefined(ctx.colors) && (ctx.colors = !1), 
@@ -585,14 +709,21 @@
                     }), hash;
                 }
                 function formatValue(ctx, value, recurseTimes) {
+                    // Provide a hook for user-specified inspect functions.
+                    // Check that value is an object with an inspect function on it
                     if (ctx.customInspect && value && isFunction(value.inspect) && value.inspect !== exports.inspect && (!value.constructor || value.constructor.prototype !== value)) {
                         var ret = value.inspect(recurseTimes, ctx);
                         return isString(ret) || (ret = formatValue(ctx, ret, recurseTimes)), ret;
                     }
+                    // Primitive types cannot have properties
                     var primitive = formatPrimitive(ctx, value);
                     if (primitive) return primitive;
+                    // Look up the keys of the object.
                     var keys = Object.keys(value), visibleKeys = arrayToHash(keys);
+                    // IE doesn't make error fields non-enumerable
+                    // http://msdn.microsoft.com/en-us/library/ie/dww52sbt(v=vs.94).aspx
                     if (ctx.showHidden && (keys = Object.getOwnPropertyNames(value)), isError(value) && (keys.indexOf("message") >= 0 || keys.indexOf("description") >= 0)) return formatError(value);
+                    // Some type of object without properties can be shortcutted.
                     if (0 === keys.length) {
                         if (isFunction(value)) {
                             var name = value.name ? ": " + value.name : "";
@@ -603,11 +734,15 @@
                         if (isError(value)) return formatError(value);
                     }
                     var base = "", array = !1, braces = [ "{", "}" ];
-                    if (isArray(value) && (array = !0, braces = [ "[", "]" ]), isFunction(value)) {
+                    // Make functions say that they are functions
+                    if (// Make Array say that they are Array
+                    isArray(value) && (array = !0, braces = [ "[", "]" ]), isFunction(value)) {
                         var n = value.name ? ": " + value.name : "";
                         base = " [Function" + n + "]";
                     }
-                    if (isRegExp(value) && (base = " " + RegExp.prototype.toString.call(value)), isDate(value) && (base = " " + Date.prototype.toUTCString.call(value)), 
+                    if (// Make RegExps say that they are RegExps
+                    isRegExp(value) && (base = " " + RegExp.prototype.toString.call(value)), // Make dates with properties first say the date
+                    isDate(value) && (base = " " + Date.prototype.toUTCString.call(value)), // Make error with message first say the error
                     isError(value) && (base = " " + formatError(value)), 0 === keys.length && (!array || 0 == value.length)) return braces[0] + base + braces[1];
                     if (0 > recurseTimes) return isRegExp(value) ? ctx.stylize(RegExp.prototype.toString.call(value), "regexp") : ctx.stylize("[Object]", "special");
                     ctx.seen.push(value);
@@ -622,6 +757,7 @@
                         var simple = "'" + JSON.stringify(value).replace(/^"|"$/g, "").replace(/'/g, "\\'").replace(/\\"/g, '"') + "'";
                         return ctx.stylize(simple, "string");
                     }
+                    // For some reason typeof null is "object", so special case here.
                     return isNumber(value) ? ctx.stylize("" + value, "number") : isBoolean(value) ? ctx.stylize("" + value, "boolean") : isNull(value) ? ctx.stylize("null", "null") : void 0;
                 }
                 function formatError(value) {
@@ -657,6 +793,8 @@
                     }, 0);
                     return length > 60 ? braces[0] + ("" === base ? "" : base + "\n ") + " " + output.join(",\n  ") + " " + braces[1] : braces[0] + base + " " + output.join(", ") + " " + braces[1];
                 }
+                // NOTE: These type checking functions intentionally don't use `instanceof`
+                // because it is fragile and can be easily faked with `Object.create()`.
                 function isArray(ar) {
                     return Array.isArray(ar);
                 }
@@ -697,6 +835,7 @@
                     return "function" == typeof arg;
                 }
                 function isPrimitive(arg) {
+                    // ES6 symbol
                     return null === arg || "boolean" == typeof arg || "number" == typeof arg || "string" == typeof arg || "symbol" == typeof arg || "undefined" == typeof arg;
                 }
                 function objectToString(o) {
@@ -705,6 +844,7 @@
                 function pad(n) {
                     return 10 > n ? "0" + n.toString(10) : n.toString(10);
                 }
+                // 26 Feb 16:19:34
                 function timestamp() {
                     var d = new Date(), time = [ pad(d.getHours()), pad(d.getMinutes()), pad(d.getSeconds()) ].join(":");
                     return [ d.getDate(), months[d.getMonth()], time ].join(" ");
@@ -712,6 +852,26 @@
                 function hasOwnProperty(obj, prop) {
                     return Object.prototype.hasOwnProperty.call(obj, prop);
                 }
+                // Copyright Joyent, Inc. and other Node contributors.
+                //
+                // Permission is hereby granted, free of charge, to any person obtaining a
+                // copy of this software and associated documentation files (the
+                // "Software"), to deal in the Software without restriction, including
+                // without limitation the rights to use, copy, modify, merge, publish,
+                // distribute, sublicense, and/or sell copies of the Software, and to permit
+                // persons to whom the Software is furnished to do so, subject to the
+                // following conditions:
+                //
+                // The above copyright notice and this permission notice shall be included
+                // in all copies or substantial portions of the Software.
+                //
+                // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+                // OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+                // MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+                // NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+                // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+                // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+                // USE OR OTHER DEALINGS IN THE SOFTWARE.
                 var formatRegExp = /%[sdj%]/g;
                 exports.format = function(f) {
                     if (!isString(f)) {
@@ -740,7 +900,10 @@
                         }
                     }), x = args[i]; len > i; x = args[++i]) str += isNull(x) || !isObject(x) ? " " + x : " " + inspect(x);
                     return str;
-                }, exports.deprecate = function(fn, msg) {
+                }, // Mark that a method should not be used.
+                // Returns a modified function which warns once by default.
+                // If --no-deprecation is set, then it is a no-op.
+                exports.deprecate = function(fn, msg) {
                     function deprecated() {
                         if (!warned) {
                             if (process.throwDeprecation) throw new Error(msg);
@@ -748,6 +911,7 @@
                         }
                         return fn.apply(this, arguments);
                     }
+                    // Allow for deprecating things in the process of starting up.
                     if (isUndefined(global.process)) return function() {
                         return exports.deprecate(fn, msg).apply(this, arguments);
                     };
@@ -766,7 +930,8 @@
                         };
                     } else debugs[set] = function() {};
                     return debugs[set];
-                }, exports.inspect = inspect, inspect.colors = {
+                }, exports.inspect = inspect, // http://en.wikipedia.org/wiki/ANSI_escape_code#graphics
+                inspect.colors = {
                     bold: [ 1, 22 ],
                     italic: [ 3, 23 ],
                     underline: [ 4, 24 ],
@@ -780,7 +945,8 @@
                     magenta: [ 35, 39 ],
                     red: [ 31, 39 ],
                     yellow: [ 33, 39 ]
-                }, inspect.styles = {
+                }, // Don't use 'blue' not visible on cmd.exe
+                inspect.styles = {
                     special: "cyan",
                     number: "yellow",
                     "boolean": "yellow",
@@ -788,6 +954,7 @@
                     "null": "bold",
                     string: "green",
                     date: "magenta",
+                    // "name": intentionally not styling
                     regexp: "red"
                 }, exports.isArray = isArray, exports.isBoolean = isBoolean, exports.isNull = isNull, 
                 exports.isNullOrUndefined = isNullOrUndefined, exports.isNumber = isNumber, exports.isString = isString, 
@@ -795,9 +962,24 @@
                 exports.isObject = isObject, exports.isDate = isDate, exports.isError = isError, 
                 exports.isFunction = isFunction, exports.isPrimitive = isPrimitive, exports.isBuffer = require("./support/isBuffer");
                 var months = [ "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" ];
+                // log is just a thin wrapper to console.log that prepends a timestamp
                 exports.log = function() {
                     console.log("%s - %s", timestamp(), exports.format.apply(exports, arguments));
-                }, exports.inherits = require("inherits"), exports._extend = function(origin, add) {
+                }, /**
+ * Inherit the prototype methods from one constructor into another.
+ *
+ * The Function.prototype.inherits from lang.js rewritten as a standalone
+ * function (not on Function.prototype). NOTE: If this file is to be loaded
+ * during bootstrapping this function needs to be rewritten using some native
+ * functions as prototype setup using normal JavaScript does not work as
+ * expected during bootstrapping (see mirror.js in r114903).
+ *
+ * @param {function} ctor Constructor function which needs to inherit the
+ *     prototype.
+ * @param {function} superCtor Constructor function to inherit prototype from.
+ */
+                exports.inherits = require("inherits"), exports._extend = function(origin, add) {
+                    // Don't do anything if add isn't an object
                     if (!add || !isObject(add)) return origin;
                     for (var keys = Object.keys(add), i = keys.length; i--; ) origin[keys[i]] = add[keys[i]];
                     return origin;

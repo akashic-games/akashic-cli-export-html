@@ -59,24 +59,20 @@ window.addEventListener("load", function() {
 			errorHandler: function (e) { console.log("ERRORHANDLER:", e); }
 		});
 
-		driver.gameCreatedTrigger.handle(function () {
+		driver.gameCreatedTrigger.handle(function (game) {
 			if (window.optionProps.magnify) {
 				if (!pf.containerController) return;
-				var parentView = pf.containerView.parentElement;
-				parentView.style.margin = "0px";
-				parentView.style.padding = "0px";
-				parentView.style.overflow = "hidden";
 				var viewportSize = {
 					width: window.innerWidth || document.documentElement.clientWidth,
 					height: window.innerHeight || document.documentElement.clientHeight
 				};
 				var gameScale = Math.min(
-					viewportSize.width / pf.containerController._rendererReq.primarySurfaceWidth,
-					viewportSize.height / pf.containerController._rendererReq.primarySurfaceHeight
+					viewportSize.width / game.width,
+					viewportSize.height / game.height
 				);
 				var gameSize = {
-					width: Math.floor(pf.containerController._rendererReq.primarySurfaceWidth * gameScale),
-					height: Math.floor(pf.containerController._rendererReq.primarySurfaceHeight * gameScale)
+					width: Math.floor(game.width * gameScale),
+					height: Math.floor(game.height * gameScale)
 				};
 				pf.containerController.changeScale(gameScale, gameScale);
 				var gameOffset = {
