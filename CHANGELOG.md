@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.1.15
+* akashic-cli-commons@0.2.8 を利用するように
+  * `--hash-filename` オプション有効時、 `moduleMainScripts` の値がおかしかった問題を修正。
+
 ## 0.1.14
 * ビルドツールの変更
 * 依存関係の修正
