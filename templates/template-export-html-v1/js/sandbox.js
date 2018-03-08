@@ -59,8 +59,28 @@ window.addEventListener("load", function() {
 			errorHandler: function (e) { console.log("ERRORHANDLER:", e); }
 		});
 
-		driver.gameCreatedTrigger.handle(function () {
-			if (window.optionProps.magnify) pf.fitToWindow(true);
+		driver.gameCreatedTrigger.handle(function (game) {
+			if (window.optionProps.magnify) {
+				if (!pf.containerController) return;
+				var viewportSize = {
+					width: window.innerWidth || document.documentElement.clientWidth,
+					height: window.innerHeight || document.documentElement.clientHeight
+				};
+				var gameScale = Math.min(
+					viewportSize.width / game.width,
+					viewportSize.height / game.height
+				);
+				var gameSize = {
+					width: Math.floor(game.width * gameScale),
+					height: Math.floor(game.height * gameScale)
+				};
+				pf.containerController.changeScale(gameScale, gameScale);
+				var gameOffset = {
+					x: Math.floor((viewportSize.width - gameSize.width) / 2),
+					y: Math.floor((viewportSize.height - gameSize.height) / 2)
+				};
+				pf.containerController.inputHandlerLayer.setOffset(gameOffset);
+			}
 		});
 
 		driver.initialize({

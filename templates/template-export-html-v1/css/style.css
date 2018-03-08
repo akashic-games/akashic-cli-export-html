@@ -7,6 +7,12 @@ body{
 	overflow: hidden;
 }
 
+#container {
+	margin: 0px;
+	padding: 0px;
+	overflow: hidden;
+}
+
 #container canvas{
 	background-size: contain;
 }

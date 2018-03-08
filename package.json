@@ -1,6 +1,6 @@
 {
   "name": "@akashic/akashic-cli-export-html",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "A module to convert your Akashic game to a runnable standalone.",
   "main": "lib/index.js",
   "scripts": {
@@ -66,8 +66,8 @@
     "uglify-js": "2.6.1"
   },
   "optionalDependencies": {
-    "@akashic/game-driver": "~1.0.0",
-    "@akashic/pdi-browser": "~1.0.0",
+    "@akashic/game-driver": "~1.0.1",
+    "@akashic/pdi-browser": "~1.1.0",
     "@akashic/game-storage": "0.0.6"
   },
   "repository": {

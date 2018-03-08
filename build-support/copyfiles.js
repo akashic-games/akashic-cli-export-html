@@ -5,8 +5,8 @@ var fs = require("fs");
 function minify(filepath) {
 	return UglifyJS.minify(filepath, {
 		mangle: false,
-		preserveComments: "license",
 		output: {
+			comments: "license",
 			beautify: true
 		}
 	});

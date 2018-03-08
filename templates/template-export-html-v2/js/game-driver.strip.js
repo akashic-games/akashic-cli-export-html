@@ -21,46 +21,12 @@ require = function e(t, n, r) {
     for (var i = "function" == typeof require && require, o = 0; o < r.length; o++) s(r[o]);
     return s;
 }({
-    "@akashic/game-driver": [ function(require, module, exports) {
-        "use strict";
-        Object.defineProperty(exports, "__esModule", {
-            value: !0
-        });
-        var EventIndex = require("./EventIndex");
-        exports.EventIndex = EventIndex;
-        var LoopMode_1 = require("./LoopMode");
-        exports.LoopMode = LoopMode_1.default;
-        var LoopRenderMode_1 = require("./LoopRenderMode");
-        exports.LoopRenderMode = LoopRenderMode_1.default;
-        var ExecutionMode_1 = require("./ExecutionMode");
-        exports.ExecutionMode = ExecutionMode_1.default;
-        var GameDriver_1 = require("./GameDriver");
-        exports.GameDriver = GameDriver_1.GameDriver;
-        var Game_1 = require("./Game");
-        exports.Game = Game_1.Game;
-        var ReplayAmflowProxy_1 = require("./auxiliary/ReplayAmflowProxy");
-        exports.ReplayAmflowProxy = ReplayAmflowProxy_1.ReplayAmflowProxy;
-        var MemoryAmflowClient_1 = require("./auxiliary/MemoryAmflowClient");
-        exports.MemoryAmflowClient = MemoryAmflowClient_1.MemoryAmflowClient;
-        var SimpleProfiler_1 = require("./auxiliary/SimpleProfiler");
-        exports.SimpleProfiler = SimpleProfiler_1.SimpleProfiler;
-    }, {
-        "./EventIndex": 4,
-        "./ExecutionMode": 5,
-        "./Game": 6,
-        "./GameDriver": 7,
-        "./LoopMode": 10,
-        "./LoopRenderMode": 11,
-        "./auxiliary/MemoryAmflowClient": 19,
-        "./auxiliary/ReplayAmflowProxy": 20,
-        "./auxiliary/SimpleProfiler": 21
-    } ],
     1: [ function(require, module, exports) {
         "use strict";
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), Clock = function() {
+        var g = require("@akashic/akashic-engine"), Clock = /** @class */ function() {
             function Clock(param) {
                 this.fps = param.fps, this.scaleFactor = param.scaleFactor || 1, this.frameTrigger = new g.Trigger(), 
                 this.rawFrameTrigger = new g.Trigger(), this._platform = param.platform, this._maxFramePerOnce = param.maxFramePerOnce, 
@@ -70,6 +36,20 @@ require = function e(t, n, r) {
                 this._looper = this._platform.createLooper(this._onLooperCall_bound), this._waitTime = 0, 
                 this._waitTimeDoubled = 0, this._waitTimeMax = 0, this._skipFrameWaitTime = 0, this._realMaxFramePerOnce = 0;
             }
+            /**
+     * `scaleFactor` を変更する。
+     * start()した後にも呼び出せるが、1フレーム以下の経過時間情報はリセットされる点に注意。
+     */
+            /**
+     * 経過時間先取りの比率。
+     *
+     * FPSから定まる「1フレーム」の経過時間が経っていなくても、この割合の時間が経過していれば1フレーム分の計算を進めてしまう。
+     * その代わりに次フレームまでの所要時間を長くする。
+     * 例えば20FPSであれば50msで1フレームだが、50*0.8 = 40ms 時点で1フレーム進めてしまい、次フレームまでの時間を60msにする。
+     */
+            /**
+     * 異常値とみなして無視する `Looper` の呼び出し間隔[ms]のデフォルト値。
+     */
             return Clock.prototype.start = function() {
                 this.running || (this._totalDeltaTime = 0, this._updateWaitTimes(this.fps, this.scaleFactor), 
                 this._looper.start(), this.running = !0);
@@ -78,11 +58,13 @@ require = function e(t, n, r) {
             }, Clock.prototype.changeScaleFactor = function(scaleFactor) {
                 this.running ? (this.stop(), this.scaleFactor = scaleFactor, this.start()) : this.scaleFactor = scaleFactor;
             }, Clock.prototype._onLooperCall = function(deltaTime) {
-                if (deltaTime <= 0) return this._waitTime - this._totalDeltaTime;
-                deltaTime > this._deltaTimeBrokenThreshold && (deltaTime = this._waitTime);
+                if (0 >= deltaTime) // 時間が止まっているか巻き戻っている。初回呼び出しか、あるいは何かがおかしい。時間経過0と見なす。
+                return this._waitTime - this._totalDeltaTime;
+                deltaTime > this._deltaTimeBrokenThreshold && (// 間隔が長すぎる。何かがおかしい。時間経過を1フレーム分とみなす。
+                deltaTime = this._waitTime);
                 var totalDeltaTime = this._totalDeltaTime;
-                if (totalDeltaTime += deltaTime, totalDeltaTime <= this._skipFrameWaitTime) return this._totalDeltaTime = totalDeltaTime, 
-                this._waitTime - totalDeltaTime;
+                if (totalDeltaTime += deltaTime, totalDeltaTime <= this._skipFrameWaitTime) // 1フレーム分消化するほどの時間が経っていない。
+                return this._totalDeltaTime = totalDeltaTime, this._waitTime - totalDeltaTime;
                 for (var frameCount = totalDeltaTime < this._waitTimeDoubled ? 1 : totalDeltaTime > this._waitTimeMax ? this._realMaxFramePerOnce : totalDeltaTime / this._waitTime | 0, fc = frameCount, arg = {
                     interrupt: !1
                 }; fc > 0 && this.running && !arg.interrupt; ) --fc, this.frameTrigger.fire(arg);
@@ -106,7 +88,7 @@ require = function e(t, n, r) {
             value: !0
         });
         var g = (require("@akashic/playlog"), require("@akashic/akashic-pdi"), require("@akashic/akashic-engine")), PointEventResolver_1 = (require("./EventIndex"), 
-        require("./PointEventResolver")), EventBuffer = function() {
+        require("./PointEventResolver")), EventBuffer = /** @class */ function() {
             function EventBuffer(param) {
                 this._amflow = param.amflow, this._isReceiver = !1, this._isSender = !1, this._defaultEventPriority = 0, 
                 this._buffer = null, this._joinLeaveBuffer = null, this._localBuffer = null, this._filters = null, 
@@ -115,6 +97,16 @@ require = function e(t, n, r) {
                     game: param.game
                 }), this._onEvent_bound = this.onEvent.bind(this);
             }
+            /**
+     * モードを切り替える。
+     *
+     * この関数の呼び出す場合、最後に呼び出された _amflow#authenticate() から得た Permission は次の条件を満たさねばならない:
+     * * 引数 `param.isReceiver` に真を渡す場合、次に偽を渡すまでの間、 `subscribeEvent` が真であること。
+     * * 引数 `param.isSender` に真を渡す場合、次に偽を渡すまでの間、 `sendEvent` が真であること。
+     */
+            /**
+     * filterを無視してイベントを追加する。
+     */
             return EventBuffer.isEventLocal = function(pev) {
                 switch (pev[0]) {
                   case 0:
@@ -186,12 +178,15 @@ require = function e(t, n, r) {
             }, EventBuffer.prototype.readLocalEvents = function() {
                 var ret = this._localBuffer;
                 return this._localBuffer = null, ret;
-            }, EventBuffer.prototype.addFilter = function(filter) {
-                this._filters || (this._filters = []), this._filters.push(filter);
+            }, EventBuffer.prototype.addFilter = function(filter, handleEmpty) {
+                this._filters || (this._filters = []), this._filters.push({
+                    func: filter,
+                    handleEmpty: !!handleEmpty
+                });
             }, EventBuffer.prototype.removeFilter = function(filter) {
                 if (this._filters) {
                     if (!filter) return void (this._filters = null);
-                    for (var i = this._filters.length - 1; i >= 0; --i) this._filters[i] === filter && this._filters.splice(i, 1);
+                    for (var i = this._filters.length - 1; i >= 0; --i) this._filters[i].func === filter && this._filters.splice(i, 1);
                 }
             }, EventBuffer.prototype.processEvents = function() {
                 var lpevs = this._unfilteredLocalEvents, pevs = this._unfilteredEvents, joins = this._unfilteredJoinLeaves;
@@ -199,19 +194,28 @@ require = function e(t, n, r) {
                 this._localBuffer = this._localBuffer ? this._localBuffer.concat(lpevs) : lpevs), 
                 pevs.length > 0 && (this._unfilteredEvents = [], this._buffer = this._buffer ? this._buffer.concat(pevs) : pevs), 
                 void (joins.length > 0 && (this._unfilteredJoinLeaves = [], this._joinLeaveBuffer = this._joinLeaveBuffer ? this._joinLeaveBuffer.concat(joins) : joins));
+                if (0 === lpevs.length && 0 === pevs.length && 0 === joins.length) for (var i = 0; i < this._filters.length; ++i) if (this._filters[i].handleEmpty) {
+                    var gpevs = this._filters[i].func([]);
+                    if (gpevs) for (var j = 0; j < gpevs.length; ++j) {
+                        var pev = gpevs[j];
+                        EventBuffer.isEventLocal(pev) ? lpevs.push(pev) : 0 === pev[0] || 1 === pev[0] ? joins.push(pev) : pevs.push(pev);
+                    }
+                }
                 if (lpevs.length > 0) {
                     this._unfilteredLocalEvents = [];
-                    for (var i = 0; i < this._filters.length && (lpevs = this._filters[i](lpevs), lpevs); ++i) ;
+                    for (var i = 0; i < this._filters.length && (lpevs = this._filters[i].func(lpevs), 
+                    lpevs); ++i) ;
                     lpevs && lpevs.length > 0 && (this._localBuffer = this._localBuffer ? this._localBuffer.concat(lpevs) : lpevs);
                 }
                 if (pevs.length > 0) {
                     this._unfilteredEvents = [];
-                    for (var i = 0; i < this._filters.length && (pevs = this._filters[i](pevs), pevs); ++i) ;
+                    for (var i = 0; i < this._filters.length && (pevs = this._filters[i].func(pevs), 
+                    pevs); ++i) ;
                     pevs && pevs.length > 0 && (this._buffer = this._buffer ? this._buffer.concat(pevs) : pevs);
                 }
                 if (joins.length > 0) {
                     this._unfilteredJoinLeaves = [];
-                    for (var i = 0; i < this._filters.length && joins && joins.length > 0 && (joins = this._filters[i](joins), 
+                    for (var i = 0; i < this._filters.length && joins && joins.length > 0 && (joins = this._filters[i].func(joins), 
                     joins); ++i) ;
                     joins && joins.length > 0 && (this._joinLeaveBuffer = this._joinLeaveBuffer ? this._joinLeaveBuffer.concat(joins) : joins);
                 }
@@ -231,10 +235,16 @@ require = function e(t, n, r) {
             value: !0
         });
         var g = require("@akashic/akashic-engine"), EventConverter = (require("@akashic/playlog"), 
-        require("./EventIndex"), function() {
+        require("./EventIndex"), /** @class */ function() {
             function EventConverter(param) {
                 this._game = param.game, this._playerTable = {};
             }
+            /**
+     * playlog.Eventからg.Eventへ変換する。
+     */
+            /**
+     * g.Eventからplaylog.Eventに変換する。
+     */
             return EventConverter.prototype.toGameEvent = function(pev) {
                 var pointerId, entityId, target, point, startDelta, prevDelta, local, timestamp, eventCode = pev[0], prio = pev[1], playerId = pev[2], player = this._playerTable[playerId] || {
                     id: playerId
@@ -302,6 +312,7 @@ require = function e(t, n, r) {
                     return new g.OperationEvent(operationCode, decodedData, player, local, prio);
 
                   default:
+                    // TODO handle error
                     throw g.ExceptionFactory.createAssertionError("EventConverter#toGameEvent");
                 }
             }, EventConverter.prototype.toPlaylogEvent = function(e, preservePlayer) {
@@ -309,6 +320,7 @@ require = function e(t, n, r) {
                 switch (e.type) {
                   case g.EventType.Join:
                   case g.EventType.Leave:
+                    // game-driver は決して Join と Leave を生成しない
                     throw g.ExceptionFactory.createAssertionError("EventConverter#toPlaylogEvent: Invalid type: " + g.EventType[e.type]);
 
                   case g.EventType.Timestamp:
@@ -363,10 +375,27 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
+        /**
+ * `GameLoop` の実行モード。
+ */
         var ExecutionMode;
         !function(ExecutionMode) {
-            ExecutionMode[ExecutionMode.Active = 0] = "Active", ExecutionMode[ExecutionMode.Passive = 1] = "Passive";
-        }(ExecutionMode || (ExecutionMode = {})), exports.default = ExecutionMode;
+            /**
+     * `GameLoop` がactiveである。
+     *
+     * `GameLoop#_executionMode` がこの値である場合、そのインスタンスは:
+     *  - playlog.Eventを外部から受け付ける
+     *  - playlog.Tickを生成し外部へ送信する
+     */
+            ExecutionMode[ExecutionMode.Active = 0] = "Active", /**
+     * `GameLoop` がpassiveである。
+     *
+     * `GameLoop#_executionMode` がこの値である場合、そのインスタンスは:
+     *  - playlog.Eventを外部に送信する
+     *  - playlog.Tickを受信し、それに基づいて `g.Game#tick()` を呼び出す
+     */
+            ExecutionMode[ExecutionMode.Passive = 1] = "Passive";
+        }(ExecutionMode || (ExecutionMode = {})), exports["default"] = ExecutionMode;
     }, {} ],
     6: [ function(require, module, exports) {
         "use strict";
@@ -389,7 +418,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), Game = function(_super) {
+        var g = require("@akashic/akashic-engine"), Game = /** @class */ function(_super) {
             function Game(param) {
                 var _this = _super.call(this, param.configuration, param.resourceFactory, param.assetBase, param.player.id, param.operationPluginViewInfo) || this;
                 return _this.agePassedTrigger = new g.Trigger(), _this.skippingChangedTrigger = new g.Trigger(), 
@@ -399,28 +428,48 @@ require = function e(t, n, r) {
                 _this._eventFilterFuncs = null, _this._notifyPassedAgeTable = {}, _this._gameArgs = param.gameArgs, 
                 _this._globalGameArgs = param.globalGameArgs, _this;
             }
+            /**
+     * 特定age到達時の通知を要求する。
+     * @param age 通知を要求するage
+     */
+            /**
+     * 特定age到達時の通知要求を解除する。
+     * @param age 通知要求を解除するage
+     */
+            /**
+     * `Game` が内部的に利用する時刻取得関数をセットする。
+     * このメソッドは `Game#_load()` 呼び出しに先行して呼び出されていなければならない。
+     */
+            /**
+     * `Game` のイベントフィルタ関連実装をセットする。
+     * このメソッドは `Game#_load()` 呼び出しに先行して呼び出されていなければならない。
+     */
+            // TODO: (WIP) playlog.Event[] をとるべきか検討し対応する。
             return __extends(Game, _super), Game.prototype.requestNotifyAgePassed = function(age) {
                 this._notifyPassedAgeTable[age] = !0;
             }, Game.prototype.cancelNotifyAgePassed = function(age) {
                 delete this._notifyPassedAgeTable[age];
             }, Game.prototype.fireAgePassedIfNeeded = function() {
                 var age = this.age - 1;
-                return !!this._notifyPassedAgeTable[age] && (delete this._notifyPassedAgeTable[age], 
-                this.agePassedTrigger.fire(age), !0);
+                // 通過済みのageを確認するため -1 する。
+                // 通過済みのageを確認するため -1 する。
+                return this._notifyPassedAgeTable[age] ? (delete this._notifyPassedAgeTable[age], 
+                this.agePassedTrigger.fire(age), !0) : !1;
             }, Game.prototype.setCurrentTimeFunc = function(fun) {
                 this._getCurrentTimeFunc = fun;
             }, Game.prototype.setEventFilterFuncs = function(funcs) {
                 this._eventFilterFuncs = funcs;
             }, Game.prototype.setStorageFunc = function(funcs) {
                 this.storage._registerLoad(funcs.storageGetFunc), this.storage._registerWrite(funcs.storagePutFunc), 
+                // TODO: akashic-engine 側で書き換えられるようにする
                 this.storage.requestValuesForJoinPlayer = funcs.requestValuesForJoinFunc;
             }, Game.prototype.raiseEvent = function(event) {
                 this.raiseEventTrigger.fire(event);
             }, Game.prototype.raiseTick = function(events) {
                 if (!this.scene() || this.scene().tickGenerationMode !== g.TickGenerationMode.Manual) throw g.ExceptionFactory.createAssertionError("Game#raiseTick(): tickGenerationMode for the current scene is not Manual.");
                 this.raiseTickTrigger.fire(events);
-            }, Game.prototype.addEventFilter = function(filter) {
-                this._eventFilterFuncs.addFilter(filter);
+            }, Game.prototype.addEventFilter = function(filter, handleEmpty) {
+                this._eventFilterFuncs.addFilter(filter, handleEmpty);
             }, Game.prototype.removeEventFilter = function(filter) {
                 this._eventFilterFuncs.removeFilter(filter);
             }, Game.prototype.shouldSaveSnapshot = function() {
@@ -437,6 +486,7 @@ require = function e(t, n, r) {
             }, Game.prototype._restartWithSnapshot = function(snapshot) {
                 var data = snapshot.data;
                 if (this._eventFilterFuncs.removeFilter(), null != data.seed) {
+                    // 例外ケース: 第0スタートポイントでスナップショットは持っていないので特別対応
                     var randGen = new g.XorshiftRandomGenerator(data.seed);
                     this._reset({
                         age: snapshot.frame,
@@ -467,7 +517,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var es6_promise_1 = require("es6-promise"), g = require("@akashic/akashic-engine"), ExecutionMode_1 = require("./ExecutionMode"), Game_1 = require("./Game"), EventBuffer_1 = require("./EventBuffer"), GameLoop_1 = require("./GameLoop"), PdiUtil_1 = require("./PdiUtil"), GameDriver = function() {
+        var es6_promise_1 = require("es6-promise"), g = require("@akashic/akashic-engine"), ExecutionMode_1 = require("./ExecutionMode"), Game_1 = require("./Game"), EventBuffer_1 = require("./EventBuffer"), GameLoop_1 = require("./GameLoop"), PdiUtil_1 = require("./PdiUtil"), GameDriver = /** @class */ function() {
             function GameDriver(param) {
                 this.errorTrigger = new g.Trigger(), param.errorHandler && this.errorTrigger.add(param.errorHandler, param.errorHandlerOwner), 
                 this.configurationLoadedTrigger = new g.Trigger(), this.gameCreatedTrigger = new g.Trigger(), 
@@ -476,6 +526,39 @@ require = function e(t, n, r) {
                 this._game = null, this._gameLoop = null, this._eventBuffer = null, this._openedAmflow = !1, 
                 this._playToken = null, this._permission = null, this._hidden = !1;
             }
+            /**
+     * `GameDriver` を初期化する。
+     */
+            /**
+     * `GameDriver` の各種状態を変更する。
+     *
+     * 引数 `param` のうち、省略されなかった値が新たに設定される。
+     * `startGame()` によりゲームが開始されていた場合、暗黙に `stopGame()` が行われ、完了後 `startGame()` される。
+     */
+            /**
+     * ゲームを開始する。
+     * このメソッドの呼び出しは、 `initialize()` の完了後でなければならない。
+     */
+            /**
+     * ゲームを(一時的に)止める。
+     *
+     * このメソッドの呼び出し後、 `startGame()` が呼び出されるまで、 `Game#tick()` は呼び出されない。
+     * Active であればティックの生成が行われず、 Passive であれば受信したティックは蓄積される。
+     */
+            /**
+     * このドライバが次にティックを生成する場合の、ageの値を設定する。
+     * `ExecutionMode.Active` でない場合、動作に影響を与えない。
+     * このメソッドの呼び出しは、 `initialize()` の完了後でなければならない。
+     *
+     * @param age 次に生成されるティックのage
+     */
+            /**
+     * PDIに対してプライマリサーフェスのリセットを要求する。
+     *
+     * @param width プライマリサーフェスの幅。
+     * @param height プライマリサーフェスの高さ。
+     * @param rendererCandidates Rendererのタイプ。
+     */
             return GameDriver.prototype.initialize = function(param, callback) {
                 this.doInitialize(param).then(function() {
                     callback();
@@ -538,11 +621,12 @@ require = function e(t, n, r) {
             }, GameDriver.prototype._doSetDriverConfiguration = function(dconf) {
                 var _this = this;
                 if (null == dconf) return es6_promise_1.Promise.resolve();
+                // デフォルト値の補完
                 void 0 === dconf.playId && (dconf.playId = this._playId), void 0 === dconf.playToken && (dconf.playToken = this._playToken), 
-                void 0 === dconf.eventBufferMode && (dconf.executionMode === ExecutionMode_1.default.Active ? dconf.eventBufferMode = {
+                void 0 === dconf.eventBufferMode && (dconf.executionMode === ExecutionMode_1["default"].Active ? dconf.eventBufferMode = {
                     isReceiver: !0,
                     isSender: !1
-                } : dconf.executionMode === ExecutionMode_1.default.Passive && (dconf.eventBufferMode = {
+                } : dconf.executionMode === ExecutionMode_1["default"].Passive && (dconf.eventBufferMode = {
                     isReceiver: !1,
                     isSender: !0
                 }));
@@ -595,6 +679,7 @@ require = function e(t, n, r) {
             }, GameDriver.prototype._putZerothStartPoint = function(data) {
                 var _this = this;
                 return new es6_promise_1.Promise(function(resolve, reject) {
+                    // AMFlowは第0スタートポイントに関して「書かれるまで待つ」という動作をするため、「なければ書き込む」ことはできない。
                     var zerothStartPoint = {
                         frame: 0,
                         timestamp: 0,
@@ -616,7 +701,7 @@ require = function e(t, n, r) {
                     });
                 });
             }, GameDriver.prototype._createGame = function(conf, player, param) {
-                var p, _this = this, putSeed = param.driverConfiguration.executionMode === ExecutionMode_1.default.Active && this._permission.writeTick;
+                var p, _this = this, putSeed = param.driverConfiguration.executionMode === ExecutionMode_1["default"].Active && this._permission.writeTick;
                 return p = putSeed ? this._putZerothStartPoint({
                     seed: Date.now(),
                     globalArgs: param.globalGameArgs,
@@ -630,7 +715,7 @@ require = function e(t, n, r) {
                             isReceiver: !0,
                             isSender: !1
                         },
-                        executionMode: ExecutionMode_1.default.Active
+                        executionMode: ExecutionMode_1["default"].Active
                     }, seed = zerothData.seed, args = param.gameArgs, globalArgs = zerothData.globalArgs, startedAt = zerothData.startedAt, rendererRequirement = {
                         primarySurfaceWidth: conf.width,
                         primarySurfaceHeight: conf.height,
@@ -701,7 +786,7 @@ require = function e(t, n, r) {
             value: !0
         });
         var g = require("@akashic/akashic-engine"), LoopMode_1 = require("./LoopMode"), LoopRenderMode_1 = require("./LoopRenderMode"), ExecutionMode_1 = require("./ExecutionMode"), Clock_1 = (require("./EventIndex"), 
-        require("./Clock")), ProfilerClock_1 = require("./ProfilerClock"), EventConverter_1 = require("./EventConverter"), TickController_1 = require("./TickController"), GameLoop = function() {
+        require("./Clock")), ProfilerClock_1 = require("./ProfilerClock"), EventConverter_1 = require("./EventConverter"), TickController_1 = require("./TickController"), GameLoop = /** @class */ function() {
             function GameLoop(param) {
                 this.errorTrigger = new g.Trigger(), this.running = !1, this._currentTime = 0, this._frameTime = 1e3 / param.game.fps, 
                 param.errorHandler && this.errorTrigger.add(param.errorHandler, param.errorHandlerOwner);
@@ -715,12 +800,14 @@ require = function e(t, n, r) {
                 this._jumpIgnoreThreshold = conf.jumpIgnoreThreshold || GameLoop.DEFAULT_JUMP_IGNORE_THRESHOLD, 
                 this._pollingTickThreshold = conf._pollingTickThreshold || GameLoop.DEFAULT_POLLING_TICK_THRESHOLD, 
                 this._playbackRate = conf.playbackRate || 1;
-                var loopRenderMode = null != conf.loopRenderMode ? conf.loopRenderMode : LoopRenderMode_1.default.AfterRawFrame;
-                this._loopRenderMode = null, this._loopMode = conf.loopMode, this._amflow = param.amflow, 
-                this._game = param.game, this._eventBuffer = param.eventBuffer, this._executionMode = param.executionMode, 
+                var loopRenderMode = null != conf.loopRenderMode ? conf.loopRenderMode : LoopRenderMode_1["default"].AfterRawFrame;
+                this._loopRenderMode = null, // 後の_setLoopRenderMode()で初期化
+                this._loopMode = conf.loopMode, this._amflow = param.amflow, this._game = param.game, 
+                this._eventBuffer = param.eventBuffer, this._executionMode = param.executionMode, 
                 this._sceneTickMode = null, this._sceneLocalMode = null, this._targetAge = null != conf.targetAge ? conf.targetAge : null, 
                 this._waitingStartPoint = !1, this._lastRequestedStartPointAge = -1, this._lastRequestedStartPointTime = -1, 
                 this._waitingNextTick = !1, this._skipping = !1, this._lastPollingTickTime = 0, 
+                // todo: 本来は、パフォーマンス測定機構を含まないリリースモードによるビルド方式も提供すべき。
                 param.profiler ? this._clock = new ProfilerClock_1.ProfilerClock({
                     fps: param.game.fps,
                     scaleFactor: this._playbackRate,
@@ -749,6 +836,50 @@ require = function e(t, n, r) {
                 this._tickBuffer.gotNextTickTrigger.add(this._onGotNextFrameTick, this), this._tickBuffer.start(), 
                 this._updateGamePlaybackRate(), this._handleSceneChange();
             }
+            // 過去のtypoの後方互換性維持
+            /**
+     * 早送り状態に入る。
+     *
+     * すべての早回し(1フレームでの複数ティック消費)で早送り状態に入るわけではないことに注意。
+     * 少々の遅れはこのクラスが暗黙に早回しして吸収する。
+     * 早送り状態は、暗黙の早回しでは吸収しきれない規模の早回しの開始時に通知される。
+     * 具体的な値との関連は `skipThreshold` など `LoopConfiguration` のメンバを参照のこと。
+     */
+            /**
+     * 早送り状態を終える。
+     */
+            /**
+     * Gameの再生速度設定を変える。
+     * 実際に再生速度(ティックの消費速度)を決めているのはこのクラスである点に注意。
+     */
+            /**
+     * ローカルシーンのフレーム処理。
+     *
+     * `this._clock` の管理する時間経過に従い、ローカルシーンにおいて1フレーム時間につき1回呼び出される。
+     */
+            /**
+     * 非ローカルシーンのフレーム処理。
+     *
+     * `this._clock` の管理する時間経過に従い、非ローカルシーンにおいて1フレーム時間につき1回呼び出される。
+     */
+            /**
+     * 時刻関数が与えられている場合のフレーム処理。
+     *
+     * 通常ケース (`_onFrameNormal()`) とは主に次の点で異なる:
+     *  1. `Replay` 時の実装しか持たない (`Realtime` は時刻関数を無視してとにかく最新ティックを目指すので不要)
+     *  2. ローカルティック補間をタイムスタンプに従ってしか行わない
+     * 後者は、ティック受信待ちなどの状況で起きるローカルティック補間がなくなることを意味する。
+     */
+            /**
+     * 非ローカルシーンの通常ケースのフレーム処理。
+     * 時刻関数が与えられていない、またはリプレイでない場合に用いられる。
+     */
+            // このフレーム以下の遅延は遅れてないものとみなす(常時コマが飛ぶのを避けるため)
+            // 100倍早送り
+            // 30FPSの100倍早送りで換算3000FPSで進めて10秒かかる閾値
+            // 30FPSの100倍早送りで換算3000FPSで進めても30秒かかる閾値
+            // 30FPSの100倍早送りで換算3000FPSで進めて5秒で済む閾値
+            // 最新ティックを取得する間隔
             return GameLoop.prototype.start = function() {
                 this.running = !0, this._clock.start();
             }, GameLoop.prototype.stop = function() {
@@ -781,7 +912,8 @@ require = function e(t, n, r) {
                 null != conf.jumpIgnoreThreshold && (this._jumpIgnoreThreshold = conf.jumpIgnoreThreshold), 
                 null != conf.playbackRate && (this._playbackRate = conf.playbackRate, this._clock.changeScaleFactor(this._playbackRate), 
                 this._updateGamePlaybackRate()), null != conf.loopRenderMode && this._setLoopRenderMode(conf.loopRenderMode), 
-                null != conf.targetTimeFunc && (this._targetTimeFunc = conf.targetTimeFunc), null != conf.targetTimeOffset && (this._targetTimeOffset = conf.targetTimeOffset), 
+                null != conf.targetTimeFunc && (// TODO consider _waitingNextTick
+                this._targetTimeFunc = conf.targetTimeFunc), null != conf.targetTimeOffset && (this._targetTimeOffset = conf.targetTimeOffset), 
                 null != conf.originDate && (this._originDate = conf.originDate), this._realTargetTimeOffset = null != this._originDate ? this._originDate - this._startedAt : this._targetTimeOffset || 0, 
                 null != conf.targetAge && (this._targetAge !== conf.targetAge && (this._waitingNextTick = !1), 
                 this._targetAge = conf.targetAge);
@@ -801,14 +933,17 @@ require = function e(t, n, r) {
                 if (this._sceneLocalMode !== localMode || this._sceneTickMode !== tickMode) switch (this._sceneLocalMode = localMode, 
                 this._sceneTickMode = tickMode, localMode) {
                   case g.LocalTickMode.FullLocal:
+                    // ローカルシーン: TickGenerationMode に関係なくローカルティックのみ
                     this._tickController.stopTick(), this._clock.frameTrigger.remove(this._onFrame, this), 
                     this._clock.frameTrigger.add(this._onLocalFrame, this);
                     break;
 
                   case g.LocalTickMode.NonLocal:
                   case g.LocalTickMode.InterpolateLocal:
-                    tickMode === g.TickGenerationMode.ByClock ? this._tickController.startTick() : this._tickController.startTickOnce(), 
-                    this._clock.frameTrigger.remove(this._onLocalFrame, this), this._clock.frameTrigger.add(this._onFrame, this);
+                    tickMode === g.TickGenerationMode.ByClock ? this._tickController.startTick() : // Manual の場合: storageDataが乗る可能性がある最初のTickだけ生成させ、あとは生成を止める。(Manualの仕様どおりの挙動)
+                    // storageDataがある場合は送らないとPassiveのインスタンスがローディングシーンを終えられない。
+                    this._tickController.startTickOnce(), this._clock.frameTrigger.remove(this._onLocalFrame, this), 
+                    this._clock.frameTrigger.add(this._onFrame, this);
                     break;
 
                   default:
@@ -818,40 +953,44 @@ require = function e(t, n, r) {
                 this._doLocalTick();
             }, GameLoop.prototype._doLocalTick = function() {
                 var game = this._game, pevs = this._eventBuffer.readLocalEvents();
-                if (this._currentTime += this._frameTime, pevs) for (var i = 0, len = pevs.length; i < len; ++i) game.events.push(this._eventConverter.toGameEvent(pevs[i]));
+                if (this._currentTime += this._frameTime, pevs) for (var i = 0, len = pevs.length; len > i; ++i) game.events.push(this._eventConverter.toGameEvent(pevs[i]));
                 var sceneChanged = game.tick(!1);
                 sceneChanged && this._handleSceneChange();
             }, GameLoop.prototype._onFrame = function(frameArg) {
-                this._loopMode === LoopMode_1.default.Replay && this._targetTimeFunc ? this._onFrameForTimedReplay(frameArg) : this._onFrameNormal(frameArg);
+                this._loopMode === LoopMode_1["default"].Replay && this._targetTimeFunc ? this._onFrameForTimedReplay(frameArg) : this._onFrameNormal(frameArg);
             }, GameLoop.prototype._onFrameForTimedReplay = function(frameArg) {
                 var sceneChanged = !1, game = this._game, targetTime = this._targetTimeFunc() + this._realTargetTimeOffset, timeGap = targetTime - this._currentTime, frameGap = timeGap / this._frameTime;
-                if ((frameGap > this._jumpTryThreshold || frameGap < 0) && !this._waitingStartPoint && this._lastRequestedStartPointTime < this._currentTime && (this._waitingStartPoint = !0, 
-                this._lastRequestedStartPointTime = targetTime, this._amflow.getStartPoint({
+                if ((frameGap > this._jumpTryThreshold || 0 > frameGap) && !this._waitingStartPoint && this._lastRequestedStartPointTime < this._currentTime && (// スナップショットを要求だけして続行する(スナップショットが来るまで進める限りは進む)。
+                this._waitingStartPoint = !0, this._lastRequestedStartPointTime = targetTime, this._amflow.getStartPoint({
                     timestamp: targetTime
-                }, this._onGotStartPoint_bound)), this._skipping ? frameGap <= 1 && this._stopSkipping() : frameGap > this._skipThreshold && this._startSkipping(), 
-                !(frameGap <= 0)) for (var i = 0; i < this._skipTicksAtOnce; ++i) {
+                }, this._onGotStartPoint_bound)), this._skipping ? 1 >= frameGap && this._stopSkipping() : frameGap > this._skipThreshold && this._startSkipping(), 
+                !(0 >= frameGap)) for (var i = 0; i < this._skipTicksAtOnce; ++i) {
                     if (!this._tickBuffer.hasNextTick()) {
                         this._waitingNextTick || (this._tickBuffer.requestTicks(), this._startWaitingNextTick());
                         break;
                     }
                     var nextFrameTime = this._currentTime + this._frameTime, nextTickTime = this._tickBuffer.readNextTickTime();
-                    if (null == nextTickTime && (nextTickTime = nextFrameTime), targetTime < nextFrameTime) {
-                        if (!(nextTickTime <= targetTime)) break;
+                    if (null == nextTickTime && (nextTickTime = nextFrameTime), nextFrameTime > targetTime) {
+                        // 次フレームに進むと目標時刻を超過する＝次フレーム時刻までは進めない＝補間ティックは必要ない。
+                        if (!(targetTime >= nextTickTime)) break;
+                        // 特殊ケース: 目標時刻より手前に次ティックがあるので、目標時刻までは進んで次ティックは消化してしまう。
+                        // (この処理がないと、特にリプレイで「最後のティックの0.1フレーム時間前」などに来たときに進めなくなってしまう。)
                         nextFrameTime = targetTime;
-                    } else if (nextFrameTime < nextTickTime) {
+                    } else if (nextTickTime > nextFrameTime) {
                         this._sceneLocalMode === g.LocalTickMode.InterpolateLocal && this._doLocalTick();
                         continue;
                     }
                     this._currentTime = nextFrameTime;
                     var tick = this._tickBuffer.consume(), consumedAge = -1, pevs = this._eventBuffer.readLocalEvents();
-                    if (pevs) for (var j = 0, len = pevs.length; j < len; ++j) game.events.push(this._eventConverter.toGameEvent(pevs[j]));
+                    if (pevs) for (var j = 0, len = pevs.length; len > j; ++j) game.events.push(this._eventConverter.toGameEvent(pevs[j]));
                     if ("number" == typeof tick) consumedAge = tick, sceneChanged = game.tick(!0); else {
                         consumedAge = tick[0];
                         var pevs_1 = tick[1];
-                        if (pevs_1) for (var j = 0, len = pevs_1.length; j < len; ++j) game.events.push(this._eventConverter.toGameEvent(pevs_1[j]));
+                        if (pevs_1) for (var j = 0, len = pevs_1.length; len > j; ++j) game.events.push(this._eventConverter.toGameEvent(pevs_1[j]));
                         sceneChanged = game.tick(!0);
                     }
                     if (game._notifyPassedAgeTable[consumedAge] && game.fireAgePassedIfNeeded()) {
+                        // age到達通知したらドライバユーザが何かしている可能性があるので抜ける
                         frameArg.interrupt = !0;
                         break;
                     }
@@ -864,24 +1003,42 @@ require = function e(t, n, r) {
                 var sceneChanged = !1, game = this._game;
                 if (this._waitingNextTick) return void (this._sceneLocalMode === g.LocalTickMode.InterpolateLocal && this._doLocalTick());
                 var targetAge, ageGap;
-                if (this._loopMode === LoopMode_1.default.Realtime ? (targetAge = this._tickBuffer.knownLatestAge + 1, 
+                if (this._loopMode === LoopMode_1["default"].Realtime ? (targetAge = this._tickBuffer.knownLatestAge + 1, 
                 ageGap = targetAge - this._tickBuffer.currentAge) : null === this._targetAge ? (targetAge = null, 
                 ageGap = 1) : this._targetAge === this._tickBuffer.currentAge ? (targetAge = this._targetAge = null, 
                 ageGap = 1) : (targetAge = this._targetAge, ageGap = targetAge - this._tickBuffer.currentAge), 
-                (ageGap > this._jumpTryThreshold || ageGap < 0) && !this._waitingStartPoint && this._lastRequestedStartPointAge < this._tickBuffer.currentAge && (this._waitingStartPoint = !0, 
-                this._lastRequestedStartPointAge = targetAge, this._amflow.getStartPoint({
+                (ageGap > this._jumpTryThreshold || 0 > ageGap) && !this._waitingStartPoint && this._lastRequestedStartPointAge < this._tickBuffer.currentAge && (// スナップショットを要求だけして続行する(スナップショットが来るまで進める限りは進む)。
+                //
+                // 上の条件が _lastRequestedStartPointAge を参照しているのは、スナップショットで飛んだ後もなお
+                // `ageGap` が大きい場合に、延々スナップショットをリクエストし続けるのを避けるためである。
+                // 実際にはageが進めば新たなスナップショットが保存されている可能性もあるので、
+                // `targetAge` が変わればリクエストし続けるのが全くの無駄というわけではない。
+                // が、`Realtime` で実行している場合 `targetAge` は毎フレーム変化してしまうし、
+                // スナップショットがそれほど頻繁に保存されるとは思えない(すべきでもない)。ここでは割り切って抑制しておく。
+                this._waitingStartPoint = !0, this._lastRequestedStartPointAge = targetAge, this._amflow.getStartPoint({
                     frame: targetAge
                 }, this._onGotStartPoint_bound)), this._skipping) {
-                    var skipStopGap = this._loopMode === LoopMode_1.default.Realtime ? 0 : 1;
-                    ageGap <= skipStopGap && this._stopSkipping();
+                    // リアルタイムモードの場合、早送り停止通知するのは既知最新ageまで消費しきった時にする。
+                    // リプレイモードでは、平常運行(1フレームずつ進む)に戻す時に早送り停止通知を出す。
+                    var skipStopGap = this._loopMode === LoopMode_1["default"].Realtime ? 0 : 1;
+                    skipStopGap >= ageGap && this._stopSkipping();
                 } else ageGap > this._skipThreshold && this._startSkipping();
-                if (ageGap <= 0) return 0 === ageGap && (this._sceneTickMode !== g.TickGenerationMode.Manual && this._loopMode !== LoopMode_1.default.Replay || 0 !== this._tickBuffer.currentAge || this._tickBuffer.requestTicks(), 
+                if (0 >= ageGap) // NOTE: Manualのシーンでは age=1 のティックが長時間受信できない場合がある。(TickBuffer#addTick()が呼ばれない)
+                // そのケースでは最初のティックの受信にポーリング時間(初期値: 10秒)かかってしまうため、ここで最新ティックを要求する。
+                // 既知最新ティックに追いついたので、ポーリング処理により後続ティックを要求する。
+                // NOTE: Manualのシーンでは最新ティックの生成そのものが長時間起きない可能性がある。
+                // (Manualでなくても、最新ティックの受信が長時間起きないことはありうる(長いローディングシーンなど))
+                // ティック待ちの間、ローカルティックを(補間して)消費: 上の暫定対処のrequestTicks()より後に行うべきである点に注意。
+                // ローカルティックを消費すると、ゲームスクリプトがraiseTick()する(_waitingNextTickが立つのはおかしい)可能性がある。
+                return 0 === ageGap && (this._sceneTickMode !== g.TickGenerationMode.Manual && this._loopMode !== LoopMode_1["default"].Replay || 0 !== this._tickBuffer.currentAge || this._tickBuffer.requestTicks(), 
                 this._startWaitingNextTick()), void (this._sceneLocalMode === g.LocalTickMode.InterpolateLocal && this._doLocalTick());
-                for (var loopCount = !this._skipping && ageGap <= this._delayIgnoreThreshold ? 1 : Math.min(ageGap, this._skipTicksAtOnce), i = 0; i < loopCount; ++i) {
+                for (var loopCount = !this._skipping && ageGap <= this._delayIgnoreThreshold ? 1 : Math.min(ageGap, this._skipTicksAtOnce), i = 0; loopCount > i; ++i) {
+                    // ティック時刻確認
                     var nextFrameTime = this._currentTime + this._frameTime;
-                    if (this._loopMode === LoopMode_1.default.Realtime) ; else {
+                    if (this._loopMode === LoopMode_1["default"].Realtime) ; else {
                         var nextTickTime = this._tickBuffer.readNextTickTime();
-                        if (null != nextTickTime && nextFrameTime < nextTickTime) {
+                        if (null != nextTickTime && nextTickTime > nextFrameTime) {
+                            // ティック時刻に達していない
                             if (this._sceneLocalMode === g.LocalTickMode.InterpolateLocal) {
                                 this._doLocalTick();
                                 continue;
@@ -892,18 +1049,20 @@ require = function e(t, n, r) {
                     this._currentTime = nextFrameTime;
                     var tick = this._tickBuffer.consume(), consumedAge = -1;
                     if (null == tick) {
+                        // 時間は経過しているが消費すべきティックが届いていない
                         this._tickBuffer.requestTicks(), this._startWaitingNextTick();
                         break;
                     }
                     var pevs = this._eventBuffer.readLocalEvents();
-                    if (pevs) for (var i_1 = 0, len = pevs.length; i_1 < len; ++i_1) game.events.push(this._eventConverter.toGameEvent(pevs[i_1]));
+                    if (pevs) for (var i_1 = 0, len = pevs.length; len > i_1; ++i_1) game.events.push(this._eventConverter.toGameEvent(pevs[i_1]));
                     if ("number" == typeof tick) consumedAge = tick, sceneChanged = game.tick(!0); else {
                         consumedAge = tick[0];
                         var pevs_2 = tick[1];
-                        if (pevs_2) for (var j = 0, len = pevs_2.length; j < len; ++j) game.events.push(this._eventConverter.toGameEvent(pevs_2[j]));
+                        if (pevs_2) for (var j = 0, len = pevs_2.length; len > j; ++j) game.events.push(this._eventConverter.toGameEvent(pevs_2[j]));
                         sceneChanged = game.tick(!0);
                     }
                     if (game._notifyPassedAgeTable[consumedAge] && game.fireAgePassedIfNeeded()) {
+                        // age到達通知したらドライバユーザが何かしている可能性があるので抜ける
                         frameArg.interrupt = !0;
                         break;
                     }
@@ -913,25 +1072,38 @@ require = function e(t, n, r) {
                     }
                 }
             }, GameLoop.prototype._onGotNextFrameTick = function() {
-                this._waitingNextTick && this._loopMode !== LoopMode_1.default.FrameByFrame && this._stopWaitingNextTick();
+                this._waitingNextTick && this._loopMode !== LoopMode_1["default"].FrameByFrame && this._stopWaitingNextTick();
             }, GameLoop.prototype._onGotStartPoint = function(err, startPoint) {
                 if (this._waitingStartPoint = !1, err) return void this.errorTrigger.fire(err);
-                if (this._targetTimeFunc && this._loopMode !== LoopMode_1.default.Realtime) {
+                if (this._targetTimeFunc && this._loopMode !== LoopMode_1["default"].Realtime) {
                     var targetTime = this._targetTimeFunc() + this._realTargetTimeOffset;
-                    if (targetTime < startPoint.timestamp) return;
+                    if (targetTime < startPoint.timestamp) // 要求した時点と今で目標時刻(targetTime)が変わっている。得られたStartPointでは目標時刻より未来に飛んでしまう。
+                    return;
                     var currentTime = this._currentTime;
-                    if (currentTime <= targetTime && startPoint.timestamp < currentTime + this._jumpIgnoreThreshold * this._frameTime) return;
+                    if (targetTime >= currentTime && startPoint.timestamp < currentTime + this._jumpIgnoreThreshold * this._frameTime) // 今の目標時刻(targetTime)は過去でない一方、得られたStartPointは至近未来または過去のもの → 飛ぶ価値なし。
+                    return;
                 } else {
-                    var targetAge = this._loopMode === LoopMode_1.default.Realtime ? this._tickBuffer.knownLatestAge + 1 : this._targetAge;
-                    if (null === targetAge || targetAge < startPoint.frame) return;
+                    var targetAge = this._loopMode === LoopMode_1["default"].Realtime ? this._tickBuffer.knownLatestAge + 1 : this._targetAge;
+                    if (null === targetAge || targetAge < startPoint.frame) // 要求した時点と今で目標age(targetAge)が変わっている。
+                    // 現在の状況では飛ぶ必要がないか、得られたStartPointでは目標ageより未来に飛んでしまう。
+                    return;
                     var currentAge = this._tickBuffer.currentAge;
-                    if (currentAge <= targetAge && startPoint.frame < currentAge + this._jumpIgnoreThreshold) return;
+                    if (targetAge >= currentAge && startPoint.frame < currentAge + this._jumpIgnoreThreshold) // 今の目標age(targetAge)は過去でない一方、得られたStartPointは至近未来または過去のもの → 飛ぶ価値なし。
+                    return;
                 }
+                // リセットから `g.Game#_start()` まで(エントリポイント実行まで)の間、processEvents() は起こらないようにする。
+                // すなわちこれ以降 `_onGameStarted()` までの間 EventBuffer からイベントは取得できない。しかしそもそもこの状態では
+                // イベントを処理するシーンがいない = 非ローカルティックは生成されない = 非ローカルティック生成時にのみ行われるイベントの取得もない。
                 this._clock.frameTrigger.remove(this._eventBuffer.processEvents, this._eventBuffer), 
                 this._tickBuffer.setCurrentAge(startPoint.frame), this._currentTime = startPoint.timestamp || startPoint.data.timestamp || 0, 
-                this._waitingNextTick = !1, this._lastRequestedStartPointAge = -1, this._lastRequestedStartPointTime = -1, 
+                // data.timestamp は後方互換性のために存在。現在は使っていない。
+                this._waitingNextTick = !1, // 現在ageを変えた後、さらに後続のTickが足りないかどうかは_onFrameで判断する。
+                this._lastRequestedStartPointAge = -1, // 現在ageを変えた時はリセットしておく(場合によっては不要だが、安全のため)。
+                this._lastRequestedStartPointTime = -1, // 同上。
                 this._game._restartWithSnapshot(startPoint), this._handleSceneChange(), this.start();
             }, GameLoop.prototype._onGameStarted = function() {
+                // 必ず先頭に挿入することで、同じClockを参照する `TickGenerator` のティック生成などに毎フレーム先行してイベントフィルタを適用する。
+                // 全体的に `this._clock` のhandle順は動作順に直結するので注意が必要。
                 this._clock.frameTrigger.add({
                     index: 0,
                     owner: this._eventBuffer,
@@ -939,11 +1111,11 @@ require = function e(t, n, r) {
                 });
             }, GameLoop.prototype._setLoopRenderMode = function(mode) {
                 if (mode !== this._loopRenderMode) switch (this._loopRenderMode = mode, mode) {
-                  case LoopRenderMode_1.default.AfterRawFrame:
+                  case LoopRenderMode_1["default"].AfterRawFrame:
                     this._clock.rawFrameTrigger.add(this._renderOnRawFrame, this);
                     break;
 
-                  case LoopRenderMode_1.default.None:
+                  case LoopRenderMode_1["default"].None:
                     this._clock.rawFrameTrigger.remove(this._renderOnRawFrame, this);
                     break;
 
@@ -957,7 +1129,8 @@ require = function e(t, n, r) {
                 var pev = this._eventConverter.toPlaylogEvent(e);
                 this._eventBuffer.onEvent(pev);
             }, GameLoop.prototype._onGameRaiseTick = function(es) {
-                if (this._executionMode === ExecutionMode_1.default.Active) {
+                if (this._executionMode === ExecutionMode_1["default"].Active) {
+                    // TODO: イベントフィルタの中で呼ばれるとおかしくなる(フィルタ中のイベントがtickに乗らない)。
                     if (es) for (var i = 0; i < es.length; ++i) this._eventBuffer.addEventDirect(this._eventConverter.toPlaylogEvent(es[i]));
                     this._tickController.forceGenerateTick();
                 }
@@ -965,12 +1138,14 @@ require = function e(t, n, r) {
                 var pev = this._eventConverter.makePlaylogOperationEvent(op);
                 this._eventBuffer.onEvent(pev);
             }, GameLoop.prototype._onPollingTick = function() {
+                // この関数が呼ばれる時、 `this._waitingNextTick` は必ず真である。
+                // TODO: rawFrameTriggerのfire時に前回呼び出し時からの経過時間を渡せばnew Dateする必要はなくなる。
                 var time = +new Date();
                 time - this._lastPollingTickTime > this._pollingTickThreshold && (this._lastPollingTickTime = time, 
                 this._tickBuffer.requestTicks());
             }, GameLoop.prototype._startWaitingNextTick = function() {
-                this._waitingNextTick = !0, this._clock.rawFrameTrigger.add(this._onPollingTick, this), 
-                this._lastPollingTickTime = +new Date();
+                this._waitingNextTick = !0, // TODO: Active時はポーリングしない (要 Active/Passive 切り替えの対応)
+                this._clock.rawFrameTrigger.add(this._onPollingTick, this), this._lastPollingTickTime = +new Date();
             }, GameLoop.prototype._stopWaitingNextTick = function() {
                 this._waitingNextTick = !1, this._clock.rawFrameTrigger.remove(this._onPollingTick, this);
             }, GameLoop.DEFAULT_DELAY_IGNORE_THRESHOLD = 6, GameLoop.DEFAULT_SKIP_TICKS_AT_ONCE = 100, 
@@ -997,7 +1172,7 @@ require = function e(t, n, r) {
             value: !0
         });
         var g = (require("@akashic/playlog"), require("@akashic/akashic-engine")), JoinLeaveRequest = (require("./EventIndex"), 
-        function() {
+        /** @class */ function() {
             function JoinLeaveRequest(pev, joinResolver, amflow, keys) {
                 this.joinResolver = joinResolver, this.pev = pev, 0 === pev[0] && keys ? (this.resolved = !1, 
                 amflow.getStorageData(keys, this._onGotStorageData.bind(this))) : this.resolved = !0;
@@ -1007,7 +1182,7 @@ require = function e(t, n, r) {
             }, JoinLeaveRequest;
         }());
         exports.JoinLeaveRequest = JoinLeaveRequest;
-        var JoinResolver = function() {
+        var JoinResolver = /** @class */ function() {
             function JoinResolver(param) {
                 this.errorTrigger = new g.Trigger(), param.errorHandler && this.errorTrigger.add(param.errorHandler, param.errorHandlerOwner), 
                 this._amflow = param.amflow, this._keysForJoin = null, this._requested = [];
@@ -1017,7 +1192,7 @@ require = function e(t, n, r) {
             }, JoinResolver.prototype.readResolved = function() {
                 var len = this._requested.length;
                 if (0 === len || !this._requested[0].resolved) return null;
-                for (var ret = [], i = 0; i < len; ++i) {
+                for (var ret = [], i = 0; len > i; ++i) {
                     var req = this._requested[i];
                     if (!req.resolved) break;
                     ret.push(req.pev);
@@ -1038,21 +1213,54 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
+        /**
+ * `GameLoop` のループ制御のモード。
+ * `GameLoop` は、この値に応じて `g.Game#tick()` の呼び出し方法を変える。
+ */
         var LoopMode;
         !function(LoopMode) {
-            LoopMode[LoopMode.Realtime = 0] = "Realtime", LoopMode[LoopMode.Replay = 1] = "Replay", 
+            /**
+     * 最新フレームに最大限追いつくモード。
+     *
+     * Passiveである場合、自分の現在フレームが取得済みの最新フレームから大きく遅れているなら、
+     * 早送りやスナップショットによるジャンプを行う。
+     */
+            LoopMode[LoopMode.Realtime = 0] = "Realtime", /**
+     * 追いつこうとするフレームを自分で制御するモード。
+     *
+     * `Realtime` と同様早送りやスナップショットによるジャンプを行うが、
+     * その基準フレームとして `LoopConfiguration#targetAge` (を保持する `GameLoop#_targetAge`) を使う。
+     * 早送りやスナップショットによるジャンプを行う。
+     */
+            LoopMode[LoopMode.Replay = 1] = "Replay", /**
+     * 正しく使っていない。削除する予定。
+     *
+     * コマ送りモード。
+     * `GameLoop#step()` 呼び出し時に1フレーム進む。それ以外の方法では進まない。
+     * 早送りやスナップショットによるジャンプは行わない。
+     */
             LoopMode[LoopMode.FrameByFrame = 2] = "FrameByFrame";
-        }(LoopMode || (LoopMode = {})), exports.default = LoopMode;
+        }(LoopMode || (LoopMode = {})), exports["default"] = LoopMode;
     }, {} ],
     11: [ function(require, module, exports) {
         "use strict";
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
+        /**
+ * `GameLoop` が描画を行う基準。
+ */
         var LoopRenderMode;
         !function(LoopRenderMode) {
-            LoopRenderMode[LoopRenderMode.AfterRawFrame = 0] = "AfterRawFrame", LoopRenderMode[LoopRenderMode.None = 1] = "None";
-        }(LoopRenderMode || (LoopRenderMode = {})), exports.default = LoopRenderMode;
+            /**
+     * 毎raw frame後に描画する。
+     * raw frameの詳細についてはClock.tsのコメントを参照。
+     */
+            LoopRenderMode[LoopRenderMode.AfterRawFrame = 0] = "AfterRawFrame", /**
+     * 描画をまったく行わない。
+     */
+            LoopRenderMode[LoopRenderMode.None = 1] = "None";
+        }(LoopRenderMode || (LoopRenderMode = {})), exports["default"] = LoopRenderMode;
     }, {} ],
     12: [ function(require, module, exports) {
         "use strict";
@@ -1061,6 +1269,15 @@ require = function e(t, n, r) {
         });
         var PdiUtil, es6_promise_1 = require("es6-promise"), g = require("@akashic/akashic-engine");
         !function(PdiUtil) {
+            /**
+     * 与えられた `Platform` の `loadGameConfiguration()` をラップした、`GameConfiguration` 読み込み関数を作成して返す。
+     *
+     * 戻り値の関数は、次の点で `Platform#loadGameConfiguration()` と異なる。
+     * * "definitions" フィールドを解決する (再帰的に読み込みを行い、_mergeGameConfiguration() でカスケード解決する)
+     * * "basePath" を使って `GameConfiguration` 内のパスを絶対パスに変換する
+     *
+     * @param pf ラップする `loadGameConfiguration()` を持つ `Platform`
+     */
             function makeLoadConfigurationFunc(pf) {
                 function loadResolvedConfiguration(url, basePath, callback) {
                     pf.loadGameConfiguration(url, function(err, conf) {
@@ -1076,7 +1293,7 @@ require = function e(t, n, r) {
                         });
                         es6_promise_1.Promise.all(defs).then(function(confs) {
                             return callback(null, confs.reduce(PdiUtil._mergeGameConfiguration));
-                        }).catch(function(e) {
+                        })["catch"](function(e) {
                             return callback(e, null);
                         });
                     });
@@ -1090,6 +1307,11 @@ require = function e(t, n, r) {
                 }
                 return loadResolvedConfiguration;
             }
+            /**
+     * 与えられた `GameConfiguration` のパス(相対パスになっている)を絶対パスに変える。
+     * @param configuration 対象の `GameConfiguration`
+     * @param basePath 相対パスの基準となるパス
+     */
             function _resolveConfigurationBasePath(configuration, basePath) {
                 function resolvePath(base, path) {
                     var ret = g.PathUtil.resolvePath(base, path);
@@ -1109,8 +1331,16 @@ require = function e(t, n, r) {
                     };
                 }), delete configuration.globalScripts), configuration;
             }
+            /**
+     * 与えられたオブジェクト二つを「マージ」する。
+     * ここでマージとは、オブジェクトのフィールドをイテレートし、
+     * プリミティブ値であれば上書き、配列であればconcat、オブジェクトであれば再帰的にマージする処理である。
+     *
+     * @param target マージされるオブジェクト。この値は破壊される
+     * @param source マージするオブジェクト
+     */
             function _mergeObject(target, source) {
-                for (var ks = Object.keys(source), i = 0, len = ks.length; i < len; ++i) {
+                for (var ks = Object.keys(source), i = 0, len = ks.length; len > i; ++i) {
                     var k = ks[i], sourceVal = source[k], sourceValType = typeof sourceVal, targetValType = typeof target[k];
                     if (sourceValType === targetValType) switch (typeof sourceVal) {
                       case "string":
@@ -1144,7 +1374,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var PointEventResolver = (require("@akashic/playlog"), function() {
+        var PointEventResolver = (require("@akashic/playlog"), /** @class */ function() {
             function PointEventResolver(param) {
                 this._game = param.game, this._pointEventMap = {};
             }
@@ -1163,7 +1393,9 @@ require = function e(t, n, r) {
                         y: e.offset.y
                     }
                 };
+                // NOTE: 優先度は機械的にJoinedをつけておく。Joinしていない限りPointDownEventなどはリジェクトされる。
                 var ret = [ 33, 2, player.id, e.identifier, point.x, point.y, targetId ];
+                // 7?: ローカル
                 return source.local && ret.push(source.local), ret;
             }, PointEventResolver.prototype.pointMove = function(e) {
                 var player = this._game.player, holder = this._pointEventMap[e.identifier];
@@ -1177,6 +1409,7 @@ require = function e(t, n, r) {
                 };
                 this._pointMoveAndUp(holder, e.offset, prev, start);
                 var ret = [ 34, 2, player.id, e.identifier, holder.point.x, holder.point.y, start.x, start.y, prev.x, prev.y, holder.targetId ];
+                // 11?: ローカル
                 return holder.local && ret.push(holder.local), ret;
             }, PointEventResolver.prototype.pointUp = function(e) {
                 var player = this._game.player, holder = this._pointEventMap[e.identifier];
@@ -1190,6 +1423,7 @@ require = function e(t, n, r) {
                 };
                 this._pointMoveAndUp(holder, e.offset, prev, start), delete this._pointEventMap[e.identifier];
                 var ret = [ 35, 2, player.id, e.identifier, holder.point.x, holder.point.y, start.x, start.y, prev.x, prev.y, holder.targetId ];
+                // 11?: ローカル
                 return holder.local && ret.push(holder.local), ret;
             }, PointEventResolver.prototype._pointMoveAndUp = function(holder, offset, prevDelta, startDelta) {
                 startDelta.x = offset.x - holder.start.x, startDelta.y = offset.y - holder.start.y, 
@@ -1222,17 +1456,19 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var Clock_1 = require("./Clock"), ProfilerClock = function(_super) {
+        var Clock_1 = require("./Clock"), ProfilerClock = /** @class */ function(_super) {
             function ProfilerClock(param) {
                 var _this = _super.call(this, param) || this;
                 return _this._profiler = param.profiler, _this;
             }
             return __extends(ProfilerClock, _super), ProfilerClock.prototype._onLooperCall = function(deltaTime) {
-                if (deltaTime <= 0) return this._waitTime - this._totalDeltaTime;
-                deltaTime > this._deltaTimeBrokenThreshold && (deltaTime = this._waitTime);
+                if (0 >= deltaTime) // 時間が止まっているか巻き戻っている。初回呼び出しか、あるいは何かがおかしい。時間経過0と見なす。
+                return this._waitTime - this._totalDeltaTime;
+                deltaTime > this._deltaTimeBrokenThreshold && (// 間隔が長すぎる。何かがおかしい。時間経過を1フレーム分とみなす。
+                deltaTime = this._waitTime);
                 var totalDeltaTime = this._totalDeltaTime;
-                if (totalDeltaTime += deltaTime, totalDeltaTime <= this._skipFrameWaitTime) return this._totalDeltaTime = totalDeltaTime, 
-                this._waitTime - totalDeltaTime;
+                if (totalDeltaTime += deltaTime, totalDeltaTime <= this._skipFrameWaitTime) // 1フレーム分消化するほどの時間が経っていない。
+                return this._totalDeltaTime = totalDeltaTime, this._waitTime - totalDeltaTime;
                 this._profiler.timeEnd(1), this._profiler.time(1);
                 var frameCount = totalDeltaTime < this._waitTimeDoubled ? 1 : totalDeltaTime > this._waitTimeMax ? this._realMaxFramePerOnce : totalDeltaTime / this._waitTime | 0, fc = frameCount, arg = {
                     interrupt: !1
@@ -1253,20 +1489,24 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), ExecutionMode_1 = require("./ExecutionMode"), StorageResolver = function() {
+        var g = require("@akashic/akashic-engine"), ExecutionMode_1 = require("./ExecutionMode"), StorageResolver = /** @class */ function() {
             function StorageResolver(param) {
                 this.errorTrigger = new g.Trigger(), param.errorHandler && this.errorTrigger.add(param.errorHandler, param.errorHandlerOwner), 
                 this.getStorageFunc = this._getStorage.bind(this), this.putStorageFunc = this._putStorage.bind(this), 
                 this.requestValuesForJoinFunc = this._requestValuesForJoin.bind(this), this._game = param.game, 
                 this._amflow = param.amflow, this._tickGenerator = param.tickGenerator, this._tickBuffer = param.tickBuffer, 
-                this._executionMode = null, this.setExecutionMode(param.executionMode), this._unresolvedLoaders = {}, 
-                this._unresolvedStorages = {}, this._onStoragePut_bound = this._onStoragePut.bind(this);
+                this._executionMode = null, // 後続のsetExecutionMode()で設定する。
+                this.setExecutionMode(param.executionMode), this._unresolvedLoaders = {}, this._unresolvedStorages = {}, 
+                this._onStoragePut_bound = this._onStoragePut.bind(this);
             }
+            /**
+     * ExecutionModeを変更する。
+     */
             return StorageResolver.prototype.setExecutionMode = function(executionMode) {
                 if (this._executionMode !== executionMode) {
                     this._executionMode = executionMode;
                     var tickBuf = this._tickBuffer, tickGen = this._tickGenerator;
-                    executionMode === ExecutionMode_1.default.Active ? (tickBuf.gotStorageTrigger.remove(this._onGotStorageOnTick, this), 
+                    executionMode === ExecutionMode_1["default"].Active ? (tickBuf.gotStorageTrigger.remove(this._onGotStorageOnTick, this), 
                     tickGen.gotStorageTrigger.add(this._onGotStorageOnTick, this)) : (tickGen.gotStorageTrigger.remove(this._onGotStorageOnTick, this), 
                     tickBuf.gotStorageTrigger.add(this._onGotStorageOnTick, this));
                 }
@@ -1280,7 +1520,7 @@ require = function e(t, n, r) {
                 loader._onLoaded(values, serialization);
             }, StorageResolver.prototype._getStorage = function(keys, loader, ser) {
                 var resolvingAge;
-                null != ser ? (resolvingAge = ser, this._tickBuffer.requestTicks(resolvingAge, 1)) : this._executionMode === ExecutionMode_1.default.Active ? resolvingAge = this._tickGenerator.requestStorageTick(keys) : (resolvingAge = this._game.age, 
+                null != ser ? (resolvingAge = ser, this._tickBuffer.requestTicks(resolvingAge, 1)) : this._executionMode === ExecutionMode_1["default"].Active ? resolvingAge = this._tickGenerator.requestStorageTick(keys) : (resolvingAge = this._game.age, 
                 this._tickBuffer.requestTicks(resolvingAge, 1));
                 var sd = this._unresolvedStorages[resolvingAge];
                 if (!sd) return void (this._unresolvedLoaders[resolvingAge] = loader);
@@ -1290,7 +1530,7 @@ require = function e(t, n, r) {
                 });
                 loader._onLoaded(values, serialization);
             }, StorageResolver.prototype._putStorage = function(key, value, option) {
-                this._executionMode === ExecutionMode_1.default.Active && this._amflow.putStorageData(key, value, option, this._onStoragePut_bound);
+                this._executionMode === ExecutionMode_1["default"].Active && this._amflow.putStorageData(key, value, option, this._onStoragePut_bound);
             }, StorageResolver.prototype._requestValuesForJoin = function(keys) {
                 this._tickGenerator.setRequestValuesForJoin(keys);
             }, StorageResolver.prototype._onStoragePut = function(err) {
@@ -1308,7 +1548,7 @@ require = function e(t, n, r) {
             value: !0
         });
         var g = (require("@akashic/playlog"), require("@akashic/akashic-engine")), ExecutionMode_1 = (require("./EventIndex"), 
-        require("./ExecutionMode")), TickBuffer = function() {
+        require("./ExecutionMode")), TickBuffer = /** @class */ function() {
             function TickBuffer(param) {
                 this.currentAge = 0, this.knownLatestAge = -1, this.gotNextTickTrigger = new g.Trigger(), 
                 this.gotStorageTrigger = new g.Trigger(), this._amflow = param.amflow, this._prefetchThreshold = param.prefetchThreshold || TickBuffer.DEFAULT_PREFETCH_THRESHOLD, 
@@ -1317,13 +1557,17 @@ require = function e(t, n, r) {
                 this._nearestAbsentAge = this.currentAge, this._nextTickTimeCache = null, this._addTick_bound = this.addTick.bind(this), 
                 this._onTicks_bound = this._onTicks.bind(this);
             }
+            // 数字は適当に30FPSで5分間分。
+            // 数字は適当に30FPSで1分間分。30FPS * 60秒。
             return TickBuffer.prototype.start = function() {
                 this._receiving = !0, this._updateAmflowReceiveState();
             }, TickBuffer.prototype.stop = function() {
                 this._receiving = !1, this._updateAmflowReceiveState();
             }, TickBuffer.prototype.setExecutionMode = function(execMode) {
-                this._executionMode !== execMode && (this._dropUntil(this.knownLatestAge + 1), this._nextTickTimeCache = null, 
-                this._nearestAbsentAge = this.currentAge, this._executionMode = execMode, this._updateAmflowReceiveState());
+                // TODO: getTickList()中にauthenticate()しなおした場合の挙動確認
+                this._executionMode !== execMode && (this._dropUntil(this.knownLatestAge + 1), // 既存データは捨てる(特にPassive->Activeで既存Tickを上書きする必要がありうる)
+                this._nextTickTimeCache = null, this._nearestAbsentAge = this.currentAge, this._executionMode = execMode, 
+                this._updateAmflowReceiveState());
             }, TickBuffer.prototype.setCurrentAge = function(age) {
                 this._dropUntil(age), this._nextTickTimeCache = null, this.currentAge = age, this._nearestAbsentAge = this._findNearestAbscentAge(age);
             }, TickBuffer.prototype.hasNextTick = function() {
@@ -1331,6 +1575,7 @@ require = function e(t, n, r) {
             }, TickBuffer.prototype.consume = function() {
                 if (this.currentAge === this._nearestAbsentAge) return null;
                 var age = this.currentAge, range = this._tickRanges[0];
+                // range.start < age。外部から前に追加された場合。破棄してリトライする。
                 return age === range.start ? (this._nextTickTimeCache = null, ++this.currentAge, 
                 ++range.start, age + this._prefetchThreshold === this._nearestAbsentAge && this.requestTicks(this._nearestAbsentAge, this._sizeRequestOnce), 
                 range.start === range.end && this._tickRanges.shift(), range.ticks.length > 0 && range.ticks[0][0] === age ? range.ticks.shift() : age) : (this._dropUntil(this.currentAge), 
@@ -1349,10 +1594,11 @@ require = function e(t, n, r) {
                     this._nextTickTimeCache;
                     return null;
                 }
+                // range.start < age。外部から前に追加された場合。破棄してリトライする。
                 return this._dropUntil(this.currentAge), this.readNextTickTime();
             }, TickBuffer.prototype.requestTicks = function(from, len) {
                 void 0 === from && (from = this.currentAge), void 0 === len && (len = this._sizeRequestOnce), 
-                this._executionMode === ExecutionMode_1.default.Passive && this._amflow.getTickList(from, from + len, this._onTicks_bound);
+                this._executionMode === ExecutionMode_1["default"].Passive && this._amflow.getTickList(from, from + len, this._onTicks_bound);
             }, TickBuffer.prototype.addTick = function(tick) {
                 var age = tick[0], gotNext = this.currentAge === age && this._nearestAbsentAge === age;
                 this.knownLatestAge < age && (this.knownLatestAge = age), tick[2] && this.gotStorageTrigger.fire({
@@ -1364,42 +1610,53 @@ require = function e(t, n, r) {
                     if (age >= range.start) break;
                 }
                 var nextRange = this._tickRanges[i + 1];
-                if (i < 0) this._tickRanges.unshift(this._createTickRangeFromTick(tick)); else {
+                if (0 > i) // 既知のどの tick よりも過去、または単に既知の tick がない。
+                // NOTE: _tickRanges[0]を過去方向に拡張できるかもしれないが、
+                //       addTickはほぼ最新フレームしか受信しないので気にせず新たにTickRangeを作る。
+                this._tickRanges.unshift(this._createTickRangeFromTick(tick)); else {
                     var range = this._tickRanges[i];
-                    age === range.end ? (++range.end, tick[1] && range.ticks.push(tick)) : age > range.end && this._tickRanges.splice(i + 1, 0, this._createTickRangeFromTick(tick));
+                    age === range.end ? (// 直近の TickRange のすぐ後に続く tick だった。
+                    ++range.end, tick[1] && range.ticks.push(tick)) : age > range.end && // 既存 TickList に続かない tick だった。新規に TickList を作って挿入
+                    this._tickRanges.splice(i + 1, 0, this._createTickRangeFromTick(tick));
                 }
-                this._nearestAbsentAge === age && (++this._nearestAbsentAge, nextRange && this._nearestAbsentAge === nextRange.start && (this._nearestAbsentAge = this._findNearestAbscentAge(this._nearestAbsentAge))), 
+                this._nearestAbsentAge === age && (++this._nearestAbsentAge, nextRange && this._nearestAbsentAge === nextRange.start && (// 直近の欠けているageを追加したら前後のrangeが繋がってしまった。諦めて_nearestAbsentAgeを求め直す。
+                this._nearestAbsentAge = this._findNearestAbscentAge(this._nearestAbsentAge))), 
                 gotNext && this.gotNextTickTrigger.fire();
             }, TickBuffer.prototype.addTickList = function(tickList) {
                 var start = tickList[0], end = tickList[1] + 1, ticks = tickList[2], origStart = start, origEnd = end;
                 this.knownLatestAge < end - 1 && (this.knownLatestAge = end - 1);
+                // 今回挿入分の開始ageよりも「後」に開始される最初のrangeを探す
                 var i = 0, len = this._tickRanges.length;
-                for (i = 0; i < len; ++i) {
+                for (i = 0; len > i; ++i) {
                     var range_1 = this._tickRanges[i];
                     if (start < range_1.start) break;
                 }
                 var insertPoint = i;
+                // 左側が重複しうるrangeを探して重複を除く
                 if (i > 0) {
+                    // 左側が重複しうるrangeは、今回挿入分の開始ageの直前に始まるもの
                     --i;
                     var leftEndAge = this._tickRanges[i].end;
-                    start < leftEndAge && (start = leftEndAge);
+                    leftEndAge > start && (start = leftEndAge);
                 }
-                for (;i < len; ++i) {
+                // 右側で重複しうるrangeを探して重複を除く
+                for (;len > i; ++i) {
                     var range_2 = this._tickRanges[i];
                     if (end <= range_2.end) break;
                 }
-                if (i < len) {
+                if (len > i) {
                     var rightStartAge = this._tickRanges[i].start;
                     end > rightStartAge && (end = rightStartAge);
                 }
-                if (start >= end) return {
+                if (start >= end) // 今回挿入分はすべて重複だった。何もせずreturn
+                return {
                     start: start,
                     end: start,
                     ticks: []
                 };
-                ticks || (ticks = []), origStart === start && origEnd === end || (ticks = ticks.filter(function(tick) {
+                ticks || (ticks = []), (origStart !== start || origEnd !== end) && (ticks = ticks.filter(function(tick) {
                     var age = tick[0];
-                    return start <= age && age < end;
+                    return age >= start && end > age;
                 }));
                 for (var j = 0; j < ticks.length; ++j) {
                     var tick = ticks[j];
@@ -1416,7 +1673,7 @@ require = function e(t, n, r) {
                 return this._tickRanges.splice(insertPoint, delLen, range), start <= this._nearestAbsentAge && this._nearestAbsentAge < end && (this._nearestAbsentAge = this._findNearestAbscentAge(this._nearestAbsentAge)), 
                 range;
             }, TickBuffer.prototype._updateAmflowReceiveState = function() {
-                this._receiving && this._executionMode === ExecutionMode_1.default.Passive ? this._amflow.onTick(this._addTick_bound) : this._amflow.offTick(this._addTick_bound);
+                this._receiving && this._executionMode === ExecutionMode_1["default"].Passive ? this._amflow.onTick(this._addTick_bound) : this._amflow.offTick(this._addTick_bound);
             }, TickBuffer.prototype._onTicks = function(err, ticks) {
                 if (err) throw new Error();
                 if (ticks) {
@@ -1424,17 +1681,19 @@ require = function e(t, n, r) {
                     mayGotNext && inserted.start <= this.currentAge && this.currentAge < inserted.end && this.gotNextTickTrigger.fire();
                 }
             }, TickBuffer.prototype._findNearestAbscentAge = function(age) {
-                for (var i = 0, len = this._tickRanges.length; i < len && !(age <= this._tickRanges[i].end); ++i) ;
-                for (;i < len; ++i) {
+                for (var i = 0, len = this._tickRanges.length; len > i && !(age <= this._tickRanges[i].end); ++i) ;
+                for (;len > i; ++i) {
                     var range = this._tickRanges[i];
                     if (age < range.start) break;
                     age = range.end;
                 }
                 return age;
             }, TickBuffer.prototype._dropUntil = function(age) {
+                // [start,end) が全部 age 以前のものを削除
                 var i;
                 for (i = 0; i < this._tickRanges.length && !(age < this._tickRanges[i].end); ++i) ;
                 if (this._tickRanges = this._tickRanges.slice(i), 0 !== this._tickRanges.length) {
+                    // start を書き換えることで、[start, age) の範囲を削除
                     var range = this._tickRanges[0];
                     if (!(age < range.start)) {
                         for (range.start = age, i = 0; i < range.ticks.length && !(age <= range.ticks[i][0]); ++i) ;
@@ -1463,7 +1722,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), ExecutionMode_1 = require("./ExecutionMode"), TickBuffer_1 = require("./TickBuffer"), TickGenerator_1 = require("./TickGenerator"), sr = require("./StorageResolver"), TickController = function() {
+        var g = require("@akashic/akashic-engine"), ExecutionMode_1 = require("./ExecutionMode"), TickBuffer_1 = require("./TickBuffer"), TickGenerator_1 = require("./TickGenerator"), sr = require("./StorageResolver"), TickController = /** @class */ function() {
             function TickController(param) {
                 this.errorTrigger = new g.Trigger(), param.errorHandler && this.errorTrigger.add(param.errorHandler, param.errorHandlerOwner), 
                 this._amflow = param.amflow, this._clock = param.clock, this._started = !1, this._executionMode = param.executionMode, 
@@ -1510,7 +1769,7 @@ require = function e(t, n, r) {
             }, TickController.prototype._stopTriggerOnTick = function() {
                 this.stopTick();
             }, TickController.prototype._updateGeneratorState = function() {
-                var toGenerate = this._started && this._executionMode === ExecutionMode_1.default.Active;
+                var toGenerate = this._started && this._executionMode === ExecutionMode_1["default"].Active;
                 this._generator.startStopGenerate(toGenerate);
             }, TickController.prototype._onTickGenerated = function(tick) {
                 this._amflow.sendTick(tick), this._buffer.addTick(tick);
@@ -1529,7 +1788,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), JoinResolver_1 = require("./JoinResolver"), TickGenerator = function() {
+        var g = require("@akashic/akashic-engine"), JoinResolver_1 = require("./JoinResolver"), TickGenerator = /** @class */ function() {
             function TickGenerator(param) {
                 this.tickTrigger = new g.Trigger(), this.gotStorageTrigger = new g.Trigger(), this.errorTrigger = new g.Trigger(), 
                 param.errorHandler && this.errorTrigger.add(param.errorHandler, param.errorHandlerOwner), 
@@ -1540,6 +1799,10 @@ require = function e(t, n, r) {
                 }), this._nextAge = 0, this._storageDataForNext = null, this._generatingTick = !1, 
                 this._waitingStorage = !1, this._onGotStorageData_bound = this._onGotStorageData.bind(this);
             }
+            /**
+     * 次に生成するtickにstorageDataを持たせる。
+     * 取得が完了するまで、次のtickは生成されない。
+     */
             return TickGenerator.prototype.next = function() {
                 if (this._generatingTick && !this._waitingStorage) {
                     var joinLeaves = this._eventBuffer.readJoinLeaves();
@@ -1560,6 +1823,9 @@ require = function e(t, n, r) {
             }, TickGenerator.prototype.stopTick = function() {
                 this._generatingTick = !1;
             }, TickGenerator.prototype.setNextAge = function(age) {
+                // エッジケース: 次のtickにストレージを乗せるはずだったが、ageが変わってしまうのでできない。
+                // Activeでストレージ要求(シーン切り替え)して待っている間にここに来るとこのパスにかかる。
+                // 現実にはActiveで実行開始した後にageを変えるケースは想像しにくい(tickが飛び飛びになったり重複したりする)。
                 return this._waitingStorage ? void this.errorTrigger.fire(new Error("TickGenerator#setNextAge(): cannot change the next age while waiting storage.")) : void (this._nextAge = age);
             }, TickGenerator.prototype.requestStorageTick = function(keys) {
                 if (this._waitingStorage) {
@@ -1588,7 +1854,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var MemoryAmflowClient = (require("../EventIndex"), function() {
+        var MemoryAmflowClient = (require("../EventIndex"), /** @class */ function() {
             function MemoryAmflowClient(param) {
                 this._playId = param.playId, this._putStorageDataSyncFunc = param.putStorageDataSyncFunc || function() {
                     throw new Error("Implementation not given");
@@ -1597,6 +1863,20 @@ require = function e(t, n, r) {
                 }, this._tickHandlers = [], this._eventHandlers = [], this._events = [], this._tickList = null, 
                 param.startPoints ? (this._tickList = param.tickList, this._startPoints = param.startPoints) : this._startPoints = [];
             }
+            /**
+     * 与えられていたティックリストを部分的に破棄する。
+     * @param age ティックを破棄する基準のage(このageのティックも破棄される)
+     */
+            /**
+     * `writeTick` 権限を持つトークン。
+     * この値は authenticate() の挙動以外は変更しない。
+     * 他メソッド(sendEvent()など)の呼び出しは(権限に反していても)エラーを起こすとは限らない。
+     */
+            /**
+     * `subscribeTick` 権限を持つトークン。
+     * この値は authenticate() の挙動以外は変更しない。
+     * 他メソッド(sendTick()など)の呼び出しは(権限に反していても)エラーを起こすとは限らない。
+     */
             return MemoryAmflowClient.prototype.dump = function() {
                 return {
                     tickList: this._tickList,
@@ -1649,6 +1929,7 @@ require = function e(t, n, r) {
                 }, 0);
             }, MemoryAmflowClient.prototype.sendTick = function(tick) {
                 if (this._tickList) {
+                    // 既に存在するTickListのfrom~to間にtickが挿入されることは無い
                     if (this._tickList[0] <= tick[0] && tick[0] <= this._tickList[1]) throw new Error("illegal age tick");
                     this._tickList[1] = tick[0];
                 } else this._tickList = [ tick[0], tick[0], [] ];
@@ -1683,7 +1964,7 @@ require = function e(t, n, r) {
                 from = Math.max(from, this._tickList[0]), to = Math.min(to, this._tickList[1]);
                 var ticks = this._tickList[2].filter(function(tick) {
                     var age = tick[0];
-                    return from <= age && age <= to;
+                    return age >= from && to >= age;
                 }), tickList = [ from, to, ticks ];
                 setTimeout(function() {
                     return callback(null, tickList);
@@ -1700,10 +1981,10 @@ require = function e(t, n, r) {
                     var index = 0;
                     if (null != opts.frame) for (var nearestFrame = _this._startPoints[0].frame, i = 1; i < _this._startPoints.length; ++i) {
                         var frame = _this._startPoints[i].frame;
-                        frame <= opts.frame && nearestFrame < frame && (nearestFrame = frame, index = i);
+                        frame <= opts.frame && frame > nearestFrame && (nearestFrame = frame, index = i);
                     } else for (var nearestTimestamp = _this._startPoints[0].timestamp, i = 1; i < _this._startPoints.length; ++i) {
                         var timestamp = _this._startPoints[i].timestamp;
-                        timestamp <= opts.timestamp && nearestTimestamp < timestamp && (nearestTimestamp = timestamp, 
+                        timestamp <= opts.timestamp && timestamp > nearestTimestamp && (nearestTimestamp = timestamp, 
                         index = i);
                     }
                     callback(null, _this._startPoints[index]);
@@ -1730,10 +2011,10 @@ require = function e(t, n, r) {
             }, MemoryAmflowClient.prototype.dropAfter = function(age) {
                 if (this._tickList) {
                     var from = this._tickList[0], to = this._tickList[1];
-                    age <= from ? (this._tickList = null, this._startPoints = []) : age <= to && (this._tickList[1] = age - 1, 
+                    from >= age ? (this._tickList = null, this._startPoints = []) : to >= age && (this._tickList[1] = age - 1, 
                     this._tickList[2] = this._tickList[2].filter(function(tick) {
                         var ta = tick[0];
-                        return from <= ta && ta <= age - 1;
+                        return ta >= from && age - 1 >= ta;
                     }), this._startPoints = this._startPoints.filter(function(sp) {
                         return sp.frame < age;
                     }));
@@ -1750,14 +2031,19 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var ReplayAmflowProxy = (require("../EventIndex"), function() {
+        var ReplayAmflowProxy = (require("../EventIndex"), /** @class */ function() {
             function ReplayAmflowProxy(param) {
                 this._amflow = param.amflow, this._tickList = param.tickList, this._startPoints = param.startPoints;
             }
+            /**
+     * 与えられていたティックリストを部分的に破棄する。
+     * ReplayAmflowProxy の独自メソッド。
+     * @param age ティックを破棄する基準のage(このageのティックも破棄される)
+     */
             return ReplayAmflowProxy.prototype.dropAfter = function(age) {
                 if (this._tickList) {
                     var givenFrom = this._tickList[0], givenTo = this._tickList[1], givenTicksWithEvents = this._tickList[2];
-                    age <= givenFrom ? (this._tickList = null, this._startPoints = []) : age <= givenTo && (this._tickList[1] = age - 1, 
+                    givenFrom >= age ? (this._tickList = null, this._startPoints = []) : givenTo >= age && (this._tickList[1] = age - 1, 
                     this._tickList[2] = this._sliceTicks(givenTicksWithEvents, givenTo, age - 1), this._startPoints = this._startPoints.filter(function(sp) {
                         return sp.frame < age;
                     }));
@@ -1783,25 +2069,27 @@ require = function e(t, n, r) {
             }, ReplayAmflowProxy.prototype.getTickList = function(from, to, callback) {
                 var _this = this;
                 if (!this._tickList) return void this._amflow.getTickList(from, to, callback);
-                var givenFrom = this._tickList[0], givenTo = this._tickList[1], givenTicksWithEvents = this._tickList[2], fromInGiven = givenFrom <= from && from <= givenTo, toInGiven = givenFrom <= to && to <= givenTo;
+                var givenFrom = this._tickList[0], givenTo = this._tickList[1], givenTicksWithEvents = this._tickList[2], fromInGiven = from >= givenFrom && givenTo >= from, toInGiven = to >= givenFrom && givenTo >= to;
                 fromInGiven && toInGiven ? setTimeout(function() {
                     callback(null, [ from, to, _this._sliceTicks(givenTicksWithEvents, from, to) ]);
                 }, 0) : this._amflow.getTickList(from, to, function(err, tickList) {
                     if (err) return void callback(err);
-                    if (tickList) if (fromInGiven || toInGiven) if (fromInGiven) {
+                    if (tickList) // 何かは得られた。手持ちとマージする。
+                    if (fromInGiven || toInGiven) if (fromInGiven) {
                         var ticksWithEvents = _this._sliceTicks(givenTicksWithEvents, from, to).concat(tickList[2] || []);
                         callback(null, [ from, tickList[1], ticksWithEvents ]);
                     } else {
                         var ticksWithEvents = (tickList[2] || []).concat(_this._sliceTicks(givenTicksWithEvents, from, to));
                         callback(null, [ tickList[0], to, ticksWithEvents ]);
-                    } else if (to < givenFrom || givenTo < from) callback(null, tickList); else {
+                    } else if (givenFrom > to || from > givenTo) callback(null, tickList); else {
                         var ticksWithEvents = tickList[2];
                         if (ticksWithEvents) {
                             var beforeGiven = _this._sliceTicks(ticksWithEvents, from, givenFrom - 1), afterGiven = _this._sliceTicks(ticksWithEvents, givenTo + 1, to);
                             ticksWithEvents = beforeGiven.concat(givenTicksWithEvents, afterGiven);
                         } else ticksWithEvents = givenTicksWithEvents;
                         callback(null, [ from, to, ticksWithEvents ]);
-                    } else fromInGiven || toInGiven ? fromInGiven ? callback(null, [ from, givenTo, _this._sliceTicks(givenTicksWithEvents, from, to) ]) : callback(null, [ givenFrom, to, _this._sliceTicks(givenTicksWithEvents, from, to) ]) : to < givenFrom || givenTo < from ? callback(null, tickList) : callback(null, [ givenFrom, givenTo, _this._sliceTicks(givenTicksWithEvents, from, to) ]);
+                    } else // 何も得られなかった。手持ちの重複範囲を返すだけ。
+                    fromInGiven || toInGiven ? fromInGiven ? callback(null, [ from, givenTo, _this._sliceTicks(givenTicksWithEvents, from, to) ]) : callback(null, [ givenFrom, to, _this._sliceTicks(givenTicksWithEvents, from, to) ]) : givenFrom > to || from > givenTo ? callback(null, tickList) : callback(null, [ givenFrom, givenTo, _this._sliceTicks(givenTicksWithEvents, from, to) ]);
                 });
             }, ReplayAmflowProxy.prototype.putStartPoint = function(startPoint, callback) {
                 this._amflow.putStartPoint(startPoint, callback);
@@ -1809,14 +2097,15 @@ require = function e(t, n, r) {
                 var _this = this, index = 0;
                 if (this._startPoints.length > 0) if (null != opts.frame) for (var nearestFrame = this._startPoints[0].frame, i = 1; i < this._startPoints.length; ++i) {
                     var frame = this._startPoints[i].frame;
-                    frame <= opts.frame && nearestFrame < frame && (nearestFrame = frame, index = i);
+                    frame <= opts.frame && frame > nearestFrame && (nearestFrame = frame, index = i);
                 } else for (var nearestTimestamp = this._startPoints[0].timestamp, i = 1; i < this._startPoints.length; ++i) {
                     var timestamp = this._startPoints[i].timestamp;
-                    timestamp <= opts.timestamp && nearestTimestamp < timestamp && (nearestTimestamp = timestamp, 
+                    timestamp <= opts.timestamp && timestamp > nearestTimestamp && (nearestTimestamp = timestamp, 
                     index = i);
                 }
                 var givenTo = this._tickList ? this._tickList[1] : -1;
                 opts.frame > givenTo ? this._amflow.getStartPoint(opts, function(err, startPoint) {
+                    // 与えられたティックリストの範囲内のスタートポイントが見つかったとしてもなかったかのように振る舞う
                     return err ? void callback(err) : void (givenTo < startPoint.frame ? callback(null, startPoint) : callback(null, _this._startPoints[index]));
                 }) : setTimeout(function() {
                     callback(null, _this._startPoints[index]);
@@ -1828,7 +2117,7 @@ require = function e(t, n, r) {
             }, ReplayAmflowProxy.prototype._sliceTicks = function(ticks, from, to) {
                 return ticks.filter(function(t) {
                     var age = t[0];
-                    return from <= age && age <= to;
+                    return age >= from && to >= age;
                 });
             }, ReplayAmflowProxy;
         }());
@@ -1841,13 +2130,16 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), SimpleProfiler = function() {
+        var g = require("@akashic/akashic-engine"), SimpleProfiler = /** @class */ function() {
             function SimpleProfiler(param) {
                 this._interval = null != param.interval ? param.interval : SimpleProfiler.DEFAULT_INTERVAL, 
                 null != param.limit ? this._limit = param.limit >= SimpleProfiler.DEFAULT_LIMIT ? param.limit : SimpleProfiler.DEFAULT_LIMIT : this._limit = SimpleProfiler.DEFAULT_LIMIT, 
                 this._calculateProfilerValueTrigger = new g.Trigger(), param.getValueHandler && this._calculateProfilerValueTrigger.add(param.getValueHandler, param.getValueHandlerOwner), 
                 this._reset();
             }
+            /**
+     * 現在時刻から、指定した時間までを遡った期間の `SimpleProfilerValue` を取得する。
+     */
             return SimpleProfiler.prototype.time = function(type) {
                 this._beforeTimes[type] = this._getCurrentTime();
             }, SimpleProfiler.prototype.timeEnd = function(type) {
@@ -1884,9 +2176,9 @@ require = function e(t, n, r) {
                 this._values = [], this._values[1] = [], this._values[2] = [], this._values[3] = [], 
                 this._values[0] = [];
             }, SimpleProfiler.prototype._calculateProfilerValue = function(type, time) {
-                for (var limit = this._getCurrentTime() - time, sum = 0, num = 0, max = 0, min = Number.MAX_VALUE, i = this._values[type].length - 1; i >= 0 && !(0 < num && this._values[type][i].time < limit); --i) {
+                for (var limit = this._getCurrentTime() - time, sum = 0, num = 0, max = 0, min = Number.MAX_VALUE, i = this._values[type].length - 1; i >= 0 && !(num > 0 && this._values[type][i].time < limit); --i) {
                     var value = this._values[type][i].value;
-                    max < value && (max = value), value < min && (min = value), sum += value, ++num;
+                    value > max && (max = value), min > value && (min = value), sum += value, ++num;
                 }
                 return {
                     ave: sum / num,
@@ -1903,10 +2195,11 @@ require = function e(t, n, r) {
         "@akashic/akashic-engine": "@akashic/akashic-engine"
     } ],
     22: [ function(require, module, exports) {
-        arguments[4][4][0].apply(exports, arguments);
-    }, {
-        dup: 4
-    } ],
+        "use strict";
+        Object.defineProperty(exports, "__esModule", {
+            value: !0
+        });
+    }, {} ],
     23: [ function(require, module, exports) {}, {} ],
     24: [ function(require, module, exports) {
         arguments[4][23][0].apply(exports, arguments);
@@ -1953,11 +2246,15 @@ require = function e(t, n, r) {
                 function setAsap(asapFn) {
                     asap = asapFn;
                 }
+                // node
                 function useNextTick() {
+                    // node version 0.10.x displays a deprecation warning when nextTick is used recursively
+                    // see https://github.com/cujojs/when/issues/410 for details
                     return function() {
                         return process.nextTick(flush);
                     };
                 }
+                // vertx
                 function useVertxTimer() {
                     return function() {
                         vertxNext(flush);
@@ -1971,6 +2268,7 @@ require = function e(t, n, r) {
                         node.data = iterations = ++iterations % 2;
                     };
                 }
+                // web worker
                 function useMessageChannel() {
                     var channel = new MessageChannel();
                     return channel.port1.onmessage = flush, function() {
@@ -1978,13 +2276,15 @@ require = function e(t, n, r) {
                     };
                 }
                 function useSetTimeout() {
+                    // Store setTimeout reference so es6-promise will be unaffected by
+                    // other code modifying setTimeout (like sinon.useFakeTimers())
                     var globalSetTimeout = setTimeout;
                     return function() {
                         return globalSetTimeout(flush, 1);
                     };
                 }
                 function flush() {
-                    for (var i = 0; i < len; i += 2) {
+                    for (var i = 0; len > i; i += 2) {
                         var callback = queue[i], arg = queue[i + 1];
                         callback(arg), queue[i] = void 0, queue[i + 1] = void 0;
                     }
@@ -2009,7 +2309,39 @@ require = function e(t, n, r) {
                         });
                     }() : subscribe(parent, child, onFulfillment, onRejection), child;
                 }
+                /**
+  `Promise.resolve` returns a promise that will become resolved with the
+  passed `value`. It is shorthand for the following:
+
+  ```javascript
+  let promise = new Promise(function(resolve, reject){
+    resolve(1);
+  });
+
+  promise.then(function(value){
+    // value === 1
+  });
+  ```
+
+  Instead of writing the above, your code now simply becomes the following:
+
+  ```javascript
+  let promise = Promise.resolve(1);
+
+  promise.then(function(value){
+    // value === 1
+  });
+  ```
+
+  @method resolve
+  @static
+  @param {Any} value value that the returned promise will be resolved with
+  Useful for tooling.
+  @return {Promise} a promise that will become fulfilled with the given
+  `value`
+*/
                 function resolve(object) {
+                    /*jshint validthis:true */
                     var Constructor = this;
                     if (object && "object" == typeof object && object.constructor === Constructor) return object;
                     var promise = new Constructor(noop);
@@ -2127,18 +2459,166 @@ require = function e(t, n, r) {
                 function validationError() {
                     return new Error("Array Methods must be provided an Array");
                 }
+                /**
+  `Promise.all` accepts an array of promises, and returns a new promise which
+  is fulfilled with an array of fulfillment values for the passed promises, or
+  rejected with the reason of the first passed promise to be rejected. It casts all
+  elements of the passed iterable to promises as it runs this algorithm.
+
+  Example:
+
+  ```javascript
+  let promise1 = resolve(1);
+  let promise2 = resolve(2);
+  let promise3 = resolve(3);
+  let promises = [ promise1, promise2, promise3 ];
+
+  Promise.all(promises).then(function(array){
+    // The array here would be [ 1, 2, 3 ];
+  });
+  ```
+
+  If any of the `promises` given to `all` are rejected, the first promise
+  that is rejected will be given as an argument to the returned promises's
+  rejection handler. For example:
+
+  Example:
+
+  ```javascript
+  let promise1 = resolve(1);
+  let promise2 = reject(new Error("2"));
+  let promise3 = reject(new Error("3"));
+  let promises = [ promise1, promise2, promise3 ];
+
+  Promise.all(promises).then(function(array){
+    // Code here never runs because there are rejected promises!
+  }, function(error) {
+    // error.message === "2"
+  });
+  ```
+
+  @method all
+  @static
+  @param {Array} entries array of promises
+  @param {String} label optional string for labeling the promise.
+  Useful for tooling.
+  @return {Promise} promise that is fulfilled when all `promises` have been
+  fulfilled, or rejected if any of them become rejected.
+  @static
+*/
                 function all(entries) {
                     return new Enumerator(this, entries).promise;
                 }
+                /**
+  `Promise.race` returns a new promise which is settled in the same way as the
+  first passed promise to settle.
+
+  Example:
+
+  ```javascript
+  let promise1 = new Promise(function(resolve, reject){
+    setTimeout(function(){
+      resolve('promise 1');
+    }, 200);
+  });
+
+  let promise2 = new Promise(function(resolve, reject){
+    setTimeout(function(){
+      resolve('promise 2');
+    }, 100);
+  });
+
+  Promise.race([promise1, promise2]).then(function(result){
+    // result === 'promise 2' because it was resolved before promise1
+    // was resolved.
+  });
+  ```
+
+  `Promise.race` is deterministic in that only the state of the first
+  settled promise matters. For example, even if other promises given to the
+  `promises` array argument are resolved, but the first settled promise has
+  become rejected before the other promises became fulfilled, the returned
+  promise will become rejected:
+
+  ```javascript
+  let promise1 = new Promise(function(resolve, reject){
+    setTimeout(function(){
+      resolve('promise 1');
+    }, 200);
+  });
+
+  let promise2 = new Promise(function(resolve, reject){
+    setTimeout(function(){
+      reject(new Error('promise 2'));
+    }, 100);
+  });
+
+  Promise.race([promise1, promise2]).then(function(result){
+    // Code here never runs
+  }, function(reason){
+    // reason.message === 'promise 2' because promise 2 became rejected before
+    // promise 1 became fulfilled
+  });
+  ```
+
+  An example real-world use case is implementing timeouts:
+
+  ```javascript
+  Promise.race([ajax('foo.json'), timeout(5000)])
+  ```
+
+  @method race
+  @static
+  @param {Array} promises array of promises to observe
+  Useful for tooling.
+  @return {Promise} a promise which settles in the same way as the first passed
+  promise to settle.
+*/
                 function race(entries) {
+                    /*jshint validthis:true */
                     var Constructor = this;
                     return new Constructor(isArray(entries) ? function(resolve, reject) {
-                        for (var length = entries.length, i = 0; i < length; i++) Constructor.resolve(entries[i]).then(resolve, reject);
+                        for (var length = entries.length, i = 0; length > i; i++) Constructor.resolve(entries[i]).then(resolve, reject);
                     } : function(_, reject) {
                         return reject(new TypeError("You must pass an array to race."));
                     });
                 }
+                /**
+  `Promise.reject` returns a promise rejected with the passed `reason`.
+  It is shorthand for the following:
+
+  ```javascript
+  let promise = new Promise(function(resolve, reject){
+    reject(new Error('WHOOPS'));
+  });
+
+  promise.then(function(value){
+    // Code here doesn't run because the promise is rejected!
+  }, function(reason){
+    // reason.message === 'WHOOPS'
+  });
+  ```
+
+  Instead of writing the above, your code now simply becomes the following:
+
+  ```javascript
+  let promise = Promise.reject(new Error('WHOOPS'));
+
+  promise.then(function(value){
+    // Code here doesn't run because the promise is rejected!
+  }, function(reason){
+    // reason.message === 'WHOOPS'
+  });
+  ```
+
+  @method reject
+  @static
+  @param {Any} reason value that the returned promise will be rejected with.
+  Useful for tooling.
+  @return {Promise} a promise rejected with the given `reason`.
+*/
                 function reject(reason) {
+                    /*jshint validthis:true */
                     var Constructor = this, promise = new Constructor(noop);
                     return _reject(promise, reason), promise;
                 }
@@ -2148,6 +2628,109 @@ require = function e(t, n, r) {
                 function needsNew() {
                     throw new TypeError("Failed to construct 'Promise': Please use the 'new' operator, this object constructor cannot be called as a function.");
                 }
+                /**
+  Promise objects represent the eventual result of an asynchronous operation. The
+  primary way of interacting with a promise is through its `then` method, which
+  registers callbacks to receive either a promise's eventual value or the reason
+  why the promise cannot be fulfilled.
+
+  Terminology
+  -----------
+
+  - `promise` is an object or function with a `then` method whose behavior conforms to this specification.
+  - `thenable` is an object or function that defines a `then` method.
+  - `value` is any legal JavaScript value (including undefined, a thenable, or a promise).
+  - `exception` is a value that is thrown using the throw statement.
+  - `reason` is a value that indicates why a promise was rejected.
+  - `settled` the final resting state of a promise, fulfilled or rejected.
+
+  A promise can be in one of three states: pending, fulfilled, or rejected.
+
+  Promises that are fulfilled have a fulfillment value and are in the fulfilled
+  state.  Promises that are rejected have a rejection reason and are in the
+  rejected state.  A fulfillment value is never a thenable.
+
+  Promises can also be said to *resolve* a value.  If this value is also a
+  promise, then the original promise's settled state will match the value's
+  settled state.  So a promise that *resolves* a promise that rejects will
+  itself reject, and a promise that *resolves* a promise that fulfills will
+  itself fulfill.
+
+
+  Basic Usage:
+  ------------
+
+  ```js
+  let promise = new Promise(function(resolve, reject) {
+    // on success
+    resolve(value);
+
+    // on failure
+    reject(reason);
+  });
+
+  promise.then(function(value) {
+    // on fulfillment
+  }, function(reason) {
+    // on rejection
+  });
+  ```
+
+  Advanced Usage:
+  ---------------
+
+  Promises shine when abstracting away asynchronous interactions such as
+  `XMLHttpRequest`s.
+
+  ```js
+  function getJSON(url) {
+    return new Promise(function(resolve, reject){
+      let xhr = new XMLHttpRequest();
+
+      xhr.open('GET', url);
+      xhr.onreadystatechange = handler;
+      xhr.responseType = 'json';
+      xhr.setRequestHeader('Accept', 'application/json');
+      xhr.send();
+
+      function handler() {
+        if (this.readyState === this.DONE) {
+          if (this.status === 200) {
+            resolve(this.response);
+          } else {
+            reject(new Error('getJSON: `' + url + '` failed with status: [' + this.status + ']'));
+          }
+        }
+      };
+    });
+  }
+
+  getJSON('/posts.json').then(function(json) {
+    // on fulfillment
+  }, function(reason) {
+    // on rejection
+  });
+  ```
+
+  Unlike callbacks, promises are great composable primitives.
+
+  ```js
+  Promise.all([
+    getJSON('/posts'),
+    getJSON('/comments')
+  ]).then(function(values){
+    values[0] // => postsJSON
+    values[1] // => commentsJSON
+
+    return values;
+  });
+  ```
+
+  @class Promise
+  @param {function} resolver
+  Useful for tooling.
+  @constructor
+*/
                 function Promise(resolver) {
                     this[PROMISE_ID] = nextId(), this._result = this._state = void 0, this._subscribers = [], 
                     noop !== resolver && ("function" != typeof resolver && needsResolver(), this instanceof Promise ? initializePromise(this, resolver) : needsNew());
@@ -2176,10 +2759,12 @@ require = function e(t, n, r) {
                 var isArray = _isArray, len = 0, vertxNext = void 0, customSchedulerFn = void 0, asap = function(callback, arg) {
                     queue[len] = callback, queue[len + 1] = arg, len += 2, 2 === len && (customSchedulerFn ? customSchedulerFn(flush) : scheduleFlush());
                 }, browserWindow = "undefined" != typeof window ? window : void 0, browserGlobal = browserWindow || {}, BrowserMutationObserver = browserGlobal.MutationObserver || browserGlobal.WebKitMutationObserver, isNode = "undefined" == typeof self && "undefined" != typeof process && "[object process]" === {}.toString.call(process), isWorker = "undefined" != typeof Uint8ClampedArray && "undefined" != typeof importScripts && "undefined" != typeof MessageChannel, queue = new Array(1e3), scheduleFlush = void 0;
+                // Decide what async method to use to triggering processing of queued callbacks:
                 scheduleFlush = isNode ? useNextTick() : BrowserMutationObserver ? useMutationObserver() : isWorker ? useMessageChannel() : void 0 === browserWindow && "function" == typeof require ? attemptVertx() : useSetTimeout();
                 var PROMISE_ID = Math.random().toString(36).substring(16), PENDING = void 0, FULFILLED = 1, REJECTED = 2, GET_THEN_ERROR = new ErrorObject(), TRY_CATCH_ERROR = new ErrorObject(), id = 0;
+                // Strange compat..
                 return Enumerator.prototype._enumerate = function() {
-                    for (var length = this.length, _input = this._input, i = 0; this._state === PENDING && i < length; i++) this._eachEntry(_input[i], i);
+                    for (var length = this.length, _input = this._input, i = 0; this._state === PENDING && length > i; i++) this._eachEntry(_input[i], i);
                 }, Enumerator.prototype._eachEntry = function(entry, i) {
                     var c = this._instanceConstructor, resolve$$ = c.resolve;
                     if (resolve$$ === resolve) {
@@ -2207,8 +2792,228 @@ require = function e(t, n, r) {
                 Promise._setScheduler = setScheduler, Promise._setAsap = setAsap, Promise._asap = asap, 
                 Promise.prototype = {
                     constructor: Promise,
+                    /**
+    The primary way of interacting with a promise is through its `then` method,
+    which registers callbacks to receive either a promise's eventual value or the
+    reason why the promise cannot be fulfilled.
+  
+    ```js
+    findUser().then(function(user){
+      // user is available
+    }, function(reason){
+      // user is unavailable, and you are given the reason why
+    });
+    ```
+  
+    Chaining
+    --------
+  
+    The return value of `then` is itself a promise.  This second, 'downstream'
+    promise is resolved with the return value of the first promise's fulfillment
+    or rejection handler, or rejected if the handler throws an exception.
+  
+    ```js
+    findUser().then(function (user) {
+      return user.name;
+    }, function (reason) {
+      return 'default name';
+    }).then(function (userName) {
+      // If `findUser` fulfilled, `userName` will be the user's name, otherwise it
+      // will be `'default name'`
+    });
+  
+    findUser().then(function (user) {
+      throw new Error('Found user, but still unhappy');
+    }, function (reason) {
+      throw new Error('`findUser` rejected and we're unhappy');
+    }).then(function (value) {
+      // never reached
+    }, function (reason) {
+      // if `findUser` fulfilled, `reason` will be 'Found user, but still unhappy'.
+      // If `findUser` rejected, `reason` will be '`findUser` rejected and we're unhappy'.
+    });
+    ```
+    If the downstream promise does not specify a rejection handler, rejection reasons will be propagated further downstream.
+  
+    ```js
+    findUser().then(function (user) {
+      throw new PedagogicalException('Upstream error');
+    }).then(function (value) {
+      // never reached
+    }).then(function (value) {
+      // never reached
+    }, function (reason) {
+      // The `PedgagocialException` is propagated all the way down to here
+    });
+    ```
+  
+    Assimilation
+    ------------
+  
+    Sometimes the value you want to propagate to a downstream promise can only be
+    retrieved asynchronously. This can be achieved by returning a promise in the
+    fulfillment or rejection handler. The downstream promise will then be pending
+    until the returned promise is settled. This is called *assimilation*.
+  
+    ```js
+    findUser().then(function (user) {
+      return findCommentsByAuthor(user);
+    }).then(function (comments) {
+      // The user's comments are now available
+    });
+    ```
+  
+    If the assimliated promise rejects, then the downstream promise will also reject.
+  
+    ```js
+    findUser().then(function (user) {
+      return findCommentsByAuthor(user);
+    }).then(function (comments) {
+      // If `findCommentsByAuthor` fulfills, we'll have the value here
+    }, function (reason) {
+      // If `findCommentsByAuthor` rejects, we'll have the reason here
+    });
+    ```
+  
+    Simple Example
+    --------------
+  
+    Synchronous Example
+  
+    ```javascript
+    let result;
+  
+    try {
+      result = findResult();
+      // success
+    } catch(reason) {
+      // failure
+    }
+    ```
+  
+    Errback Example
+  
+    ```js
+    findResult(function(result, err){
+      if (err) {
+        // failure
+      } else {
+        // success
+      }
+    });
+    ```
+  
+    Promise Example;
+  
+    ```javascript
+    findResult().then(function(result){
+      // success
+    }, function(reason){
+      // failure
+    });
+    ```
+  
+    Advanced Example
+    --------------
+  
+    Synchronous Example
+  
+    ```javascript
+    let author, books;
+  
+    try {
+      author = findAuthor();
+      books  = findBooksByAuthor(author);
+      // success
+    } catch(reason) {
+      // failure
+    }
+    ```
+  
+    Errback Example
+  
+    ```js
+  
+    function foundBooks(books) {
+  
+    }
+  
+    function failure(reason) {
+  
+    }
+  
+    findAuthor(function(author, err){
+      if (err) {
+        failure(err);
+        // failure
+      } else {
+        try {
+          findBoooksByAuthor(author, function(books, err) {
+            if (err) {
+              failure(err);
+            } else {
+              try {
+                foundBooks(books);
+              } catch(reason) {
+                failure(reason);
+              }
+            }
+          });
+        } catch(error) {
+          failure(err);
+        }
+        // success
+      }
+    });
+    ```
+  
+    Promise Example;
+  
+    ```javascript
+    findAuthor().
+      then(findBooksByAuthor).
+      then(function(books){
+        // found books
+    }).catch(function(reason){
+      // something went wrong
+    });
+    ```
+  
+    @method then
+    @param {Function} onFulfilled
+    @param {Function} onRejected
+    Useful for tooling.
+    @return {Promise}
+  */
                     then: then,
-                    catch: function(onRejection) {
+                    /**
+    `catch` is simply sugar for `then(undefined, onRejection)` which makes it the same
+    as the catch block of a try/catch statement.
+  
+    ```js
+    function findAuthor(){
+      throw new Error('couldn't find that author');
+    }
+  
+    // synchronous
+    try {
+      findAuthor();
+    } catch(reason) {
+      // something went wrong
+    }
+  
+    // async with promises
+    findAuthor().catch(function(reason){
+      // something went wrong
+    });
+    ```
+  
+    @method catch
+    @param {Function} onRejection
+    Useful for tooling.
+    @return {Promise}
+  */
+                    "catch": function(onRejection) {
                         return this.then(null, onRejection);
                     }
                 }, polyfill(), Promise.polyfill = polyfill, Promise.Promise = Promise, Promise;
@@ -2225,29 +3030,40 @@ require = function e(t, n, r) {
             throw new Error("clearTimeout has not been defined");
         }
         function runTimeout(fun) {
-            if (cachedSetTimeout === setTimeout) return setTimeout(fun, 0);
+            if (cachedSetTimeout === setTimeout) //normal enviroments in sane situations
+            return setTimeout(fun, 0);
+            // if setTimeout wasn't available but was latter defined
             if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) return cachedSetTimeout = setTimeout, 
             setTimeout(fun, 0);
             try {
+                // when when somebody has screwed with setTimeout but no I.E. maddness
                 return cachedSetTimeout(fun, 0);
             } catch (e) {
                 try {
+                    // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
                     return cachedSetTimeout.call(null, fun, 0);
                 } catch (e) {
+                    // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
                     return cachedSetTimeout.call(this, fun, 0);
                 }
             }
         }
         function runClearTimeout(marker) {
-            if (cachedClearTimeout === clearTimeout) return clearTimeout(marker);
+            if (cachedClearTimeout === clearTimeout) //normal enviroments in sane situations
+            return clearTimeout(marker);
+            // if clearTimeout wasn't available but was latter defined
             if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) return cachedClearTimeout = clearTimeout, 
             clearTimeout(marker);
             try {
+                // when when somebody has screwed with setTimeout but no I.E. maddness
                 return cachedClearTimeout(marker);
             } catch (e) {
                 try {
+                    // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
                     return cachedClearTimeout.call(null, marker);
                 } catch (e) {
+                    // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+                    // Some versions of I.E. have different rules for clearTimeout vs setTimeout
                     return cachedClearTimeout.call(this, marker);
                 }
             }
@@ -2267,10 +3083,12 @@ require = function e(t, n, r) {
                 currentQueue = null, draining = !1, runClearTimeout(timeout);
             }
         }
+        // v8 likes predictible objects
         function Item(fun, array) {
             this.fun = fun, this.array = array;
         }
         function noop() {}
+        // shim for using process in browser
         var cachedSetTimeout, cachedClearTimeout, process = module.exports = {};
         !function() {
             try {
@@ -2292,8 +3110,9 @@ require = function e(t, n, r) {
         }, Item.prototype.run = function() {
             this.fun.apply(null, this.array);
         }, process.title = "browser", process.browser = !0, process.env = {}, process.argv = [], 
-        process.version = "", process.versions = {}, process.on = noop, process.addListener = noop, 
-        process.once = noop, process.off = noop, process.removeListener = noop, process.removeAllListeners = noop, 
+        process.version = "", // empty string to avoid regexp issues
+        process.versions = {}, process.on = noop, process.addListener = noop, process.once = noop, 
+        process.off = noop, process.removeListener = noop, process.removeAllListeners = noop, 
         process.emit = noop, process.prependListener = noop, process.prependOnceListener = noop, 
         process.listeners = function(name) {
             return [];
@@ -2306,5 +3125,39 @@ require = function e(t, n, r) {
         }, process.umask = function() {
             return 0;
         };
-    }, {} ]
+    }, {} ],
+    "@akashic/game-driver": [ function(require, module, exports) {
+        "use strict";
+        Object.defineProperty(exports, "__esModule", {
+            value: !0
+        });
+        var EventIndex = require("./EventIndex");
+        exports.EventIndex = EventIndex;
+        var LoopMode_1 = require("./LoopMode");
+        exports.LoopMode = LoopMode_1["default"];
+        var LoopRenderMode_1 = require("./LoopRenderMode");
+        exports.LoopRenderMode = LoopRenderMode_1["default"];
+        var ExecutionMode_1 = require("./ExecutionMode");
+        exports.ExecutionMode = ExecutionMode_1["default"];
+        var GameDriver_1 = require("./GameDriver");
+        exports.GameDriver = GameDriver_1.GameDriver;
+        var Game_1 = require("./Game");
+        exports.Game = Game_1.Game;
+        var ReplayAmflowProxy_1 = require("./auxiliary/ReplayAmflowProxy");
+        exports.ReplayAmflowProxy = ReplayAmflowProxy_1.ReplayAmflowProxy;
+        var MemoryAmflowClient_1 = require("./auxiliary/MemoryAmflowClient");
+        exports.MemoryAmflowClient = MemoryAmflowClient_1.MemoryAmflowClient;
+        var SimpleProfiler_1 = require("./auxiliary/SimpleProfiler");
+        exports.SimpleProfiler = SimpleProfiler_1.SimpleProfiler;
+    }, {
+        "./EventIndex": 4,
+        "./ExecutionMode": 5,
+        "./Game": 6,
+        "./GameDriver": 7,
+        "./LoopMode": 10,
+        "./LoopRenderMode": 11,
+        "./auxiliary/MemoryAmflowClient": 19,
+        "./auxiliary/ReplayAmflowProxy": 20,
+        "./auxiliary/SimpleProfiler": 21
+    } ]
 }, {}, []);

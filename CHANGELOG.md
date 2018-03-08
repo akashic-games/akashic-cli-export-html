@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.1.16
+* `--magnify` オプションの実装を pdi-browser@1.1.0 に追従
+* 内部コンポーネントの更新
+
 ## 0.1.15
 * akashic-cli-commons@0.2.8 を利用するように
   * `--hash-filename` オプション有効時、 `moduleMainScripts` の値がおかしかった問題を修正。
