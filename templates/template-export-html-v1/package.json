@@ -1,0 +1,35 @@
+{
+  "name": "@akashic/akashic-cli-export-html-template-v1",
+  "version": "0.0.1",
+  "description": "Modules for export html template.",
+  "scripts": {
+    "copy": "npm run copy:browserify && npm run copy:minify && npm run copy:delete",
+    "copy:browserify": "browserify --require ./node_modules/@akashic/akashic-engine/lib/main.node.js:@akashic/akashic-engine --outfile ./js/akashic-engine.js",
+    "copy:minify": "node ../../build-template-support/copyfiles.js",
+    "copy:delete": "shx rm -rf ./js/akashic-engine.js"
+},
+  "author": "DWANGO Co., Ltd.",
+  "license": "MIT",
+  "files": [
+    "js",
+    "css",
+    "package.json"
+  ],
+  "devDependencies": {
+    "@akashic/akashic-engine": "~1.12.8",
+    "browserify": "^13.0.0",
+    "shx": "~0.2.2"
+  },
+  "optionalDependencies": {
+    "@akashic/game-driver": "~0.11.10",
+    "@akashic/pdi-browser": "~0.10.6",
+    "@akashic/game-storage": "0.0.6"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/akashic-games/akashic-cli-export-html.git"
+  },
+  "publishConfig": {
+    "@akashic:registry": "http://registry.npmjs.org/"
+  }
+}
