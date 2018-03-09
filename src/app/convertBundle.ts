@@ -117,8 +117,7 @@ function writeCommonFiles(
 	const cssDir = path.resolve(outputPath, "css");
 	const nodeModulesDir = path.resolve(outputPath, "node_modules");
 	const templatePackageJsonPath = path.resolve(outputPath, "package.json");
-	// fs-extraのd.tsではCopyFilterにdest引数が定義されていないため、anyにキャストする
-	(<any>(fsx.copySync))(
+	fsx.copySync(
 		path.resolve(__dirname, "..", templatePath),
 		outputPath,
 		{ filter: (src: string, dest: string): boolean => (dest !== jsDir && dest !== cssDir && dest !== nodeModulesDir && dest !== templatePackageJsonPath)}
