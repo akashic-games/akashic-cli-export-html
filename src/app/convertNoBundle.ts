@@ -102,7 +102,9 @@ function writeCommonFiles(
 
 	fsx.copySync(
 		path.resolve(__dirname, "..", templatePath),
-		outputPath);
+		outputPath,
+		{ filter: (src: string, dest: string): boolean => path.basename(src) !== "package.json" }
+	);
 }
 
 function writeOptionScript(outputPath: string, options: ConvertTemplateParameterObject): void {
