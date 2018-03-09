@@ -115,11 +115,14 @@ function writeCommonFiles(
 
 	const jsDir = path.resolve(outputPath, "js");
 	const cssDir = path.resolve(outputPath, "css");
-	const nodeModulesDir = path.resolve(outputPath, "node_modules");
+	const nodeModulesPath = path.resolve(outputPath, "node_modules");
 	const templatePackageJsonPath = path.resolve(outputPath, "package.json");
 	fsx.copySync(
 		path.resolve(__dirname, "..", templatePath),
 		outputPath,
-		{ filter: (src: string, dest: string): boolean => (dest !== jsDir && dest !== cssDir && dest !== nodeModulesDir && dest !== templatePackageJsonPath)}
+		{
+			filter: (src: string, dest: string): boolean =>
+				(dest !== jsDir && dest !== cssDir && dest !== nodeModulesPath && dest !== templatePackageJsonPath)
+		}
 	);
 }
