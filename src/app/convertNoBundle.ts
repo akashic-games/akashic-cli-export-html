@@ -100,8 +100,6 @@ function writeCommonFiles(
 			throw Error("Unknown engine version: `environment[\"sandbox-runtime\"]` field in game.json should be \"1\" or \"2\".");
 	}
 
-	const nodeModulesPath = path.resolve(outputPath, "node_modules");
-	const templatePackageJsonPath = path.resolve(outputPath, "package.json");
 	fsx.copySync(
 		path.resolve(__dirname, "..", templatePath),
 		outputPath

@@ -115,8 +115,6 @@ function writeCommonFiles(
 
 	const jsDir = path.resolve(outputPath, "js");
 	const cssDir = path.resolve(outputPath, "css");
-	const nodeModulesPath = path.resolve(outputPath, "node_modules");
-	const templatePackageJsonPath = path.resolve(outputPath, "package.json");
 	fsx.copySync(
 		path.resolve(__dirname, "..", templatePath),
 		outputPath,
