@@ -1,0 +1,31 @@
+* {
+	margin: 0;
+	border: 0;
+	padding: 0;
+}
+body{
+	overflow: hidden;
+}
+
+#container {
+	margin: 0px;
+	padding: 0px;
+	overflow: hidden;
+}
+
+#container canvas{
+	background-size: contain;
+}
+
+@media screen and (max-device-width: 1023px){
+	/* Smartphone 横持ち */
+	html{
+		width:480px;
+		/*margin:0 auto;*/
+	}
+	body{
+		background-color:#000;
+		width:480px;
+		/*margin:0 auto;*/
+	}
+}
