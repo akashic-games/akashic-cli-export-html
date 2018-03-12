@@ -49,10 +49,10 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 	let templatePath: string;
 	switch (conf._content.environment["sandbox-runtime"]) {
 		case "1":
-			templatePath = "templates/template-export-html-v1";
+			templatePath = "templates-build/v1";
 			break;
 		case "2":
-			templatePath = "templates/template-export-html-v2";
+			templatePath = "templates-build/v2";
 			break;
 		default:
 			throw Error("Unknown engine version: `environment[\"sandbox-runtime\"]` field in game.json should be \"1\" or \"2\".");

@@ -3,9 +3,11 @@
   "version": "0.0.1",
   "description": "Modules for export html template.",
   "scripts": {
-    "copy": "npm run copy:browserify && npm run copy:minify && npm run copy:delete",
+    "copy": "npm run copy:mkdir && npm run copy:commonFiles && npm run copy:browserify && npm run copy:minify && npm run copy:delete",
+    "copy:mkdir": "shx mkdir -p ../../templates-build/v1",
+    "copy:commonFiles": "shx cp -r js ../../templates-build/v1 && shx cp -r css ../../templates-build/v1",
     "copy:browserify": "browserify --require ./node_modules/@akashic/akashic-engine/lib/main.node.js:@akashic/akashic-engine --outfile ./js/akashic-engine.js",
-    "copy:minify": "node ../../build-template-support/copyfiles.js",
+    "copy:minify": "node ../../build-template-support/copyfiles.js v1",
     "copy:delete": "shx rm -rf ./js/akashic-engine.js"
 },
   "author": "DWANGO Co., Ltd.",

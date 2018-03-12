@@ -12,8 +12,8 @@
     "build:export": "npm run build:export:tsc && npm run build:export:copy",
     "build:export:tsc": "tsc -p ./src/export/tsconfig.json",
     "build:export:copy": "npm run build:export:copy:v2 && npm run build:export:copy:v1",
-    "build:export:copy:v2": "shx cp -r tmp/export/build templates/template-export-html-v2/js",
-    "build:export:copy:v1": "shx cp -r tmp/export/build templates/template-export-html-v1/js",
+    "build:export:copy:v2": "shx mkdir -p templates-build/v2/js && shx cp -r tmp/export/build templates-build/v2/js",
+    "build:export:copy:v1": "shx mkdir -p templates-build/v1/js && shx cp -r tmp/export/build templates-build/v1/js",
     "lint": "npm run lint:ts && npm run lint:md",
     "lint:ts": "tslint -c tslint.json --project ./tsconfig.json",
     "lint:md": "remark ./*.md --frail --no-stdout --quiet --rc-path ./.remarkrc",
@@ -32,7 +32,7 @@
     "README.md",
     "bin",
     "lib",
-    "templates",
+    "templates-build",
     "package.json"
   ],
   "devDependencies": {
