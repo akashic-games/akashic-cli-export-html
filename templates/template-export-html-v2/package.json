@@ -3,12 +3,13 @@
   "version": "0.0.1",
   "description": "Modules for export html template.",
   "scripts": {
-    "copy": "npm run copy:mkdir && npm run copy:commonFiles && npm run copy:browserify && npm run copy:minify && npm run copy:delete",
-    "copy:mkdir": "shx mkdir -p ../../templates-build/v2",
-    "copy:commonFiles": "shx cp -r js ../../templates-build/v2 && shx cp -r css ../../templates-build/v2",
-    "copy:browserify": "browserify --require ./node_modules/@akashic/akashic-engine/lib/main.node.js:@akashic/akashic-engine --outfile ./js/akashic-engine.js",
-    "copy:minify": "node ../../build-template-support/copyfiles.js v2",
-    "copy:delete": "shx rm -rf ./js/akashic-engine.js"
+	"build": "npm run build:mkdir && npm run build:browserify && npm run update:engine && npm run build:delete && npm run copy",
+    "build:mkdir": "shx mkdir -p ../../templates-build/v2",
+	"build:browserify": "browserify --require ./node_modules/@akashic/akashic-engine/lib/main.node.js:@akashic/akashic-engine --outfile ./js/akashic-engine.js",
+    "build:delete": "shx rm -rf ./js/akashic-engine.js",
+	"copy": "shx cp -r js ../../templates-build/v2 && shx cp -r css ../../templates-build/v2",
+    "update:all": "node ../../build-template-support/updatefiles.js all",
+    "update:engine": "node ../../build-template-support/updatefiles.js engine"
 },
   "author": "DWANGO Co., Ltd.",
   "license": "MIT",
