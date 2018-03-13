@@ -19,6 +19,7 @@
     "lint:md": "remark ./*.md --frail --no-stdout --quiet --rc-path ./.remarkrc",
     "test": "npm run test:jasmine && npm run lint",
     "test:jasmine": "istanbul cover --report text --report html --colors -i ./lib/main.node.js ./node_modules/jasmine/bin/jasmine.js",
+    "build-templates": "npm run copy",
     "copy": "npm run copy:v2 && npm run copy:v1",
     "copy:v1": "cd templates/template-export-html-v1 && npm install && npm run copy && cd ../../",
     "copy:v2": "cd templates/template-export-html-v2 && npm install && npm run copy && cd ../../"

@@ -102,8 +102,7 @@ function writeCommonFiles(
 
 	fsx.copySync(
 		path.resolve(__dirname, "..", templatePath),
-		outputPath
-	);
+		outputPath);
 }
 
 function writeOptionScript(outputPath: string, options: ConvertTemplateParameterObject): void {
