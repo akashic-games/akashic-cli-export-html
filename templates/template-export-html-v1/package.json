@@ -14,11 +14,6 @@
 },
   "author": "DWANGO Co., Ltd.",
   "license": "MIT",
-  "files": [
-    "js",
-    "css",
-    "package.json"
-  ],
   "devDependencies": {
     "@akashic/akashic-engine": "~1.12.8",
     "browserify": "^13.0.0",
@@ -29,10 +24,7 @@
     "@akashic/pdi-browser": "~0.10.6",
     "@akashic/game-storage": "0.0.6"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/akashic-games/akashic-cli-export-html.git"
-  },
+  "private": true,
   "publishConfig": {
     "@akashic:registry": "http://registry.npmjs.org/"
   }
