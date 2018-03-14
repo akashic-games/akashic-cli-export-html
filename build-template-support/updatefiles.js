@@ -16,7 +16,6 @@ var templateName = process.argv[2];
 if (!templateName) process.exit(1);
 
 var target = process.argv[3];
-if (["all", "engine"].indexOf(target) === -1) process.exit(1);
 
 var files;
 switch (target) {
