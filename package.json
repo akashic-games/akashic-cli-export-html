@@ -22,9 +22,12 @@
     "lint:ts": "tslint -c tslint.json --project ./tsconfig.json",
     "lint:md": "remark ./*.md --frail --no-stdout --quiet --rc-path ./.remarkrc",
     "test": "npm run test:jasmine && npm run lint",
-    "test:jasmine": "istanbul cover --report text --report html --colors -i ./lib/main.node.js ./node_modules/jasmine/bin/jasmine.js"
+    "test:jasmine": "istanbul cover --report text --report html --colors -i ./lib/main.node.js ./node_modules/jasmine/bin/jasmine.js",
+    "update-template": "npm run update-template:v1 && npm run update-template:v1",
+    "update-template:v1": "cd templates/template-export-html-v1 && npm run update && npm run build && cd ../../",
+    "update-template:v2": "cd templates/template-export-html-v2 && npm run update && npm run build && cd ../../"
 },
-  "author": "DWANGO Co., Ltd.",
+"author": "DWANGO Co., Ltd.",
   "license": "MIT",
   "bin": {
     "akashic-cli-export-html": "./bin/run"

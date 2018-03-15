@@ -35,6 +35,6 @@ switch (target) {
 }
 
 files.forEach(filepath => {
-	const outputPath = path.resolve(process.cwd(), "../../templates-build", templateName, "js", path.basename(filepath, ".js") + ".strip.js");
+	const outputPath = path.resolve(process.cwd(), "../../templates", templateName, "js", path.basename(filepath, ".js") + ".strip.js");
 	fs.writeFileSync(outputPath, minify(filepath).code);
 });
