@@ -12,8 +12,6 @@
     "update:all": "node ../../build-template-support/updatefiles.js template-export-html-v2 all",
     "update:engine": "node ../../build-template-support/updatefiles.js template-export-html-v2 engine"
 },
-  "author": "DWANGO Co., Ltd.",
-  "license": "MIT",
   "devDependencies": {
     "@akashic/akashic-engine": "~2.1.1",
     "browserify": "^13.0.0",
@@ -24,8 +22,5 @@
     "@akashic/pdi-browser": "~1.2.1",
     "@akashic/game-storage": "0.0.6"
   },
-  "private": true,
-  "publishConfig": {
-    "@akashic:registry": "http://registry.npmjs.org/"
-  }
+  "private": true
 }
