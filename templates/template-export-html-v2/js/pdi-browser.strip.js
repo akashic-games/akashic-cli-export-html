@@ -1070,11 +1070,9 @@ require = function e(t, n, r) {
                 }), // Upが完了したら、Down->Upが完了したとしてロックを外す
                 delete this.pointerEventLock[identifier]);
             }, InputAbstractHandler.prototype.getOffsetFromEvent = function(e) {
-                // windowの左上を0,0とした時のinputViewのoffset取得する
-                var bounding = this.inputView.getBoundingClientRect();
                 return {
-                    x: (e.pageX - Math.round(window.pageXOffset + bounding.left)) / this._xScale,
-                    y: (e.pageY - Math.round(window.pageYOffset + bounding.top)) / this._yScale
+                    x: e.offsetX,
+                    y: e.offsetY
                 };
             }, InputAbstractHandler.prototype.getScale = function() {
                 return {
@@ -1165,19 +1163,19 @@ require = function e(t, n, r) {
                 return _this.onTouchDown = function(e) {
                     for (var touches = e.changedTouches, i = 0, len = touches.length; len > i; i++) {
                         var touch = touches[i];
-                        _this.pointDown(touch.identifier, touch);
+                        _this.pointDown(touch.identifier, _this.convertToPagePosition(touch));
                     }
                     _this._disablePreventDefault || (e.stopPropagation(), e.preventDefault());
                 }, _this.onTouchMove = function(e) {
                     for (var touches = e.changedTouches, i = 0, len = touches.length; len > i; i++) {
                         var touch = touches[i];
-                        _this.pointMove(touch.identifier, touch);
+                        _this.pointMove(touch.identifier, _this.convertToPagePosition(touch));
                     }
                     _this._disablePreventDefault || (e.stopPropagation(), e.preventDefault());
                 }, _this.onTouchUp = function(e) {
                     for (var touches = e.changedTouches, i = 0, len = touches.length; len > i; i++) {
                         var touch = touches[i];
-                        _this.pointUp(touch.identifier, touch);
+                        _this.pointUp(touch.identifier, _this.convertToPagePosition(touch));
                     }
                     _this._disablePreventDefault || (e.stopPropagation(), e.preventDefault());
                 }, _this;
@@ -1190,6 +1188,13 @@ require = function e(t, n, r) {
             }, TouchHandler.prototype.stop = function() {
                 _super.prototype.stop.call(this), this.inputView.removeEventListener("touchstart", this.onTouchDown), 
                 this.inputView.removeEventListener("touchmove", this.onTouchMove), this.inputView.removeEventListener("touchend", this.onTouchUp);
+            }, TouchHandler.prototype.convertToPagePosition = function(e) {
+                // windowの左上を0,0とした時のinputViewのoffsetを取得する
+                var bounding = this.inputView.getBoundingClientRect(), scale = this.getScale();
+                return {
+                    offsetX: (e.pageX - Math.round(window.pageXOffset + bounding.left)) / scale.x,
+                    offsetY: (e.pageY - Math.round(window.pageYOffset + bounding.top)) / scale.y
+                };
             }, TouchHandler;
         }(MouseHandler_1.MouseHandler);
         exports.TouchHandler = TouchHandler;
