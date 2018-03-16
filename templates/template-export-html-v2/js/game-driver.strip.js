@@ -87,13 +87,12 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = (require("@akashic/playlog"), require("@akashic/akashic-pdi"), require("@akashic/akashic-engine")), PointEventResolver_1 = (require("./EventIndex"), 
-        require("./PointEventResolver")), EventBuffer = /** @class */ function() {
+        var g = (require("@akashic/akashic-pdi"), require("@akashic/akashic-engine")), PointEventResolver_1 = require("./PointEventResolver"), EventBuffer = /** @class */ function() {
             function EventBuffer(param) {
-                this._amflow = param.amflow, this._isReceiver = !1, this._isSender = !1, this._defaultEventPriority = 0, 
-                this._buffer = null, this._joinLeaveBuffer = null, this._localBuffer = null, this._filters = null, 
-                this._unfilteredLocalEvents = [], this._unfilteredEvents = [], this._unfilteredJoinLeaves = [], 
-                this._pointEventResolver = new PointEventResolver_1.PointEventResolver({
+                this._amflow = param.amflow, this._isLocalReceiver = !0, this._isReceiver = !1, 
+                this._isSender = !1, this._isDiscarder = !1, this._defaultEventPriority = 0, this._buffer = null, 
+                this._joinLeaveBuffer = null, this._localBuffer = null, this._filters = null, this._unfilteredLocalEvents = [], 
+                this._unfilteredEvents = [], this._unfilteredJoinLeaves = [], this._pointEventResolver = new PointEventResolver_1.PointEventResolver({
                     game: param.game
                 }), this._onEvent_bound = this.onEvent.bind(this);
             }
@@ -137,17 +136,21 @@ require = function e(t, n, r) {
                     throw g.ExceptionFactory.createAssertionError("EventBuffer.isEventLocal");
                 }
             }, EventBuffer.prototype.setMode = function(param) {
+                null != param.isLocalReceiver && (this._isLocalReceiver = param.isLocalReceiver), 
                 null != param.isReceiver && this._isReceiver !== param.isReceiver && (this._isReceiver = param.isReceiver, 
                 param.isReceiver ? this._amflow.onEvent(this._onEvent_bound) : this._amflow.offEvent(this._onEvent_bound)), 
-                null != param.isSender && (this._isSender = param.isSender), null != param.defaultEventPriority && (this._defaultEventPriority = param.defaultEventPriority);
+                null != param.isSender && (this._isSender = param.isSender), null != param.isDiscarder && (this._isDiscarder = param.isDiscarder), 
+                null != param.defaultEventPriority && (this._defaultEventPriority = param.defaultEventPriority);
             }, EventBuffer.prototype.getMode = function() {
                 return {
+                    isLocalReceiver: this._isLocalReceiver,
                     isReceiver: this._isReceiver,
                     isSender: this._isSender,
+                    isDiscarder: this._isDiscarder,
                     defaultEventPriority: this._defaultEventPriority
                 };
             }, EventBuffer.prototype.onEvent = function(pev) {
-                return EventBuffer.isEventLocal(pev) ? void this._unfilteredLocalEvents.push(pev) : (this._isReceiver && (0 === pev[0] || 1 === pev[0] ? this._unfilteredJoinLeaves.push(pev) : this._unfilteredEvents.push(pev)), 
+                return EventBuffer.isEventLocal(pev) ? void (this._isLocalReceiver && !this._isDiscarder && this._unfilteredLocalEvents.push(pev)) : (this._isReceiver && !this._isDiscarder && (0 === pev[0] || 1 === pev[0] ? this._unfilteredJoinLeaves.push(pev) : this._unfilteredEvents.push(pev)), 
                 void (this._isSender && (null == pev[1] && (pev[1] = this._defaultEventPriority), 
                 this._amflow.sendEvent(pev))));
             }, EventBuffer.prototype.onPointEvent = function(e) {
@@ -166,9 +169,12 @@ require = function e(t, n, r) {
                 }
                 pev && this.onEvent(pev);
             }, EventBuffer.prototype.addEventDirect = function(pev) {
-                return EventBuffer.isEventLocal(pev) ? void (this._localBuffer ? this._localBuffer.push(pev) : this._localBuffer = [ pev ]) : (this._isReceiver && (0 === pev[0] || 1 === pev[0] ? this._joinLeaveBuffer ? this._joinLeaveBuffer.push(pev) : this._joinLeaveBuffer = [ pev ] : this._buffer ? this._buffer.push(pev) : this._buffer = [ pev ]), 
-                void (this._isSender && (null == pev[1] && (pev[1] = this._defaultEventPriority), 
-                this._amflow.sendEvent(pev))));
+                if (EventBuffer.isEventLocal(pev)) {
+                    if (!this._isLocalReceiver || this._isDiscarder) return;
+                    return void (this._localBuffer ? this._localBuffer.push(pev) : this._localBuffer = [ pev ]);
+                }
+                this._isReceiver && !this._isDiscarder && (0 === pev[0] || 1 === pev[0] ? this._joinLeaveBuffer ? this._joinLeaveBuffer.push(pev) : this._joinLeaveBuffer = [ pev ] : this._buffer ? this._buffer.push(pev) : this._buffer = [ pev ]), 
+                this._isSender && (null == pev[1] && (pev[1] = this._defaultEventPriority), this._amflow.sendEvent(pev));
             }, EventBuffer.prototype.readEvents = function() {
                 var ret = this._buffer;
                 return this._buffer = null, ret;
@@ -223,19 +229,16 @@ require = function e(t, n, r) {
         }();
         exports.EventBuffer = EventBuffer;
     }, {
-        "./EventIndex": 4,
         "./PointEventResolver": 13,
         "@akashic/akashic-engine": "@akashic/akashic-engine",
-        "@akashic/akashic-pdi": 22,
-        "@akashic/playlog": 26
+        "@akashic/akashic-pdi": 22
     } ],
     3: [ function(require, module, exports) {
         "use strict";
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), EventConverter = (require("@akashic/playlog"), 
-        require("./EventIndex"), /** @class */ function() {
+        var g = require("@akashic/akashic-engine"), EventConverter = /** @class */ function() {
             function EventConverter(param) {
                 this._game = param.game, this._playerTable = {};
             }
@@ -357,12 +360,10 @@ require = function e(t, n, r) {
                 var playerId = this._game.player.id, priority = null != op.priority ? op.priority : 0;
                 return [ 64, priority, playerId, op._code, op.data, !!op.local ];
             }, EventConverter;
-        }());
+        }();
         exports.EventConverter = EventConverter;
     }, {
-        "./EventIndex": 4,
-        "@akashic/akashic-engine": "@akashic/akashic-engine",
-        "@akashic/playlog": 26
+        "@akashic/akashic-engine": "@akashic/akashic-engine"
     } ],
     4: [ function(require, module, exports) {
         "use strict";
@@ -778,15 +779,14 @@ require = function e(t, n, r) {
         "./GameLoop": 8,
         "./PdiUtil": 12,
         "@akashic/akashic-engine": "@akashic/akashic-engine",
-        "es6-promise": 27
+        "es6-promise": 23
     } ],
     8: [ function(require, module, exports) {
         "use strict";
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), LoopMode_1 = require("./LoopMode"), LoopRenderMode_1 = require("./LoopRenderMode"), ExecutionMode_1 = require("./ExecutionMode"), Clock_1 = (require("./EventIndex"), 
-        require("./Clock")), ProfilerClock_1 = require("./ProfilerClock"), EventConverter_1 = require("./EventConverter"), TickController_1 = require("./TickController"), GameLoop = /** @class */ function() {
+        var g = require("@akashic/akashic-engine"), LoopMode_1 = require("./LoopMode"), LoopRenderMode_1 = require("./LoopRenderMode"), ExecutionMode_1 = require("./ExecutionMode"), Clock_1 = require("./Clock"), ProfilerClock_1 = require("./ProfilerClock"), EventConverter_1 = require("./EventConverter"), TickController_1 = require("./TickController"), GameLoop = /** @class */ function() {
             function GameLoop(param) {
                 this.errorTrigger = new g.Trigger(), this.running = !1, this._currentTime = 0, this._frameTime = 1e3 / param.game.fps, 
                 param.errorHandler && this.errorTrigger.add(param.errorHandler, param.errorHandlerOwner);
@@ -866,7 +866,7 @@ require = function e(t, n, r) {
      * 時刻関数が与えられている場合のフレーム処理。
      *
      * 通常ケース (`_onFrameNormal()`) とは主に次の点で異なる:
-     *  1. `Replay` 時の実装しか持たない (`Realtime` は時刻関数を無視してとにかく最新ティックを目指すので不要)
+     *  1. `Replay` 時の実装しか持たない (`Realtime` は時刻関数を使わずとにかく最新ティックを目指すので不要)
      *  2. ローカルティック補間をタイムスタンプに従ってしか行わない
      * 後者は、ティック受信待ちなどの状況で起きるローカルティック補間がなくなることを意味する。
      */
@@ -1034,17 +1034,18 @@ require = function e(t, n, r) {
                 this._startWaitingNextTick()), void (this._sceneLocalMode === g.LocalTickMode.InterpolateLocal && this._doLocalTick());
                 for (var loopCount = !this._skipping && ageGap <= this._delayIgnoreThreshold ? 1 : Math.min(ageGap, this._skipTicksAtOnce), i = 0; loopCount > i; ++i) {
                     // ティック時刻確認
-                    var nextFrameTime = this._currentTime + this._frameTime;
-                    if (this._loopMode === LoopMode_1["default"].Realtime) ; else {
-                        var nextTickTime = this._tickBuffer.readNextTickTime();
-                        if (null != nextTickTime && nextTickTime > nextFrameTime) {
-                            // ティック時刻に達していない
+                    var nextFrameTime = this._currentTime + this._frameTime, nextTickTime = this._tickBuffer.readNextTickTime();
+                    if (null != nextTickTime && nextTickTime > nextFrameTime) {
+                        if (this._loopMode !== LoopMode_1["default"].Realtime) {
                             if (this._sceneLocalMode === g.LocalTickMode.InterpolateLocal) {
                                 this._doLocalTick();
                                 continue;
                             }
                             break;
                         }
+                        // リアルタイムモードではティック時刻を気にせず続行する(とにかく最新ageを目指すので)が、
+                        // リプレイモードに切り替えた時に矛盾しないよう時刻を補正する(当該ティック時刻まで待った扱いにする)。
+                        nextFrameTime = Math.ceil(nextTickTime / this._frameTime) * this._frameTime;
                     }
                     this._currentTime = nextFrameTime;
                     var tick = this._tickBuffer.consume(), consumedAge = -1;
@@ -1158,7 +1159,6 @@ require = function e(t, n, r) {
     }, {
         "./Clock": 1,
         "./EventConverter": 3,
-        "./EventIndex": 4,
         "./ExecutionMode": 5,
         "./LoopMode": 10,
         "./LoopRenderMode": 11,
@@ -1171,8 +1171,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = (require("@akashic/playlog"), require("@akashic/akashic-engine")), JoinLeaveRequest = (require("./EventIndex"), 
-        /** @class */ function() {
+        var g = require("@akashic/akashic-engine"), JoinLeaveRequest = /** @class */ function() {
             function JoinLeaveRequest(pev, joinResolver, amflow, keys) {
                 this.joinResolver = joinResolver, this.pev = pev, 0 === pev[0] && keys ? (this.resolved = !1, 
                 amflow.getStorageData(keys, this._onGotStorageData.bind(this))) : this.resolved = !0;
@@ -1180,7 +1179,7 @@ require = function e(t, n, r) {
             return JoinLeaveRequest.prototype._onGotStorageData = function(err, sds) {
                 return this.resolved = !0, err ? void this.joinResolver.errorTrigger.fire(err) : void (this.pev[4] = sds);
             }, JoinLeaveRequest;
-        }());
+        }();
         exports.JoinLeaveRequest = JoinLeaveRequest;
         var JoinResolver = /** @class */ function() {
             function JoinResolver(param) {
@@ -1204,9 +1203,7 @@ require = function e(t, n, r) {
         }();
         exports.JoinResolver = JoinResolver;
     }, {
-        "./EventIndex": 4,
-        "@akashic/akashic-engine": "@akashic/akashic-engine",
-        "@akashic/playlog": 26
+        "@akashic/akashic-engine": "@akashic/akashic-engine"
     } ],
     10: [ function(require, module, exports) {
         "use strict";
@@ -1367,14 +1364,23 @@ require = function e(t, n, r) {
         }(PdiUtil = exports.PdiUtil || (exports.PdiUtil = {}));
     }, {
         "@akashic/akashic-engine": "@akashic/akashic-engine",
-        "es6-promise": 27
+        "es6-promise": 23
     } ],
     13: [ function(require, module, exports) {
         "use strict";
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var PointEventResolver = (require("@akashic/playlog"), /** @class */ function() {
+        /**
+ * pdi.PointEventからg.Eventへの変換機構。
+ *
+ * ほぼ座標しか持たないpdi.PointEventに対して、g.Point(Down|Move|Up)Eventはその座標にあるエンティティや、
+ * (g.Point(Move|Up)Eventの場合)g.PointDownEventからの座標の差分を持っている。
+ * それらの足りない情報を管理・追加して、pdi.PointEventをg.Eventに変換するクラス。
+ * PDI実装はpointDown()なしでpointMove()を呼び出してくることも考えられるため、
+ * Down -> Move -> Up の流れを保証する機能も持つ。
+ */
+        var PointEventResolver = /** @class */ function() {
             function PointEventResolver(param) {
                 this._game = param.game, this._pointEventMap = {};
             }
@@ -1430,11 +1436,9 @@ require = function e(t, n, r) {
                 prevDelta.x = offset.x - holder.prev.x, prevDelta.y = offset.y - holder.prev.y, 
                 holder.prev.x = offset.x, holder.prev.y = offset.y;
             }, PointEventResolver;
-        }());
+        }();
         exports.PointEventResolver = PointEventResolver;
-    }, {
-        "@akashic/playlog": 26
-    } ],
+    }, {} ],
     14: [ function(require, module, exports) {
         "use strict";
         var __extends = this && this.__extends || function() {
@@ -1547,8 +1551,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = (require("@akashic/playlog"), require("@akashic/akashic-engine")), ExecutionMode_1 = (require("./EventIndex"), 
-        require("./ExecutionMode")), TickBuffer = /** @class */ function() {
+        var g = require("@akashic/akashic-engine"), ExecutionMode_1 = require("./ExecutionMode"), TickBuffer = /** @class */ function() {
             function TickBuffer(param) {
                 this.currentAge = 0, this.knownLatestAge = -1, this.gotNextTickTrigger = new g.Trigger(), 
                 this.gotStorageTrigger = new g.Trigger(), this._amflow = param.amflow, this._prefetchThreshold = param.prefetchThreshold || TickBuffer.DEFAULT_PREFETCH_THRESHOLD, 
@@ -1712,10 +1715,8 @@ require = function e(t, n, r) {
         }();
         exports.TickBuffer = TickBuffer;
     }, {
-        "./EventIndex": 4,
         "./ExecutionMode": 5,
-        "@akashic/akashic-engine": "@akashic/akashic-engine",
-        "@akashic/playlog": 26
+        "@akashic/akashic-engine": "@akashic/akashic-engine"
     } ],
     17: [ function(require, module, exports) {
         "use strict";
@@ -1854,7 +1855,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var MemoryAmflowClient = (require("../EventIndex"), /** @class */ function() {
+        var MemoryAmflowClient = /** @class */ function() {
             function MemoryAmflowClient(param) {
                 this._playId = param.playId, this._putStorageDataSyncFunc = param.putStorageDataSyncFunc || function() {
                     throw new Error("Implementation not given");
@@ -2021,17 +2022,15 @@ require = function e(t, n, r) {
                 }
             }, MemoryAmflowClient.TOKEN_ACTIVE = "mamfc-token:active", MemoryAmflowClient.TOKEN_PASSIVE = "mamfc-token:passive", 
             MemoryAmflowClient;
-        }());
+        }();
         exports.MemoryAmflowClient = MemoryAmflowClient;
-    }, {
-        "../EventIndex": 4
-    } ],
+    }, {} ],
     20: [ function(require, module, exports) {
         "use strict";
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var ReplayAmflowProxy = (require("../EventIndex"), /** @class */ function() {
+        var ReplayAmflowProxy = /** @class */ function() {
             function ReplayAmflowProxy(param) {
                 this._amflow = param.amflow, this._tickList = param.tickList, this._startPoints = param.startPoints;
             }
@@ -2120,11 +2119,9 @@ require = function e(t, n, r) {
                     return age >= from && to >= age;
                 });
             }, ReplayAmflowProxy;
-        }());
+        }();
         exports.ReplayAmflowProxy = ReplayAmflowProxy;
-    }, {
-        "../EventIndex": 4
-    } ],
+    }, {} ],
     21: [ function(require, module, exports) {
         "use strict";
         Object.defineProperty(exports, "__esModule", {
@@ -2200,28 +2197,7 @@ require = function e(t, n, r) {
             value: !0
         });
     }, {} ],
-    23: [ function(require, module, exports) {}, {} ],
-    24: [ function(require, module, exports) {
-        arguments[4][23][0].apply(exports, arguments);
-    }, {
-        dup: 23
-    } ],
-    25: [ function(require, module, exports) {
-        arguments[4][23][0].apply(exports, arguments);
-    }, {
-        dup: 23
-    } ],
-    26: [ function(require, module, exports) {
-        function __export(m) {
-            for (var p in m) exports.hasOwnProperty(p) || (exports[p] = m[p]);
-        }
-        __export(require("./Tick")), __export(require("./Event")), __export(require("./StorageData"));
-    }, {
-        "./Event": 23,
-        "./StorageData": 24,
-        "./Tick": 25
-    } ],
-    27: [ function(require, module, exports) {
+    23: [ function(require, module, exports) {
         (function(process, global) {
             /*!
  * @overview es6-promise - a tiny implementation of Promises/A+.
@@ -3020,9 +2996,9 @@ require = function e(t, n, r) {
             });
         }).call(this, require("_process"), "undefined" != typeof global ? global : "undefined" != typeof self ? self : "undefined" != typeof window ? window : {});
     }, {
-        _process: 28
+        _process: 24
     } ],
-    28: [ function(require, module, exports) {
+    24: [ function(require, module, exports) {
         function defaultSetTimout() {
             throw new Error("setTimeout has not been defined");
         }

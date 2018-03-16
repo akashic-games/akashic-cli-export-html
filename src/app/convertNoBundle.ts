@@ -71,7 +71,7 @@ function convertGlobalScriptAndOutput(scriptName: string, inputPath: string, out
 }
 
 function writeEct(assetPaths: string[], outputPath: string, conf: cmn.Configuration, options: ConvertTemplateParameterObject): void {
-	var ectRender = ect({root: __dirname + "/../templates", ext: ".ect"});
+	var ectRender = ect({root: __dirname + "/../templates-build", ext: ".ect"});
 	var html = ectRender.render("no-bundle-index", {
 		assets: assetPaths,
 		magnify: !!options.magnify
@@ -91,10 +91,10 @@ function writeCommonFiles(
 	let templatePath: string;
 	switch (conf._content.environment["sandbox-runtime"]) {
 		case "1":
-			templatePath = "templates/template-export-html-v1";
+			templatePath = "templates-build/v1";
 			break;
 		case "2":
-			templatePath = "templates/template-export-html-v2";
+			templatePath = "templates-build/v2";
 			break;
 		default:
 			throw Error("Unknown engine version: `environment[\"sandbox-runtime\"]` field in game.json should be \"1\" or \"2\".");

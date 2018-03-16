@@ -8,6 +8,9 @@ lib
 tmp
 .idea
 spec/build
-templates/template-export-html-v1/js/build
-templates/template-export-html-v2/js/build
+templates-build/
+templates/template-export-html-v1/js/akashic-engine.strip.js
+templates/template-export-html-v2/js/akashic-engine.strip.js
+templates/template-export-html-v1/js/node_modules
+templates/template-export-html-v2/js/node_modules
 .vscode

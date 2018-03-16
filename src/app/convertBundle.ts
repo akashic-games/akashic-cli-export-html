@@ -49,10 +49,10 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 	let templatePath: string;
 	switch (conf._content.environment["sandbox-runtime"]) {
 		case "1":
-			templatePath = "templates/template-export-html-v1";
+			templatePath = "templates-build/v1";
 			break;
 		case "2":
-			templatePath = "templates/template-export-html-v2";
+			templatePath = "templates-build/v2";
 			break;
 		default:
 			throw Error("Unknown engine version: `environment[\"sandbox-runtime\"]` field in game.json should be \"1\" or \"2\".");
@@ -92,7 +92,7 @@ function writeEct(
 	innerHTMLAssetArray: InnerHTMLAssetData[], outputPath: string,
 	conf: cmn.Configuration, options: ConvertTemplateParameterObject, templatePath: string): void {
 	var scripts = getDefaultBundleScripts(templatePath, options.minify);
-	var ectRender = ect({root: __dirname + "/../templates", ext: ".ect"});
+	var ectRender = ect({root: __dirname + "/../templates-build", ext: ".ect"});
 	var html = ectRender.render("bundle-index", {
 		assets: innerHTMLAssetArray,
 		preloadScripts: scripts.preloadScripts,
@@ -115,8 +115,7 @@ function writeCommonFiles(
 
 	const jsDir = path.resolve(outputPath, "js");
 	const cssDir = path.resolve(outputPath, "css");
-	// fs-extraのd.tsではCopyFilterにdest引数が定義されていないため、anyにキャストする
-	(<any>(fsx.copySync))(
+	fsx.copySync(
 		path.resolve(__dirname, "..", templatePath),
 		outputPath,
 		{ filter: (src: string, dest: string): boolean => (dest !== jsDir && dest !== cssDir) }
