@@ -71,7 +71,7 @@ function convertGlobalScriptAndOutput(scriptName: string, inputPath: string, out
 }
 
 function writeEct(assetPaths: string[], outputPath: string, conf: cmn.Configuration, options: ConvertTemplateParameterObject): void {
-	var ectRender = ect({root: __dirname + "/../templates", ext: ".ect"});
+	var ectRender = ect({root: __dirname + "/../templates-build", ext: ".ect"});
 	var html = ectRender.render("no-bundle-index", {
 		assets: assetPaths,
 		magnify: !!options.magnify

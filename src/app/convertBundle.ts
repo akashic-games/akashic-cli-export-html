@@ -92,7 +92,7 @@ function writeEct(
 	innerHTMLAssetArray: InnerHTMLAssetData[], outputPath: string,
 	conf: cmn.Configuration, options: ConvertTemplateParameterObject, templatePath: string): void {
 	var scripts = getDefaultBundleScripts(templatePath, options.minify);
-	var ectRender = ect({root: __dirname + "/../templates", ext: ".ect"});
+	var ectRender = ect({root: __dirname + "/../templates-build", ext: ".ect"});
 	var html = ectRender.render("bundle-index", {
 		assets: innerHTMLAssetArray,
 		preloadScripts: scripts.preloadScripts,
