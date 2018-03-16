@@ -27,7 +27,7 @@
     "update-template:v1": "cd templates/template-export-html-v1 && npm run update && npm run build && cd ../../",
     "update-template:v2": "cd templates/template-export-html-v2 && npm run update && npm run build && cd ../../"
 },
-"author": "DWANGO Co., Ltd.",
+  "author": "DWANGO Co., Ltd.",
   "license": "MIT",
   "bin": {
     "akashic-cli-export-html": "./bin/run"
