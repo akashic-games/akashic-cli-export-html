@@ -1,4 +1,5 @@
 var UglifyJS = require('uglify-js');
+var saveLicense = require('uglify-save-license');
 var path = require("path");
 var fs = require("fs");
 
@@ -6,7 +7,7 @@ function minify(filepath) {
 	return UglifyJS.minify(filepath, {
 		mangle: false,
 		output: {
-			comments: "license",
+			comments: saveLicense,
 			beautify: true
 		}
 	});
