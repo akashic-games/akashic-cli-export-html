@@ -30,14 +30,12 @@ require = function e(t, n, r) {
         exports.Platform = Platform_1.Platform;
         var ResourceFactory_1 = require("./ResourceFactory");
         exports.ResourceFactory = ResourceFactory_1.ResourceFactory;
-        // akashic-engine内部でresourceを使えるように初期設定
         var g = require("@akashic/akashic-engine");
         exports.g = g;
         var AudioPluginRegistry_1 = require("./plugin/AudioPluginRegistry");
         exports.AudioPluginRegistry = AudioPluginRegistry_1.AudioPluginRegistry;
         var AudioPluginManager_1 = require("./plugin/AudioPluginManager");
         exports.AudioPluginManager = AudioPluginManager_1.AudioPluginManager;
-        // TODO: Audio Pluginの実態は別リポジトリに切り出す事を検討する
         var HTMLAudioPlugin_1 = require("./plugin/HTMLAudioPlugin/HTMLAudioPlugin");
         exports.HTMLAudioPlugin = HTMLAudioPlugin_1.HTMLAudioPlugin;
         var WebAudioPlugin_1 = require("./plugin/WebAudioPlugin/WebAudioPlugin");
@@ -56,7 +54,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var AudioManager = /** @class */ function() {
+        var AudioManager = function() {
             function AudioManager() {
                 this.audioAssets = [], this._masterVolume = 1;
             }
@@ -79,34 +77,24 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), RenderingHelper_1 = require("./canvas/RenderingHelper"), InputHandlerLayer_1 = require("./InputHandlerLayer"), ContainerController = /** @class */ function() {
+        var g = require("@akashic/akashic-engine"), RenderingHelper_1 = require("./canvas/RenderingHelper"), InputHandlerLayer_1 = require("./InputHandlerLayer"), ContainerController = function() {
             function ContainerController() {
                 this.container = null, this.surface = null, this.inputHandlerLayer = null, this.rootView = null, 
                 this.defaultSize = null, this.useResizeForScaling = !1, this.pointEventTrigger = new g.Trigger(), 
                 this._rendererReq = null, this._disablePreventDefault = !1;
             }
-            /**
-     * ContainerのViewをViewportSizeに合わせてsize、scale、offsetを変更する
-     * @param viewportSize gameのsizeを合わせる元とするviewportのsize
-     * @param noCenter gameのoffsetの変更の有無
-     */
-            // デフォルトサイズに戻す
-            // イベントを片付けてから、rootViewに所属するElementを開放する
             return ContainerController.prototype.initialize = function(param) {
                 this._rendererReq = param.rendererRequirement, this._disablePreventDefault = !!param.disablePreventDefault, 
                 this._loadView();
             }, ContainerController.prototype.setRootView = function(rootView) {
-                rootView !== this.rootView && (// 一つのContainerは一つのrootしか持たないのでloadし直す
-                this.rootView && (this.unloadView(), this._loadView()), this.rootView = rootView, 
-                this._appendToRootView(rootView));
+                rootView !== this.rootView && (this.rootView && (this.unloadView(), this._loadView()), 
+                this.rootView = rootView, this._appendToRootView(rootView));
             }, ContainerController.prototype.resetView = function(rendererReq) {
                 this.unloadView(), this._rendererReq = rendererReq, this._loadView(), this._appendToRootView(this.rootView);
             }, ContainerController.prototype.getRenderer = function() {
                 if (!this.surface) throw new Error("this container has no surface");
-                // TODO: should be cached?
                 return this.surface.renderer();
             }, ContainerController.prototype.fitToSize = function(viewportSize, noCenter) {
-                // gameのsize, scale, offsetの設定
                 var gameScale = Math.min(viewportSize.width / this._rendererReq.primarySurfaceWidth, viewportSize.height / this._rendererReq.primarySurfaceHeight), gameSize = {
                     width: Math.floor(this._rendererReq.primarySurfaceWidth * gameScale),
                     height: Math.floor(this._rendererReq.primarySurfaceHeight * gameScale)
@@ -114,9 +102,7 @@ require = function e(t, n, r) {
                     x: Math.floor((viewportSize.width - gameSize.width) / 2),
                     y: Math.floor((viewportSize.height - gameSize.height) / 2)
                 };
-                // Canvas Surfaceの変更
-                this.changeScale(gameScale, gameScale), // offsetの変更
-                noCenter && this.inputHandlerLayer.setOffset(gameOffset);
+                this.changeScale(gameScale, gameScale), noCenter && this.inputHandlerLayer.setOffset(gameOffset);
             }, ContainerController.prototype.revertSize = function() {
                 this.fitToSize(this.defaultSize);
             }, ContainerController.prototype.changeScale = function(xScale, yScale) {
@@ -125,11 +111,7 @@ require = function e(t, n, r) {
             }, ContainerController.prototype.unloadView = function() {
                 if (this.inputHandlerLayer.disablePointerEvent(), this.rootView) for (;this.rootView.firstChild; ) this.rootView.removeChild(this.rootView.firstChild);
             }, ContainerController.prototype._loadView = function() {
-                // DocumentFragmentはinsertした時点で開放されているため毎回作る
-                // https://dom.spec.whatwg.org/#concept-node-insert
-                this.container = document.createDocumentFragment(), // 入力受け付けレイヤー - DOM Eventの管理
-                this.inputHandlerLayer ? (// Note: 操作プラグインに与えた view 情報を削除しないため、 inputHandlerLayer を使いまわしている
-                this.inputHandlerLayer.setViewSize({
+                this.container = document.createDocumentFragment(), this.inputHandlerLayer ? (this.inputHandlerLayer.setViewSize({
                     width: this._rendererReq.primarySurfaceWidth,
                     height: this._rendererReq.primarySurfaceHeight
                 }), this.inputHandlerLayer.pointEventTrigger._reset(), this.inputHandlerLayer.view.removeChild(this.surface.canvas), 
@@ -137,18 +119,15 @@ require = function e(t, n, r) {
                     width: this._rendererReq.primarySurfaceWidth,
                     height: this._rendererReq.primarySurfaceHeight,
                     disablePreventDefault: this._disablePreventDefault
-                }), // 入力受け付けレイヤー > 描画レイヤー
-                this.surface = RenderingHelper_1.RenderingHelper.createPrimarySurface(this._rendererReq.primarySurfaceWidth, this._rendererReq.primarySurfaceHeight, this._rendererReq.rendererCandidates), 
-                this.surface.setParentElement(this.inputHandlerLayer.view), // containerController -> input -> canvas
-                this.container.appendChild(this.inputHandlerLayer.view), // 生成時のサイズをデフォルトとする
+                }), this.surface = RenderingHelper_1.RenderingHelper.createPrimarySurface(this._rendererReq.primarySurfaceWidth, this._rendererReq.primarySurfaceHeight, this._rendererReq.rendererCandidates), 
+                this.surface.setParentElement(this.inputHandlerLayer.view), this.container.appendChild(this.inputHandlerLayer.view), 
                 this.defaultSize = {
                     width: this.surface.width,
                     height: this.surface.height
                 };
             }, ContainerController.prototype._appendToRootView = function(rootView) {
                 var _this = this;
-                rootView.appendChild(this.container), // Viewが追加されてから設定する
-                this.inputHandlerLayer.enablePointerEvent(), // DOMイベントがPointEventに変換された結果を受け取る
+                rootView.appendChild(this.container), this.inputHandlerLayer.enablePointerEvent(), 
                 this.inputHandlerLayer.pointEventTrigger.handle(function(ev) {
                     _this.pointEventTrigger.fire(ev);
                 });
@@ -165,26 +144,14 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), MouseHandler_1 = require("./handler/MouseHandler"), TouchHandler_1 = require("./handler/TouchHandler"), InputHandlerLayer = /** @class */ function() {
-            /**
-     * @example
-     *
-     * var inputHandlerLayer = new InputHandlerLayer();
-     * inputHandlerLayer.pointEventTrigger.handle(function(pointEvent){
-     *   console.log(pointEvent);
-     * });
-     * containerController.appendChild(inputHandlerLayer.view);
-     */
+        var g = require("@akashic/akashic-engine"), MouseHandler_1 = require("./handler/MouseHandler"), TouchHandler_1 = require("./handler/TouchHandler"), InputHandlerLayer = function() {
             function InputHandlerLayer(param) {
                 this.view = this._createInputView(param.width, param.height), this._inputHandler = void 0, 
                 this.pointEventTrigger = new g.Trigger(), this._disablePreventDefault = !!param.disablePreventDefault;
             }
-            // 実行環境でサポートしてるDOM Eventを使い、それぞれonPoint*Triggerを関連付ける
-            // DOMイベントハンドラを開放する
             return InputHandlerLayer.prototype.enablePointerEvent = function() {
                 var _this = this;
                 TouchHandler_1.TouchHandler.isSupported() ? this._inputHandler = new TouchHandler_1.TouchHandler(this.view, this._disablePreventDefault) : this._inputHandler = new MouseHandler_1.MouseHandler(this.view, this._disablePreventDefault), 
-                // 各種イベントのTrigger
                 this._inputHandler.pointTrigger.handle(function(e) {
                     _this.pointEventTrigger.fire(e);
                 }), this._inputHandler.start();
@@ -213,11 +180,10 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var RafLooper_1 = require("./RafLooper"), ResourceFactory_1 = require("./ResourceFactory"), ContainerController_1 = require("./ContainerController"), AudioPluginManager_1 = require("./plugin/AudioPluginManager"), AudioManager_1 = require("./AudioManager"), AudioPluginRegistry_1 = require("./plugin/AudioPluginRegistry"), XHRTextAsset_1 = require("./asset/XHRTextAsset"), Platform = /** @class */ function() {
+        var RafLooper_1 = require("./RafLooper"), ResourceFactory_1 = require("./ResourceFactory"), ContainerController_1 = require("./ContainerController"), AudioPluginManager_1 = require("./plugin/AudioPluginManager"), AudioManager_1 = require("./AudioManager"), AudioPluginRegistry_1 = require("./plugin/AudioPluginRegistry"), XHRTextAsset_1 = require("./asset/XHRTextAsset"), Platform = function() {
             function Platform(param) {
                 this.containerView = param.containerView, this.containerController = new ContainerController_1.ContainerController(), 
                 this.audioPluginManager = new AudioPluginManager_1.AudioPluginManager(), param.audioPlugins && this.audioPluginManager.tryInstallPlugin(param.audioPlugins), 
-                // TODO: make it deprecated
                 this.audioPluginManager.tryInstallPlugin(AudioPluginRegistry_1.AudioPluginRegistry.getRegisteredAudioPlugins()), 
                 this._audioManager = new AudioManager_1.AudioManager(), this.amflow = param.amflow, 
                 this._platformEventHandler = null, this._resourceFactory = param.resourceFactory || new ResourceFactory_1.ResourceFactory({
@@ -226,21 +192,6 @@ require = function e(t, n, r) {
                     audioManager: this._audioManager
                 }), this._rendererReq = null, this._disablePreventDefault = !!param.disablePreventDefault;
             }
-            /**
-     * 現在表示してる画面サイズにフィットするようにビューを拡大縮小する
-     * @param noCenter noCenterがtrueならば、CanvasSurfaceのoffsetは{0,0}とする
-     */
-            /**
-     * ビューのサイズをデフォルトへ戻す
-     */
-            /**
-     * 最終的に出力されるマスター音量を変更する
-     *
-     * @param volume マスター音量
-     */
-            /**
-     * 最終的に出力されるマスター音量を取得する
-     */
             return Platform.prototype.setPlatformEventHandler = function(handler) {
                 this.containerController && (this.containerController.pointEventTrigger.removeAll(this._platformEventHandler), 
                 this.containerController.pointEventTrigger.handle(handler, handler.onPointEvent)), 
@@ -259,7 +210,6 @@ require = function e(t, n, r) {
                 return this._resourceFactory;
             }, Platform.prototype.setRendererRequirement = function(requirement) {
                 if (!requirement) return void (this.containerController && this.containerController.unloadView());
-                // Note: this.containerController.inputHandlerLayer の存在により this.containerController が初期化されているかを判定
                 if (this._rendererReq = requirement, this._resourceFactory._rendererCandidates = this._rendererReq.rendererCandidates, 
                 this.containerController && !this.containerController.inputHandlerLayer) this.containerController.initialize({
                     rendererRequirement: requirement,
@@ -290,16 +240,8 @@ require = function e(t, n, r) {
                 this.containerController.changeScale(xScale, yScale);
             }, Platform.prototype.fitToWindow = function(noCenter) {
                 if (this.containerController) {
-                    // ゲームの外側との境界についてはBrowserGameが変更を行う
-                    // ゲームの内側についてはContainerControllerが変更を行う
                     var parentView = this.containerView.parentElement;
                     parentView.style.margin = "0px", parentView.style.padding = "0px", parentView.style.overflow = "hidden";
-                    // http://qiita.com/butchi_y/items/daf64a664b80e0e0e31a
-                    // https://developer.mozilla.org/ja/docs/Web/API/Window/innerWidth
-                    // https://developer.mozilla.org/ja/docs/Web/API/Element/clientWidth
-                    // TODO: 現在はゲーム中にスクロールバーが表示されることを想定していない
-                    // スクロールバーが出る場合、clientWidthとinnerWidthでは扱いが異なるため、検討が必要
-                    // スクロールバー対応する場合、タッチ処理も修正する必要がある
                     var viewportSize = {
                         width: window.innerWidth || document.documentElement.clientWidth,
                         height: window.innerHeight || document.documentElement.clientHeight
@@ -331,7 +273,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var RafLooper = /** @class */ function() {
+        var RafLooper = function() {
             function RafLooper(fun) {
                 this._fun = fun, this._timerId = void 0, this._prev = 0;
             }
@@ -370,7 +312,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), HTMLImageAsset_1 = require("./asset/HTMLImageAsset"), HTMLVideoAsset_1 = require("./asset/HTMLVideoAsset"), XHRTextAsset_1 = require("./asset/XHRTextAsset"), XHRScriptAsset_1 = require("./asset/XHRScriptAsset"), RenderingHelper_1 = require("./canvas/RenderingHelper"), GlyphFactory_1 = require("./canvas/GlyphFactory"), SurfaceAtlas_1 = require("./canvas/SurfaceAtlas"), ResourceFactory = /** @class */ function(_super) {
+        var g = require("@akashic/akashic-engine"), HTMLImageAsset_1 = require("./asset/HTMLImageAsset"), HTMLVideoAsset_1 = require("./asset/HTMLVideoAsset"), XHRTextAsset_1 = require("./asset/XHRTextAsset"), XHRScriptAsset_1 = require("./asset/XHRScriptAsset"), RenderingHelper_1 = require("./canvas/RenderingHelper"), GlyphFactory_1 = require("./canvas/GlyphFactory"), SurfaceAtlas_1 = require("./canvas/SurfaceAtlas"), ResourceFactory = function(_super) {
             function ResourceFactory(param) {
                 var _this = _super.call(this) || this;
                 return _this._audioPluginManager = param.audioPluginManager, _this._audioManager = param.audioManager, 
@@ -419,24 +361,12 @@ require = function e(t, n, r) {
         });
         var RuntimeInfo;
         !function(RuntimeInfo) {
-            /**
-     * pointer eventが現在実行中のブラウザで有効かどうか識別
-     * @returns {boolean} true: 有効
-     */
             function pointerEnabled() {
                 return "pointerEnabled" in window.navigator;
             }
-            /**
-     * pointer eventのmsプリフィックスバージョンが現在実行中のブラウザで有効かどうか識別
-     * @returns {boolean} true: 有効
-     */
             function msPointerEnabled() {
                 return "msPointerEnabled" in window.navigator;
             }
-            /**
-     * touch eventが現在実行中のブラウザで有効かどうか識別
-     * @returns {boolean} true: 有効
-     */
             function touchEnabled() {
                 return "ontouchstart" in window;
             }
@@ -465,7 +395,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), ImageAssetSurface = /** @class */ function(_super) {
+        var g = require("@akashic/akashic-engine"), ImageAssetSurface = function(_super) {
             function ImageAssetSurface(width, height, drawable) {
                 return _super.call(this, width, height, drawable) || this;
             }
@@ -476,7 +406,7 @@ require = function e(t, n, r) {
             }, ImageAssetSurface;
         }(g.Surface);
         exports.ImageAssetSurface = ImageAssetSurface;
-        var HTMLImageAsset = /** @class */ function(_super) {
+        var HTMLImageAsset = function(_super) {
             function HTMLImageAsset(id, path, width, height) {
                 var _this = _super.call(this, id, path, width, height) || this;
                 return _this.data = void 0, _this._surface = void 0, _this;
@@ -522,7 +452,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), HTMLVideoPlayer_1 = require("./HTMLVideoPlayer"), VideoAssetSurface = /** @class */ function(_super) {
+        var g = require("@akashic/akashic-engine"), HTMLVideoPlayer_1 = require("./HTMLVideoPlayer"), VideoAssetSurface = function(_super) {
             function VideoAssetSurface(width, height, drawable) {
                 return _super.call(this, width, height, drawable, !0) || this;
             }
@@ -531,7 +461,7 @@ require = function e(t, n, r) {
             }, VideoAssetSurface.prototype.isPlaying = function() {
                 return !1;
             }, VideoAssetSurface;
-        }(g.Surface), HTMLVideoAsset = /** @class */ function(_super) {
+        }(g.Surface), HTMLVideoAsset = function(_super) {
             function HTMLVideoAsset(id, assetPath, width, height, system, loop, useRealSize) {
                 var _this = _super.call(this, id, assetPath, width, height, system, loop, useRealSize) || this;
                 return _this._player = new HTMLVideoPlayer_1.HTMLVideoPlayer(), _this._surface = new VideoAssetSurface(width, height, null), 
@@ -576,7 +506,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), HTMLVideoPlayer = /** @class */ function(_super) {
+        var g = require("@akashic/akashic-engine"), HTMLVideoPlayer = function(_super) {
             function HTMLVideoPlayer(loop) {
                 var _this = _super.call(this, loop) || this;
                 return _this.isDummy = !0, _this;
@@ -610,7 +540,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), XHRLoader_1 = require("../utils/XHRLoader"), XHRScriptAsset = /** @class */ function(_super) {
+        var g = require("@akashic/akashic-engine"), XHRLoader_1 = require("../utils/XHRLoader"), XHRScriptAsset = function(_super) {
             function XHRScriptAsset(id, path) {
                 var _this = _super.call(this, id, path) || this;
                 return _this.script = void 0, _this;
@@ -622,8 +552,6 @@ require = function e(t, n, r) {
                     void handler._onAssetLoad(_this));
                 });
             }, XHRScriptAsset.prototype.execute = function(execEnv) {
-                // TODO: この方式では読み込んだスクリプトがcookie参照できる等本質的な危険性がある
-                // 信頼できないスクリプトを読み込むようなケースでは、iframeに閉じ込めて実行などの方式を検討する事。
                 var func = this._wrap();
                 return func(execEnv), execEnv.module.exports;
             }, XHRScriptAsset.prototype._wrap = function() {
@@ -659,7 +587,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), XHRLoader_1 = require("../utils/XHRLoader"), XHRTextAsset = /** @class */ function(_super) {
+        var g = require("@akashic/akashic-engine"), XHRLoader_1 = require("../utils/XHRLoader"), XHRTextAsset = function(_super) {
             function XHRTextAsset(id, path) {
                 var _this = _super.call(this, id, path) || this;
                 return _this.data = void 0, _this;
@@ -682,7 +610,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var AffineTransformer = /** @class */ function() {
+        var AffineTransformer = function() {
             function AffineTransformer(rhs) {
                 rhs ? this.matrix = new Float32Array(rhs.matrix) : this.matrix = new Float32Array([ 1, 0, 0, 1, 0, 0 ]);
             }
@@ -722,7 +650,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), Context2DRenderer_1 = require("./Context2DRenderer"), CanvasSurface = /** @class */ function(_super) {
+        var g = require("@akashic/akashic-engine"), Context2DRenderer_1 = require("./Context2DRenderer"), CanvasSurface = function(_super) {
             function CanvasSurface(width, height, rendererCandidates) {
                 var _this = this, canvas = document.createElement("canvas");
                 return _this = _super.call(this, width, height, canvas) || this, canvas.width = width, 
@@ -744,17 +672,6 @@ require = function e(t, n, r) {
                 this.canvas.width = width, this.canvas.height = height, context.scale(width / this._originalWidth, height / this._originalHeight), 
                 this.width = width, this.height = height;
             }, CanvasSurface.prototype.changeCanvasScale = function(xScale, yScale, defaultSize) {
-                /*
-         Canvas要素のリサイズをCSS transformで行う。
-         CSSのwidth/height styleによるリサイズはおかしくなるケースが存在する
-         - https://twitter.com/uupaa/status/639002317576998912
-         - http://havelog.ayumusato.com/develop/performance/e554-paint_gpu_acceleration_problems.html
-         - http://buccchi.jp/blog/2013/03/android_canvas_deathpoint/
-
-         補足) <canvas>のwidth/height属性(not style)は変更時にCanvasの描画がリセットされる
-         width/height属性は内部的なバッファのサイズなので、`changeSize`の求める表示のサイズとは用途が異なる。
-         https://html.spec.whatwg.org/multipage/scripting.html#the-canvas-element
-         */
                 var canvasStyle = this.canvas.style;
                 "transform" in canvasStyle ? (canvasStyle.transformOrigin = "0 0", canvasStyle.transform = "scale(" + xScale + "," + yScale + ")") : "webkitTransform" in canvasStyle ? (canvasStyle.webkitTransformOrigin = "0 0", 
                 canvasStyle.webkitTransform = "scale(" + xScale + "," + yScale + ")") : (canvasStyle.width = Math.floor(defaultSize.width * xScale) + "px", 
@@ -789,7 +706,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), RenderingHelper_1 = require("./RenderingHelper"), Context2DRenderer = /** @class */ function(_super) {
+        var g = require("@akashic/akashic-engine"), RenderingHelper_1 = require("./RenderingHelper"), Context2DRenderer = function(_super) {
             function Context2DRenderer(surface) {
                 var _this = _super.call(this) || this;
                 return _this.surface = surface, _this.context = _this.surface.context(), _this;
@@ -797,7 +714,6 @@ require = function e(t, n, r) {
             return __extends(Context2DRenderer, _super), Context2DRenderer.prototype.clear = function() {
                 this.context.clearRect(0, 0, this.surface.width, this.surface.height);
             }, Context2DRenderer.prototype.begin = function() {}, Context2DRenderer.prototype.end = function() {
-                // for WebGL
                 this.surface._drawable._texture = void 0;
             }, Context2DRenderer.prototype.drawImage = function(surface, offsetX, offsetY, width, height, canvasOffsetX, canvasOffsetY) {
                 this.context.drawImage(surface._drawable, offsetX, offsetY, width, height, canvasOffsetX, canvasOffsetY, width, height);
@@ -810,7 +726,6 @@ require = function e(t, n, r) {
             }, Context2DRenderer.prototype.transform = function(matrix) {
                 this.context.transform.apply(this.context, matrix);
             }, Context2DRenderer.prototype.opacity = function(opacity) {
-                // Note:globalAlphaの初期値が1であることは仕様上保証されているため、常に掛け合わせる
                 this.context.globalAlpha *= opacity;
             }, Context2DRenderer.prototype.save = function() {
                 this.context.save();
@@ -835,13 +750,9 @@ require = function e(t, n, r) {
     16: [ function(require, module, exports) {
         "use strict";
         function createGlyphRenderedSurface(code, fontSize, cssFontFamily, baselineHeight, marginW, marginH, needImageData, cacheImageData, fontColor, strokeWidth, strokeColor, strokeOnly, fontWeight) {
-            // 要求されたフォントサイズが描画可能な最小フォントサイズ以下だった場合、必要なスケーリング係数
             var scale = fontSize < GlyphFactory._environmentMinimumFontSize ? fontSize / GlyphFactory._environmentMinimumFontSize : 1, surfaceWidth = Math.ceil((fontSize + 2 * marginW) * scale), surfaceHeight = Math.ceil((fontSize + 2 * marginH) * scale), surface = new CanvasSurface_1.CanvasSurface(surfaceWidth, surfaceHeight), canvas = surface.canvas, context = canvas.getContext("2d"), str = 4294901760 & code ? String.fromCharCode((4294901760 & code) >>> 16, 65535 & code) : String.fromCharCode(code), fontWeightValue = fontWeight === g.FontWeight.Bold ? "bold " : "";
-            context.save(), // CanvasRenderingContext2D.font
-            // see: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/font
-            // > This string uses the same syntax as the CSS font specifier. The default font is 10px sans-serif.
-            context.font = fontWeightValue + fontSize + "px " + cssFontFamily, context.textAlign = "left", 
-            context.textBaseline = "alphabetic", context.lineJoin = "bevel", // 描画可能な最小フォントサイズ以下のフォントサイズはスケーリングで実現する
+            context.save(), context.font = fontWeightValue + fontSize + "px " + cssFontFamily, 
+            context.textAlign = "left", context.textBaseline = "alphabetic", context.lineJoin = "bevel", 
             1 !== scale && context.scale(scale, scale), strokeWidth > 0 && (context.lineWidth = strokeWidth, 
             context.strokeStyle = strokeColor, context.strokeText(str, marginW, marginH + baselineHeight)), 
             strokeOnly || (context.fillStyle = fontColor, context.fillText(str, marginW, marginH + baselineHeight));
@@ -857,7 +768,6 @@ require = function e(t, n, r) {
         function calcGlyphArea(imageData) {
             for (var sx = imageData.width, sy = imageData.height, ex = 0, ey = 0, currentPos = 0, y = 0, height = imageData.height; height > y; y = y + 1 | 0) for (var x = 0, width = imageData.width; width > x; x = x + 1 | 0) {
                 var a = imageData.data[currentPos + 3];
-                // get alpha value
                 0 !== a && (sx > x && (sx = x), x > ex && (ex = x), sy > y && (sy = y), y > ey && (ey = y)), 
                 currentPos += 4;
             }
@@ -889,10 +799,6 @@ require = function e(t, n, r) {
                 return "sans-serif";
             }
         }
-        // ジェネリックフォントファミリでない時クォートする。
-        // > Font family names must either be given quoted as strings, or unquoted as a sequence of one or more identifiers.
-        // > Generic family names are keywords and must not be quoted.
-        // see: https://developer.mozilla.org/en-US/docs/Web/CSS/font-family
         function quoteIfNotGeneric(name) {
             return -1 !== genericFontFamilyNames.indexOf(name) ? name : '"' + name + '"';
         }
@@ -920,32 +826,18 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), CanvasSurface_1 = require("./CanvasSurface"), genericFontFamilyNames = [ "serif", "sans-serif", "monospace", "cursive", "fantasy", "system-ui" ], GlyphFactory = /** @class */ function(_super) {
+        var g = require("@akashic/akashic-engine"), CanvasSurface_1 = require("./CanvasSurface"), genericFontFamilyNames = [ "serif", "sans-serif", "monospace", "cursive", "fantasy", "system-ui" ], GlyphFactory = function(_super) {
             function GlyphFactory(fontFamily, fontSize, baselineHeight, cacheImageData, fontColor, strokeWidth, strokeColor, strokeOnly, fontWeight) {
                 var _this = _super.call(this, fontFamily, fontSize, baselineHeight, fontColor, strokeWidth, strokeColor, strokeOnly, fontWeight) || this;
                 _this._cacheImageData = cacheImageData, _this._glyphAreas = {}, _this._cssFontFamily = fontFamily2CSSFontFamily(fontFamily);
-                // Akashicエンジンは指定されたフォントに利用可能なものが見つからない時
-                // `g.FontFamily.SansSerif` を利用する、と仕様して定められている。
                 var fallbackFontFamilyName = fontFamily2FontFamilyName(g.FontFamily.SansSerif);
-                // `this.fontSize`の大きさの文字を描画するためのサーフェスを生成する。
-                // 一部の文字は縦横が`this.fontSize`幅の矩形に収まらない。
-                // そこで上下左右にマージンを設ける。マージン幅は`this.fontSize`に
-                // 0.3 を乗じたものにする。0.3に確たる根拠はないが、検証した範囲では
-                // これで十分であることを確認している。
-                //
-                // strokeWidthサポートに伴い、輪郭線の厚みを加味している。
                 return -1 === _this._cssFontFamily.indexOf(fallbackFontFamilyName) && (_this._cssFontFamily += "," + fallbackFontFamilyName), 
                 _this._marginW = Math.ceil(.3 * _this.fontSize + _this.strokeWidth / 2), _this._marginH = Math.ceil(.3 * _this.fontSize + _this.strokeWidth / 2), 
                 void 0 === GlyphFactory._environmentMinimumFontSize && (GlyphFactory._environmentMinimumFontSize = _this.measureMinimumFontSize()), 
                 _this;
             }
-            // 実行環境の描画可能なフォントサイズの最小値を返す
             return __extends(GlyphFactory, _super), GlyphFactory.prototype.create = function(code) {
                 var result, glyphArea = this._glyphAreas[code];
-                // g.Glyphに格納するサーフェスを生成する。
-                // glyphAreaはサーフェスをキャッシュしないため、描画する内容を持つグリフに対しては
-                // サーフェスを生成する。もし前段でcalcGlyphArea()のためのサーフェスを生成して
-                // いればここでは生成せずにそれを利用する。
                 return glyphArea || (result = createGlyphRenderedSurface(code, this.fontSize, this._cssFontFamily, this.baselineHeight, this._marginW, this._marginH, !0, this._cacheImageData, this.fontColor, this.strokeWidth, this.strokeColor, this.strokeOnly, this.fontWeight), 
                 glyphArea = calcGlyphArea(result.imageData), glyphArea.advanceWidth = result.advanceWidth, 
                 this._glyphAreas[code] = glyphArea), isGlyphAreaEmpty(glyphArea) ? (result && result.surface.destroy(), 
@@ -958,7 +850,6 @@ require = function e(t, n, r) {
                 context.font = fontSize + "px sans-serif";
                 var width = context.measureText(str).width;
                 do preWidth = width, fontSize += 1, context.font = fontSize + "px sans-serif", width = context.measureText(str).width; while (preWidth === width || fontSize > 50);
-                // フォントサイズに対応しない動作環境の場合を考慮して上限値を設ける
                 return fontSize;
             }, GlyphFactory;
         }(g.GlyphFactory);
@@ -1076,8 +967,6 @@ require = function e(t, n, r) {
                 return rendererCandidates && 0 < rendererCandidates.length && (used = "webgl" === rendererCandidates[0]), 
                 used;
             }
-            // Canvas座標系とWebGL座標系の相互変換
-            // height は描画対象の高さを与える
             function transformCoordinateSystem(matrix, height) {
                 matrix[1] *= -1, matrix[3] *= -1, matrix[5] = -matrix[5] + height;
             }
@@ -1101,17 +990,12 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var AffineTransformer_1 = require("./AffineTransformer"), RenderingState = /** @class */ function() {
+        var AffineTransformer_1 = require("./AffineTransformer"), RenderingState = function() {
             function RenderingState(rhs) {
                 rhs ? (this.globalAlpha = rhs.globalAlpha, this.globalCompositeOperation = rhs.globalCompositeOperation, 
                 this.transformer = new AffineTransformer_1.AffineTransformer(rhs.transformer)) : (this.globalAlpha = 1, 
                 this.globalCompositeOperation = "source-over", this.transformer = new AffineTransformer_1.AffineTransformer());
             }
-            /**
-     * Note;
-     * - 透明度・アフィン変換行列: 乗算
-     * - 合成操作: 複製
-     */
             return RenderingState.prototype.copyFrom = function(rhs) {
                 return this.globalAlpha = rhs.globalAlpha, this.globalCompositeOperation = rhs.globalCompositeOperation, 
                 this.transformer.copyFrom(rhs.transformer), this;
@@ -1146,7 +1030,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), RenderingHelper_1 = require("./RenderingHelper"), RenderingState_1 = require("./RenderingState"), StateHoldingRenderer = /** @class */ function(_super) {
+        var g = require("@akashic/akashic-engine"), RenderingHelper_1 = require("./RenderingHelper"), RenderingState_1 = require("./RenderingState"), StateHoldingRenderer = function(_super) {
             function StateHoldingRenderer(capacity) {
                 var _this = _super.call(this) || this;
                 return _this._stateStack = [], _this._stateStackPointer = 0, _this._capacity = 0, 
@@ -1179,7 +1063,6 @@ require = function e(t, n, r) {
             }, StateHoldingRenderer.prototype._isOverCapacity = function() {
                 return this._capacity <= this._stateStackPointer;
             }, StateHoldingRenderer.prototype._reallocation = function(newCapacity) {
-                // 指数的成長ポリシーの再割当:
                 var oldCapacity = this._capacity;
                 if (newCapacity > oldCapacity) {
                     2 * oldCapacity > newCapacity ? this._capacity *= 2 : this._capacity = newCapacity;
@@ -1228,15 +1111,13 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), SurfaceAtlas = /** @class */ function(_super) {
+        var g = require("@akashic/akashic-engine"), SurfaceAtlas = function(_super) {
             function SurfaceAtlas() {
                 return null !== _super && _super.apply(this, arguments) || this;
             }
             return __extends(SurfaceAtlas, _super), SurfaceAtlas.prototype.addSurface = function(surface, rect) {
                 var renderer = this._surface.renderer();
                 if (surface._imageDataCache && renderer._subImage) {
-                    // WebGL環境において、通常の `Renderer#drawImage()` では十分な性能が得られなかった。
-                    // texSubImage()を用いる方法に分岐する。
                     var slot = this._acquireSurfaceAtlasSlot(rect.width, rect.height);
                     if (!slot) return null;
                     var webGLBackSurfaceRenderer = renderer, canvasSurface = surface;
@@ -1280,12 +1161,10 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), WebGLBackSurfaceRenderer_1 = require("./WebGLBackSurfaceRenderer"), WebGLBackSurface = /** @class */ function(_super) {
+        var g = require("@akashic/akashic-engine"), WebGLBackSurfaceRenderer_1 = require("./WebGLBackSurfaceRenderer"), WebGLBackSurface = function(_super) {
             function WebGLBackSurface(width, height, webGLRenderer) {
                 var _this = _super.call(this, width, height) || this;
                 _this._systemTextOps = [], _this._webGLRenderer = webGLRenderer;
-                // NOTE: Non power-of-two サイズのテクスチャの利用には条件がある
-                // see: https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Using_textures_in_WebGL
                 var texWidth = Math.ceil(width), texHeight = Math.ceil(height), renderTarget = webGLRenderer.createTextureFrameBuffer(texWidth, texHeight);
                 return _this._frameBuffer = renderTarget.frameBuffer, _this._drawable = {}, _this._drawable._texture = renderTarget.texture, 
                 _this._drawable._textureOffsetX = 0, _this._drawable._textureOffsetY = 0, _this._drawable._textureWidth = texWidth, 
@@ -1328,13 +1207,11 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), RenderingHelper_1 = require("./RenderingHelper"), RenderingState_1 = require("./RenderingState"), SystemText_1 = require("./SystemText"), WebGLBackSurfaceRenderer = /** @class */ function(_super) {
+        var g = require("@akashic/akashic-engine"), RenderingHelper_1 = require("./RenderingHelper"), RenderingState_1 = require("./RenderingState"), SystemText_1 = require("./SystemText"), WebGLBackSurfaceRenderer = function(_super) {
             function WebGLBackSurfaceRenderer(surface) {
                 var _this = _super.call(this) || this;
                 return _this._surface = surface, _this._renderer = surface._webGLRenderer, _this;
             }
-            // バックサーフェスの一部領域を`ImageData`で置き換える
-            // このメソッドは `begin()` , `end()` の間で実行される必要がない。
             return __extends(WebGLBackSurfaceRenderer, _super), WebGLBackSurfaceRenderer.prototype.translate = function(x, y) {
                 this._renderer.translate(x, y);
             }, WebGLBackSurfaceRenderer.prototype.transform = function(matrix) {
@@ -1380,7 +1257,6 @@ require = function e(t, n, r) {
             }, WebGLBackSurfaceRenderer.prototype.fillRect = function(x, y, width, height, cssColor) {
                 this._renderer.fillRect(x, y, width, height, cssColor);
             }, WebGLBackSurfaceRenderer.prototype._subImage = function(imageData, offsetX, offsetY, width, height, canvasOffsetX, canvasOffsetY) {
-                // RGBA
                 for (var src = imageData.data, dst = new Uint8Array(width * height * 4), j = 0, d = 0; height > j; j++) for (var s = 4 * (imageData.width * (offsetY + j) + offsetX), i = 0, len = 4 * width; len > i; i++) dst[d++] = src[s++];
                 var gl = this._renderer.context;
                 gl.bindTexture(gl.TEXTURE_2D, this._surface._drawable._texture), gl.texSubImage2D(gl.TEXTURE_2D, 0, canvasOffsetX, canvasOffsetY, width, height, gl.RGBA, gl.UNSIGNED_BYTE, dst), 
@@ -1412,7 +1288,6 @@ require = function e(t, n, r) {
                 return 60 > h ? [ max, h / 60 * (max - min) + min, min, a ] : 120 > h ? [ (120 - h) / 60 * (max - min) + min, max, min, a ] : 180 > h ? [ min, max, (h - 120) / 60 * (max - min) + min, a ] : 240 > h ? [ min, (240 - h) / 60 * (max - min) + min, max, a ] : 300 > h ? [ (h - 240) / 60 * (max - min) + min, min, max, a ] : [ max, min, (360 - h) / 60 * (max - min) + min, a ];
             }
             function _toColor(cssColor) {
-                // 大文字化して空白を削除 (ncc: normalized css color)
                 var ncc = cssColor.toUpperCase().replace(/\s+/g, ""), rgba = WebGLColor.colorMap[ncc];
                 if (rgba) return rgba;
                 if (ncc.match(/^#([\dA-F])([\dA-F])([\dA-F])$/)) return [ parseInt(RegExp.$1, 16) / 15, parseInt(RegExp.$2, 16) / 15, parseInt(RegExp.$3, 16) / 15, 1 ];
@@ -1597,13 +1472,12 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var CanvasSurface_1 = require("./CanvasSurface"), WebGLPrimarySurfaceRenderer_1 = require("./WebGLPrimarySurfaceRenderer"), WebGLPrimarySurface = /** @class */ function(_super) {
+        var CanvasSurface_1 = require("./CanvasSurface"), WebGLPrimarySurfaceRenderer_1 = require("./WebGLPrimarySurfaceRenderer"), WebGLPrimarySurface = function(_super) {
             function WebGLPrimarySurface(width, height, zIndexes) {
                 var _this = _super.call(this, width, height, [ "webgl" ]) || this;
                 return _this._upperSurface = new CanvasSurface_1.CanvasSurface(width, height), _this.setCanvasStyle(zIndexes), 
                 _this;
             }
-            // override
             return __extends(WebGLPrimarySurface, _super), WebGLPrimarySurface.prototype.renderer = function() {
                 return this._renderer || (this._renderer = new WebGLPrimarySurfaceRenderer_1.WebGLPrimarySurfaceRenderer(this)), 
                 this._renderer;
@@ -1651,7 +1525,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var WebGLRenderer_1 = require("./WebGLRenderer"), RenderingHelper_1 = require("./RenderingHelper"), SystemText_1 = require("./SystemText"), WebGLPrimarySurfaceRenderer = /** @class */ function(_super) {
+        var WebGLRenderer_1 = require("./WebGLRenderer"), RenderingHelper_1 = require("./RenderingHelper"), SystemText_1 = require("./SystemText"), WebGLPrimarySurfaceRenderer = function(_super) {
             function WebGLPrimarySurfaceRenderer(surface) {
                 var _this = _super.call(this, surface) || this;
                 return _this._upperRenderer = surface._upperSurface.renderer(), _this;
@@ -1702,7 +1576,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), StateHoldingRenderer_1 = require("./StateHoldingRenderer"), RenderingHelper_1 = require("./RenderingHelper"), WebGLColor_1 = require("./WebGLColor"), WebGLShaderProgram_1 = require("./WebGLShaderProgram"), WebGLTextureAtlas_1 = require("./WebGLTextureAtlas"), RenderingState_1 = require("./RenderingState"), RenderTargetStack = /** @class */ function(_super) {
+        var g = require("@akashic/akashic-engine"), StateHoldingRenderer_1 = require("./StateHoldingRenderer"), RenderingHelper_1 = require("./RenderingHelper"), WebGLColor_1 = require("./WebGLColor"), WebGLShaderProgram_1 = require("./WebGLShaderProgram"), WebGLTextureAtlas_1 = require("./WebGLTextureAtlas"), RenderingState_1 = require("./RenderingState"), RenderTargetStack = function(_super) {
             function RenderTargetStack(width, height) {
                 var _this = _super.call(this) || this;
                 return _this.push({
@@ -1714,7 +1588,7 @@ require = function e(t, n, r) {
             return __extends(RenderTargetStack, _super), RenderTargetStack.prototype.top = function() {
                 return this[this.length - 1];
             }, RenderTargetStack;
-        }(Array), WebGLRenderer = /** @class */ function(_super) {
+        }(Array), WebGLRenderer = function(_super) {
             function WebGLRenderer(surface) {
                 var _this = _super.call(this) || this;
                 if (_this.surface = surface, _this.context = surface.canvas.getContext("webgl", {
@@ -1723,44 +1597,6 @@ require = function e(t, n, r) {
                 }), !_this.context) throw g.ExceptionFactory.createAssertionError("WebGLRenderer#constructor: could not initialize WebGLRenderingContext");
                 return _this._init(), _this;
             }
-            /**
-     * ライティングを有効/無効化する。
-     * デフォルトでは無効になっている。
-     */
-            /**
-     * lightId で指定された光源を無効化する。
-     * ただし適用は次回の Renderer#begin() 呼び出し時まで遅延される。
-     * lightId は 0～3 の値のみ有効。
-     */
-            /**
-     * lightId で指定された光源をアンビエントライトにする。
-     * ただし適用は次回の Renderer#begin() 呼び出し時まで遅延される。
-     */
-            /**
-     * lightId で指定された光源をディレクショナルライトにする。
-     * ただし適用は次回の Renderer#begin() 呼び出し時まで遅延される。
-     */
-            /**
-     * lightId で指定された光源をポイントライトにする。
-     * ただし適用は次回の Renderer#begin() 呼び出し時まで遅延される。
-     */
-            /**
-     * lightId で指定された光源をスポットライトにする。
-     * ただし適用は次回の Renderer#begin() 呼び出し時まで遅延される。
-     */
-            /**
-     * image を GPU 上のテクスチャメモリ領域にコピーする.
-     */
-            /**
-     * GPU 上のテクスチャメモリ領域を texturePixels でクリアする.
-     *
-     * NOTE: 本来はGPUデバイス上で領域をクリアすることが望ましく、ホストから都度領域を転送する texSubImage2D() は適当でない。
-     * FBOをTextureにバインドさせる方式などを考慮すべきである。
-     * ただし、以下の2点より本操作の最適化を見送っている。
-     * - 処理速度上最良のケースは本操作の呼び出しを行わないことである
-     * - 本操作の呼び出し頻度がWebGLTextureAtlas#TEXTURE_SIZEやWebGLTextureAtlas#TEXTURE_COUNTの値に依存するため、
-     *   そちらをチューニングする方が優先度が高い
-     */
             return __extends(WebGLRenderer, _super), WebGLRenderer.prototype.pushRenderTarget = function(surface) {
                 this._commit(), this._renderTargetStack.push(surface), this.save();
                 var rs = new RenderingState_1.RenderingState();
@@ -1810,9 +1646,8 @@ require = function e(t, n, r) {
                 for (var i = 0; count > i; ++i) this.drawImage(surface, offsetX[i], offsetY[i], width[i], height[i], canvasOffsetX[i], canvasOffsetY[i]);
             }, WebGLRenderer.prototype.drawImage = function(surface, offsetX, offsetY, width, height, canvasOffsetX, canvasOffsetY) {
                 if (!surface._drawable) throw g.ExceptionFactory.createAssertionError("WebGLRenderer#drawImage: no drawable surface.");
-                if (// WebGLTexture でないなら変換する (HTMLVideoElement は対応しない)
-                surface._drawable._texture instanceof WebGLTexture || // this._makeTextureForSurface(surface); // slow
-                this._textureAtlas._makeTextureForSurface(this, surface), !surface._drawable._texture) throw g.ExceptionFactory.createAssertionError("WebGLRenderer#drawImage: could not create a texture.");
+                if (surface._drawable._texture instanceof WebGLTexture || this._textureAtlas._makeTextureForSurface(this, surface), 
+                !surface._drawable._texture) throw g.ExceptionFactory.createAssertionError("WebGLRenderer#drawImage: could not create a texture.");
                 var image = surface._drawable, tw = 1 / image._textureWidth, th = 1 / image._textureHeight, ox = image._textureOffsetX, oy = image._textureOffsetY, s = tw * (ox + offsetX + width), t = th * (oy + offsetY + height), u = tw * (ox + offsetX), v = th * (oy + offsetY);
                 this._drawImage(image._texture, canvasOffsetX, canvasOffsetY, width, height, [ u, v, s, v, s, t, u, v, s, t, u, t ], this._drawImageColor);
             }, WebGLRenderer.prototype.fillRect = function(x, y, width, height, cssColor) {
@@ -1865,15 +1700,12 @@ require = function e(t, n, r) {
                 this.context.bindTexture(this.context.TEXTURE_2D, this._currentTexture);
             }, WebGLRenderer.prototype._init = function() {
                 this._width = this.surface.width, this._height = this.surface.height, this._renderTargetStack = new RenderTargetStack(this._width, this._height), 
-                this._beginCount = 0, // 描画用リソース
-                this._program = new WebGLShaderProgram_1.WebGLShaderProgram(this.context), this._textureAtlas = new WebGLTextureAtlas_1.WebGLTextureAtlas(), 
-                this._fillRectTexture = this._makeTextureRaw(1, 1, new Uint8Array([ 255, 255, 255, 255 ])), 
-                this._drawImageColor = WebGLColor_1.WebGLColor.get("white"), // 描画命令をため込んでおくバッファ
-                this._maxSpriteCount = 1024, this._vertices = this._makeBuffer(24 * this._maxSpriteCount * 4), 
-                this._verticesCache = new Float32Array(24 * this._maxSpriteCount), this._numSprites = 0, 
-                // the number of sprites
-                this._inRendering = !1, this._enableLighting = !1, // 光源のデフォルト値を設定
-                this._lightTypesDisabled = new Int32Array([ 1, 0, 0, 0 ]), this._lightColorsDisabled = new Float32Array([ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ]), 
+                this._beginCount = 0, this._program = new WebGLShaderProgram_1.WebGLShaderProgram(this.context), 
+                this._textureAtlas = new WebGLTextureAtlas_1.WebGLTextureAtlas(), this._fillRectTexture = this._makeTextureRaw(1, 1, new Uint8Array([ 255, 255, 255, 255 ])), 
+                this._drawImageColor = WebGLColor_1.WebGLColor.get("white"), this._maxSpriteCount = 1024, 
+                this._vertices = this._makeBuffer(24 * this._maxSpriteCount * 4), this._verticesCache = new Float32Array(24 * this._maxSpriteCount), 
+                this._numSprites = 0, this._inRendering = !1, this._enableLighting = !1, this._lightTypesDisabled = new Int32Array([ 1, 0, 0, 0 ]), 
+                this._lightColorsDisabled = new Float32Array([ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ]), 
                 this._lightTypes = new Int32Array([ 1, 0, 0, 0 ]), this._lightColors = new Float32Array([ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ]), 
                 this._lightDirections = new Float32Array([ 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1 ]), 
                 this._lightPositions = new Float32Array([ 0, 0, 100, 0, 0, 100, 0, 0, 100, 0, 0, 100 ]), 
@@ -1882,7 +1714,6 @@ require = function e(t, n, r) {
                 var state = this.currentState();
                 this._currentTexture = this._fillRectTexture, this._currentColor = this._drawImageColor, 
                 this._currentAlpha = 1, this._currentCompositeOperation = state.globalCompositeOperation, 
-                // シェーダの設定
                 this._program.use();
                 try {
                     this._program.set_aVertex(this._vertices), this._program.set_uColor(this._currentColor), 
@@ -1891,7 +1722,6 @@ require = function e(t, n, r) {
                 } finally {
                     this._program.unuse();
                 }
-                // WebGL のパラメータを設定
                 this.context.viewport(0, 0, this.surface.width, this.surface.height), this.context.enable(this.context.BLEND), 
                 this.context.activeTexture(this.context.TEXTURE0), this.context.bindTexture(this.context.TEXTURE_2D, this._fillRectTexture), 
                 this._compositeOps = {
@@ -1926,21 +1756,16 @@ require = function e(t, n, r) {
                 this._lightAngleAttenuation[4 * lightId + 0] = cosTheta, this._lightAngleAttenuation[4 * lightId + 1] = cosPhi, 
                 this._lightAngleAttenuation[4 * lightId + 2] = cosTheta - cosPhi, this._lightAngleAttenuation[4 * lightId + 3] = falloff;
             }, WebGLRenderer.prototype._drawImage = function(texture, x, y, w, h, texCoord, color) {
-                this._numSprites >= this._maxSpriteCount && this._commit(), // テクスチャを設定
-                this._currentTexture !== texture && (this._currentTexture = texture, this._commit(), 
-                this.context.bindTexture(this.context.TEXTURE_2D, texture)), // 色を設定
-                (this._currentColor[0] !== color[0] || this._currentColor[1] !== color[1] || this._currentColor[2] !== color[2] || this._currentColor[3] !== color[3]) && (this._currentColor = color, 
+                this._numSprites >= this._maxSpriteCount && this._commit(), this._currentTexture !== texture && (this._currentTexture = texture, 
+                this._commit(), this.context.bindTexture(this.context.TEXTURE_2D, texture)), (this._currentColor[0] !== color[0] || this._currentColor[1] !== color[1] || this._currentColor[2] !== color[2] || this._currentColor[3] !== color[3]) && (this._currentColor = color, 
                 this._commit(), this._program.set_uColor(color));
                 var state = this.currentState();
-                // 合成モードを設定
-                if (// アルファを指定
-                this._currentAlpha !== state.globalAlpha && (this._currentAlpha = state.globalAlpha, 
+                if (this._currentAlpha !== state.globalAlpha && (this._currentAlpha = state.globalAlpha, 
                 this._commit(), this._program.set_uAlpha(state.globalAlpha)), this._currentCompositeOperation !== state.globalCompositeOperation) {
                     this._currentCompositeOperation = state.globalCompositeOperation, this._commit();
                     var compositeOperation = this._compositeOps[this._currentCompositeOperation];
                     this.context.blendFunc(compositeOperation[0], compositeOperation[1]);
                 }
-                // 変換行列を設定
                 this._register(this._transformVertex(x, y, w, h, state.transformer), texCoord);
             }, WebGLRenderer.prototype._transformVertex = function(x, y, w, h, transformer) {
                 var cw = 2 / this._width, ch = -2 / this._height, m = transformer.matrix, a = cw * w * m[0], b = ch * w * m[1], c = cw * h * m[2], d = ch * h * m[3], e = cw * (x * m[0] + y * m[2] + m[4]) - 1, f = ch * (x * m[1] + y * m[3] + m[5]) + 1;
@@ -1986,7 +1811,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var WebGLShaderProgram = /** @class */ function() {
+        var WebGLShaderProgram = function() {
             function WebGLShaderProgram(context) {
                 this.maxLightCount = 4;
                 var vSrc = "#version 100\nattribute vec4 aVertex;\nvarying vec2 vTexCoord;\nvarying vec4 vColor;\nuniform vec4 uColor;\nuniform float uAlpha;\nvoid main() {gl_Position = vec4(aVertex.xy, 0.0, 1.0);vTexCoord = aVertex.zw;vColor = uColor * uAlpha;}", fSrc = "#version 100\nprecision mediump float;\nvarying vec2 vTexCoord;\nvarying vec4 vColor;\nuniform sampler2D uSampler;\nuniform int uLightType[4];\nuniform vec3 uLightColor[4];\nuniform vec3 uLightDirection[4];\nuniform vec3 uLightPosition[4];\nuniform vec3 uLightDistanceAttenuation[4];\nuniform vec4 uLightAngleAttenuation[4];\nvoid main() {gl_FragColor = texture2D(uSampler, vTexCoord) * vColor;}";
@@ -1999,67 +1824,6 @@ require = function e(t, n, r) {
                 this._uLightDistanceAttenuation = context.getUniformLocation(this._program, "uLightDistanceAttenuation"), 
                 this._uLightAngleAttenuation = context.getUniformLocation(this._program, "uLightAngleAttenuation");
             }
-            /**
-     * シェーダの attribute 変数 aVertex にバッファを登録する。
-     * use()/unuse() 間のみで効果がある。
-     */
-            /**
-     * シェーダの uniform 変数 uColor に値を設定する。
-     * use()/unuse() 間のみで効果がある。
-     */
-            /**
-     * シェーダの uniform 変数 uAlpha に値を設定する。
-     * use()/unuse() 間のみで効果がある。
-     */
-            /**
-     * シェーダの uniform 変数 uSampler にテクスチャステージ番号を設定する。
-     * use()/unuse() 間のみで効果がある。
-     */
-            /**
-     * シェーダの uniform 変数 int uLightType[maxLightCount] に値を設定する。
-     * 0: なし、1: アンビエントライト、2: ディレクショナルライト、3: ポイントライト、4: スポットライト
-     * use()/unuse() 間のみで効果がある。
-     */
-            /**
-     * シェーダの uniform 変数 vec3 uLightColor[maxLightCount] に値を設定する。
-     * use()/unuse() 間のみで効果がある。
-     */
-            /**
-     * シェーダの uniform 変数 vec3 uLightDirection[maxLightCount] に値を設定する。
-     * 光の進行方向を表す単位ベクトルを指定する。
-     * use()/unuse() 間のみで効果がある。
-     */
-            /**
-     * シェーダの uniform 変数 vec3 uLightPosition[maxLightCount] に値を設定する。
-     * 光源の位置を表すベクトルを指定する。画面の手前側が +z 方向になる。
-     * use()/unuse() 間のみで効果がある。
-     */
-            /**
-     * シェーダの uniform 変数 vec3 uLightDistanceAttenuation[maxLightCount] に値を設定する。
-     * 光源の距離減衰係数を表現する。
-     * uLightDistanceAttenuation[i].x: i番目の光源の0次減衰係数
-     * uLightDistanceAttenuation[i].y: i番目の光源の1次減衰係数
-     * uLightDistanceAttenuation[i].z: i番目の光源の2次減衰係数
-     * cf. https://msdn.microsoft.com/ja-jp/library/bb172279(v=vs.85).aspx
-     * use()/unuse() 間のみで効果がある。
-     */
-            /**
-     * シェーダの uniform 変数 vec3 uLightAngleAttenuation[maxLightCount] に値を設定する。
-     * 光源の距離減衰係数を表現する。
-     * uLightAngleAttenuation[i].x: i番目の光源の cosθ/2
-     * uLightAngleAttenuation[i].y: i番目の光源の cosφ/2
-     * uLightAngleAttenuation[i].z: i番目の光源の cosθ/2 - cosφ/2
-     * uLightAngleAttenuation[i].w: i番目の光源の角度減衰係数
-     * ここで、θ はスポットライトの内径、φ はスポットライトの外径である。
-     * cf. https://msdn.microsoft.com/ja-jp/library/bb172279(v=vs.85).aspx
-     * use()/unuse() 間のみで効果がある。
-     */
-            /**
-     * シェーダを有効化する。
-     */
-            /**
-     * シェーダを無効化する。
-     */
             return WebGLShaderProgram._makeShader = function(gl, typ, src) {
                 var shader = gl.createShader(typ);
                 if (gl.shaderSource(shader, src), gl.compileShader(shader), !gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
@@ -2111,27 +1875,10 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var WebGLTextureMap_1 = require("./WebGLTextureMap"), WebGLTextureAtlas = /** @class */ function() {
+        var WebGLTextureMap_1 = require("./WebGLTextureMap"), WebGLTextureAtlas = function() {
             function WebGLTextureAtlas() {
                 this._maps = [], this._insertPos = 0, this.emptyTexturePixels = new Uint8Array(WebGLTextureAtlas.TEXTURE_SIZE * WebGLTextureAtlas.TEXTURE_SIZE * 4);
             }
-            /**
-     * 新しいシーンに遷移したとき呼ぶ。
-     */
-            /**
-     * 現在のテクスチャ領域使用効率を表示する。
-     */
-            /**
-     * g.Surface 用にテクスチャを作成する。
-     */
-            /**
-     * 適当なテクスチャアトラスにサーフィスを割り当てる
-     */
-            /**
-     * テクスチャを登録する。
-     */
-            // 確保するテクスチャのサイズ (実際のゲームに合わせてチューニングする必要がある)
-            // 確保するテクスチャの数 (実際のゲームに合わせてチューニングする必要がある)
             return WebGLTextureAtlas.prototype.clear = function() {
                 for (var i = 0; i < this._maps.length; ++i) this._maps[i].dispose();
             }, WebGLTextureAtlas.prototype.showOccupancy = function() {
@@ -2140,13 +1887,11 @@ require = function e(t, n, r) {
                 var image = surface._drawable;
                 if (image && !image._texture) {
                     var width = image.width, height = image.height;
-                    // サイズが大きいので単体のテクスチャとして扱う
-                    // サイズが大きいので単体のテクスチャとして扱う
                     return width >= WebGLTextureAtlas.TEXTURE_SIZE || height >= WebGLTextureAtlas.TEXTURE_SIZE ? void renderer._makeTextureForSurface(surface) : void this._assign(renderer, surface, this._maps);
                 }
             }, WebGLTextureAtlas.prototype._assign = function(renderer, surface, maps) {
-                for (var map, i = 0; i < maps.length; ++i) if (map = maps[(i + this._insertPos) % maps.length].insert(surface)) // 登録する
-                return this._register(renderer, map, surface._drawable), void (this._insertPos = i);
+                for (var map, i = 0; i < maps.length; ++i) if (map = maps[(i + this._insertPos) % maps.length].insert(surface)) return this._register(renderer, map, surface._drawable), 
+                void (this._insertPos = i);
                 map = null, maps.length >= WebGLTextureAtlas.TEXTURE_COUNT && (map = maps.shift(), 
                 renderer._disposeTexture(map.texture), map.dispose(), renderer._clearTexture(this.emptyTexturePixels, WebGLTextureAtlas.TEXTURE_SIZE, WebGLTextureAtlas.TEXTURE_SIZE, map.texture)), 
                 map || (map = new WebGLTextureMap_1.WebGLTextureMap(renderer._makeTextureRaw(WebGLTextureAtlas.TEXTURE_SIZE, WebGLTextureAtlas.TEXTURE_SIZE), 0, 0, WebGLTextureAtlas.TEXTURE_SIZE, WebGLTextureAtlas.TEXTURE_SIZE)), 
@@ -2167,13 +1912,11 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var WebGLTextureMap = /** @class */ function() {
+        var WebGLTextureMap = function() {
             function WebGLTextureMap(texture, offsetX, offsetY, width, height) {
                 this.texture = texture, this.offsetX = offsetX, this.offsetY = offsetY, this._width = width, 
                 this._height = height;
             }
-            // 各テクスチャを配置する際のマージンピクセル数
-            // マージンを取らないと、隣接するテクスチャが滲んで描画される可能性がある。
             return WebGLTextureMap.prototype.dispose = function() {
                 this._left && (this._left.dispose(), this._left = null), this._right && (this._right.dispose(), 
                 this._right = null), this._surface && (this._surface._drawable && (this._surface._drawable._texture = null), 
@@ -2189,7 +1932,6 @@ require = function e(t, n, r) {
                 return this.area() / this.capacity();
             }, WebGLTextureMap.prototype.insert = function(surface) {
                 var image = surface._drawable, width = image.width + WebGLTextureMap.TEXTURE_MARGIN, height = image.height + WebGLTextureMap.TEXTURE_MARGIN;
-                // 再帰的にパッキング
                 if (this._surface) {
                     if (this._left) {
                         var left = this._left.insert(surface);
@@ -2201,7 +1943,6 @@ require = function e(t, n, r) {
                     }
                     return null;
                 }
-                // 詰め込み不可能
                 if (this._width < width || this._height < height) return null;
                 var remainWidth = this._width - width, remainHeight = this._height - height;
                 return remainHeight >= remainWidth ? (this._left = new WebGLTextureMap(this.texture, this.offsetX + width, this.offsetY, remainWidth, height), 
@@ -2243,18 +1984,12 @@ require = function e(t, n, r) {
             value: !0
         });
         var g = require("@akashic/akashic-engine"), InputAbstractHandler = (require("@akashic/akashic-pdi"), 
-        /** @class */ function() {
-            /**
-     * @param inputView inputViewはDOMイベントを設定するHTMLElement
-     */
+        function() {
             function InputAbstractHandler(inputView, disablePreventDefault) {
                 if (Object.getPrototypeOf && Object.getPrototypeOf(this) === InputAbstractHandler.prototype) throw new Error("InputAbstractHandler is abstract and should not be directly instantiated");
                 this.inputView = inputView, this.pointerEventLock = {}, this._xScale = 1, this._yScale = 1, 
                 this._disablePreventDefault = !!disablePreventDefault, this.pointTrigger = new g.Trigger();
             }
-            // `start()` で設定するDOMイベントをサポートしているかを返す
-            // 継承したクラスにおいて、適切なDOMイベントを設定する
-            // start() に対応するDOMイベントを開放する
             return InputAbstractHandler.isSupported = function() {
                 return !1;
             }, InputAbstractHandler.prototype.start = function() {
@@ -2268,8 +2003,7 @@ require = function e(t, n, r) {
                     type: 0,
                     identifier: identifier,
                     offset: this.getOffsetFromEvent(pagePosition)
-                }), // downのイベントIDを保存して、moveとupのイベントの抑制をする(ロックする)
-                this.pointerEventLock[identifier] = !0;
+                }), this.pointerEventLock[identifier] = !0;
             }, InputAbstractHandler.prototype.pointMove = function(identifier, pagePosition) {
                 this.pointerEventLock.hasOwnProperty(identifier + "") && this.pointTrigger.fire({
                     type: 1,
@@ -2281,8 +2015,7 @@ require = function e(t, n, r) {
                     type: 2,
                     identifier: identifier,
                     offset: this.getOffsetFromEvent(pagePosition)
-                }), // Upが完了したら、Down->Upが完了したとしてロックを外す
-                delete this.pointerEventLock[identifier]);
+                }), delete this.pointerEventLock[identifier]);
             }, InputAbstractHandler.prototype.getOffsetFromEvent = function(e) {
                 return {
                     x: e.offsetX,
@@ -2321,12 +2054,11 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var InputAbstractHandler_1 = require("./InputAbstractHandler"), MouseHandler = /** @class */ function(_super) {
+        var InputAbstractHandler_1 = require("./InputAbstractHandler"), MouseHandler = function(_super) {
             function MouseHandler(inputView, disablePreventDefault) {
                 var _this = _super.call(this, inputView, disablePreventDefault) || this, identifier = 1;
                 return _this.onMouseDown = function(e) {
-                    0 === e.button && (// NOTE: 左クリック以外を受け付けない
-                    _this.pointDown(identifier, e), window.addEventListener("mousemove", _this.onMouseMove, !1), 
+                    0 === e.button && (_this.pointDown(identifier, e), window.addEventListener("mousemove", _this.onMouseMove, !1), 
                     window.addEventListener("mouseup", _this.onMouseUp, !1), _this._disablePreventDefault || (e.stopPropagation(), 
                     e.preventDefault()));
                 }, _this.onMouseMove = function(e) {
@@ -2371,7 +2103,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var MouseHandler_1 = require("./MouseHandler"), RuntimeInfo_1 = require("../RuntimeInfo"), TouchHandler = /** @class */ function(_super) {
+        var MouseHandler_1 = require("./MouseHandler"), RuntimeInfo_1 = require("../RuntimeInfo"), TouchHandler = function(_super) {
             function TouchHandler(inputView, disablePreventDefault) {
                 var _this = _super.call(this, inputView, disablePreventDefault) || this;
                 return _this.onTouchDown = function(e) {
@@ -2403,7 +2135,6 @@ require = function e(t, n, r) {
                 _super.prototype.stop.call(this), this.inputView.removeEventListener("touchstart", this.onTouchDown), 
                 this.inputView.removeEventListener("touchmove", this.onTouchMove), this.inputView.removeEventListener("touchend", this.onTouchUp);
             }, TouchHandler.prototype.convertToPagePosition = function(e) {
-                // windowの左上を0,0とした時のinputViewのoffsetを取得する
                 var bounding = this.inputView.getBoundingClientRect(), scale = this.getScale();
                 return {
                     offsetX: (e.pageX - Math.round(window.pageXOffset + bounding.left)) / scale.x,
@@ -2421,18 +2152,10 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        /*
- Audioプラグインを登録し、現在登録しているプラグインを管理するクラス
- 仕様は docs/audio-plugin.md を参照
-
- TODO: 各Gameインスタンスが一つのAudioプラグインしか持たないので、
- PluginManagerが状態をもたずにGame自体にpluginを登録する方式もあり
- */
-        var AudioPluginManager = /** @class */ function() {
+        var AudioPluginManager = function() {
             function AudioPluginManager() {
                 this._activePlugin = void 0;
             }
-            // Audioプラグインに登録を行い、どれか一つでも成功ならtrue、それ以外はfalseを返す
             return AudioPluginManager.prototype.getActivePlugin = function() {
                 return void 0 === this._activePlugin ? null : this._activePlugin;
             }, AudioPluginManager.prototype.tryInstallPlugin = function(plugins) {
@@ -2440,9 +2163,7 @@ require = function e(t, n, r) {
                 return PluginConstructor ? (this._activePlugin = new PluginConstructor(), !0) : !1;
             }, AudioPluginManager.prototype.findFirstAvailablePlugin = function(plugins) {
                 for (var i = 0, len = plugins.length; len > i; i++) {
-                    // Step 1
                     var plugin = plugins[i];
-                    // Step 2
                     if (plugin.isSupported()) return plugin;
                 }
             }, AudioPluginManager;
@@ -2488,26 +2209,17 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), HTMLAudioAsset = /** @class */ function(_super) {
+        var g = require("@akashic/akashic-engine"), HTMLAudioAsset = function(_super) {
             function HTMLAudioAsset() {
                 return null !== _super && _super.apply(this, arguments) || this;
             }
             return __extends(HTMLAudioAsset, _super), HTMLAudioAsset.prototype._load = function(loader) {
                 var _this = this;
-                if (null == this.path) // 再生可能な形式がない。実際には鳴らない音声としてロード成功しておく
-                return this.data = null, void setTimeout(function() {
+                if (null == this.path) return this.data = null, void setTimeout(function() {
                     return loader._onAssetLoad(_this);
                 }, 0);
                 var audio = new Audio(), startLoadingAudio = function(path, handlers) {
-                    // autoplay は preload よりも優先されるため明示的にfalseとする
                     audio.autoplay = !1, audio.preload = "none", audio.src = path, _this._attachAll(audio, handlers), 
-                    /* tslint:disable */
-                    // Firefoxはpreload="auto"でないと読み込みされない
-                    // preloadはブラウザに対するHint属性なので、どう扱うかはブラウザの実装次第となる
-                    // https://html.spec.whatwg.org/multipage/embedded-content.html#attr-media-preload
-                    // https://developer.mozilla.org/ja/docs/Web/HTML/Element/audio#attr-preload
-                    // https://github.com/CreateJS/SoundJS/blob/e2d4842a84ff425ada861edb9f6e9b57f63d7caf/src/soundjs/htmlaudio/HTMLAudioSoundInstance.js#L147-147
-                    /* tslint:enable:max-line-length */
                     audio.preload = "auto", setAudioLoadInterval(audio, handlers), audio.load();
                 }, handlers = {
                     success: function() {
@@ -2519,17 +2231,10 @@ require = function e(t, n, r) {
                         window.clearInterval(_this._intervalId);
                     }
                 }, setAudioLoadInterval = function(audio, handlers) {
-                    // IE11において、canplaythroughイベントが正常に発火しない問題が確認されたため、その対処として以下の処理を行っている。
-                    // なお、canplaythroughはreadyStateの値が4になった時点で呼び出されるイベントである。
-                    // インターバルとして指定している100msに根拠は無い。
                     _this._intervalCount = 0, _this._intervalId = window.setInterval(function() {
-                        4 === audio.readyState ? handlers.success() : (++_this._intervalCount, // readyStateの値が4にならない状態が1分（100ms×600）続いた場合、
-                        // 読み込みに失敗したとする。1分という時間に根拠は無い。
-                        600 === _this._intervalCount && handlers.error());
+                        4 === audio.readyState ? handlers.success() : (++_this._intervalCount, 600 === _this._intervalCount && handlers.error());
                     }, 100);
                 };
-                // 暫定対応：後方互換性のため、aacファイルが無い場合はmp4へのフォールバックを試みる。
-                // この対応を止める際には、HTMLAudioPluginのsupportedExtensionsからaacを除外する必要がある。
                 if (".aac" === this.path.slice(-4) && -1 !== HTMLAudioAsset.supportedFormats.indexOf("mp4")) {
                     var altHandlers = {
                         success: handlers.success,
@@ -2547,14 +2252,8 @@ require = function e(t, n, r) {
             }, HTMLAudioAsset.prototype._assetPathFilter = function(path) {
                 return -1 !== HTMLAudioAsset.supportedFormats.indexOf("ogg") ? g.PathUtil.addExtname(path, "ogg") : -1 !== HTMLAudioAsset.supportedFormats.indexOf("aac") ? g.PathUtil.addExtname(path, "aac") : null;
             }, HTMLAudioAsset.prototype._attachAll = function(audio, handlers) {
-                handlers.success && /* tslint:disable:max-line-length */
-                // https://developer.mozilla.org/en-US/docs/Web/Events/canplaythrough
-                // https://github.com/goldfire/howler.js/blob/1dad25cdd9d6982232050454e8b45411902efe65/howler.js#L372
-                // https://github.com/CreateJS/SoundJS/blob/e2d4842a84ff425ada861edb9f6e9b57f63d7caf/src/soundjs/htmlaudio/HTMLAudioSoundInstance.js#L145-145
-                /* tslint:enable:max-line-length */
-                audio.addEventListener("canplaythrough", handlers.success, !1), handlers.error && (// https://developer.mozilla.org/en-US/docs/Web/Guide/Events/Media_events
-                // stalledはfetchして取れなかった時に起きるイベント
-                audio.addEventListener("stalled", handlers.error, !1), audio.addEventListener("error", handlers.error, !1), 
+                handlers.success && audio.addEventListener("canplaythrough", handlers.success, !1), 
+                handlers.error && (audio.addEventListener("stalled", handlers.error, !1), audio.addEventListener("error", handlers.error, !1), 
                 audio.addEventListener("abort", handlers.error, !1));
             }, HTMLAudioAsset.prototype._detachAll = function(audio, handlers) {
                 handlers.success && audio.removeEventListener("canplaythrough", handlers.success, !1), 
@@ -2587,7 +2286,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), HTMLAudioPlayer = /** @class */ function(_super) {
+        var g = require("@akashic/akashic-engine"), HTMLAudioPlayer = function(_super) {
             function HTMLAudioPlayer(system, manager) {
                 var _this = _super.call(this, system) || this;
                 return _this._manager = manager, _this._endedEventHandler = function() {
@@ -2596,19 +2295,17 @@ require = function e(t, n, r) {
                     _this._onPlayEvent();
                 }, _this._dummyDurationWaitTimer = null, _this;
             }
-            // audio.play() は非同期なので、 play が開始される前に stop を呼ばれた場合はこのハンドラ到達時に停止する
             return __extends(HTMLAudioPlayer, _super), HTMLAudioPlayer.prototype.play = function(asset) {
                 this.currentAudio && this.stop();
                 var audio = asset.cloneElement();
                 audio ? (audio.volume = this.volume * this._system.volume * this._manager.getMasterVolume(), 
                 audio.play(), audio.loop = asset.loop, audio.addEventListener("ended", this._endedEventHandler, !1), 
                 audio.addEventListener("play", this._onPlayEventHandler, !1), this._isWaitingPlayEvent = !0, 
-                this._audioInstance = audio) : // 再生できるオーディオがない場合。duration後に停止処理だけ行う(処理のみ進め音は鳴らさない)
-                this._dummyDurationWaitTimer = setTimeout(this._endedEventHandler, asset.duration), 
+                this._audioInstance = audio) : this._dummyDurationWaitTimer = setTimeout(this._endedEventHandler, asset.duration), 
                 _super.prototype.play.call(this, asset);
             }, HTMLAudioPlayer.prototype.stop = function() {
-                this.currentAudio && (this._clearEndedEventHandler(), this._audioInstance && (this._isWaitingPlayEvent ? this._isStopRequested = !0 : (// _audioInstance が再び play されることは無いので、 removeEventListener("play") する必要は無い
-                this._audioInstance.pause(), this._audioInstance = null)), _super.prototype.stop.call(this));
+                this.currentAudio && (this._clearEndedEventHandler(), this._audioInstance && (this._isWaitingPlayEvent ? this._isStopRequested = !0 : (this._audioInstance.pause(), 
+                this._audioInstance = null)), _super.prototype.stop.call(this));
             }, HTMLAudioPlayer.prototype.changeVolume = function(volume) {
                 this._audioInstance && (this._audioInstance.volume = volume * this._system.volume * this._manager.getMasterVolume()), 
                 _super.prototype.changeVolume.call(this, volume);
@@ -2622,7 +2319,6 @@ require = function e(t, n, r) {
                 this._dummyDurationWaitTimer = null);
             }, HTMLAudioPlayer.prototype._onPlayEvent = function() {
                 this._isWaitingPlayEvent && (this._isWaitingPlayEvent = !1, this._isStopRequested && (this._isStopRequested = !1, 
-                // _audioInstance が再び play されることは無いので、 removeEventListener("play") する必要は無い
                 this._audioInstance.pause(), this._audioInstance = null));
             }, HTMLAudioPlayer;
         }(g.AudioPlayer);
@@ -2635,15 +2331,11 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var HTMLAudioAsset_1 = require("./HTMLAudioAsset"), HTMLAudioPlayer_1 = require("./HTMLAudioPlayer"), HTMLAudioPlugin = /** @class */ function() {
+        var HTMLAudioAsset_1 = require("./HTMLAudioAsset"), HTMLAudioPlayer_1 = require("./HTMLAudioPlayer"), HTMLAudioPlugin = function() {
             function HTMLAudioPlugin() {
                 this._supportedFormats = this._detectSupportedFormats(), HTMLAudioAsset_1.HTMLAudioAsset.supportedFormats = this.supportedFormats;
             }
-            // https://github.com/Modernizr/Modernizr/blob/master/feature-detects/audio.js
-            // https://github.com/CreateJS/SoundJS/blob/master/src/soundjs/htmlaudio/HTMLAudioPlugin.js
-            /* tslint:enable:typedef */
             return HTMLAudioPlugin.isSupported = function() {
-                // Audio要素を実際に作って、canPlayTypeが存在するかで確認する
                 var audioElement = document.createElement("audio"), result = !1;
                 try {
                     result = void 0 !== audioElement.canPlayType;
@@ -2653,9 +2345,6 @@ require = function e(t, n, r) {
                 get: function() {
                     return this._supportedFormats;
                 },
-                // TSLintのバグ - setterはreturn typeを書くとコンパイルエラー
-                /* tslint:disable:typedef */
-                // HTMLAudioAssetへ反映させるためsetterとする
                 set: function(supportedFormats) {
                     this._supportedFormats = supportedFormats, HTMLAudioAsset_1.HTMLAudioAsset.supportedFormats = supportedFormats;
                 },
@@ -2666,9 +2355,7 @@ require = function e(t, n, r) {
             }, HTMLAudioPlugin.prototype.createPlayer = function(system, manager) {
                 return new HTMLAudioPlayer_1.HTMLAudioPlayer(system, manager);
             }, HTMLAudioPlugin.prototype._detectSupportedFormats = function() {
-                // Edgeは再生できるファイル形式とcanPlayTypeの結果が一致しないため、固定でAACを利用する
                 if (-1 !== navigator.userAgent.indexOf("Edge/")) return [ "aac" ];
-                // Audio要素を実際に作って、canPlayTypeで再生できるかを判定する
                 var audioElement = document.createElement("audio"), supportedFormats = [];
                 try {
                     for (var supportedExtensions = [ "ogg", "aac", "mp4" ], i = 0, len = supportedExtensions.length; len > i; i++) {
@@ -2705,15 +2392,13 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), XHRLoader_1 = require("../../utils/XHRLoader"), helper = require("./WebAudioHelper"), WebAudioAsset = /** @class */ function(_super) {
+        var g = require("@akashic/akashic-engine"), XHRLoader_1 = require("../../utils/XHRLoader"), helper = require("./WebAudioHelper"), WebAudioAsset = function(_super) {
             function WebAudioAsset() {
                 return null !== _super && _super.apply(this, arguments) || this;
             }
-            // _assetPathFilterの判定処理を小さくするため、予めサポートしてる拡張子一覧を持つ
             return __extends(WebAudioAsset, _super), WebAudioAsset.prototype._load = function(loader) {
                 var _this = this;
-                if (null == this.path) // 再生可能な形式がない。実際には鳴らない音声としてロード成功しておく
-                return this.data = null, void setTimeout(function() {
+                if (null == this.path) return this.data = null, void setTimeout(function() {
                     return loader._onAssetLoad(_this);
                 }, 0);
                 var successHandler = function(decodedAudio) {
@@ -2728,8 +2413,6 @@ require = function e(t, n, r) {
                         error ? onFailed(error) : onSuccess(response);
                     });
                 };
-                // 暫定対応：後方互換性のため、aacファイルが無い場合はmp4へのフォールバックを試みる。
-                // この対応を止める際には、WebAudioPluginのsupportedExtensionsからaacを除外する必要がある。
                 return ".aac" === this.path.slice(-4) ? void loadArrayBuffer(this.path, onLoadArrayBufferHandler, function(error) {
                     var altPath = _this.path.slice(0, _this.path.length - 4) + ".mp4";
                     loadArrayBuffer(altPath, function(response) {
@@ -2749,15 +2432,8 @@ require = function e(t, n, r) {
     41: [ function(require, module, exports) {
         (function(global) {
             "use strict";
-            // WebAudioのブラウザ間の差を吸収する
-            // Compatible Table: http://compatibility.shwups-cms.ch/en/home?&property=AudioParam.prototype
-            // http://qiita.com/mohayonao/items/d79e9fc56b4e9c157be1#polyfill
-            // https://github.com/cwilso/webkitAudioContext-MonkeyPatch
-            // https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Porting_webkitAudioContext_code_to_standards_based_AudioContext
             var WebAudioHelper, AudioContext = global.AudioContext || global.webkitAudioContext, singleContext = null;
             !function(WebAudioHelper) {
-                // AudioContextをシングルトンとして取得する
-                // 一つのページに一つのContextが存在すれば良い
                 function getAudioContext() {
                     return singleContext || (singleContext = new AudioContext()), singleContext;
                 }
@@ -2766,9 +2442,6 @@ require = function e(t, n, r) {
                 }
                 function createBufferNode(context) {
                     var sourceNode = context.createBufferSource();
-                    // startがあるなら問題ないので、拡張しないで返す
-                    // startがあるなら問題ないので、拡張しないで返す
-                    // start/stopがない環境へのエイリアスを貼る
                     return sourceNode.start ? sourceNode : (sourceNode.start = sourceNode.noteOn, sourceNode.stop = sourceNode.noteOff, 
                     sourceNode);
                 }
@@ -2798,7 +2471,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), helper = require("./WebAudioHelper"), WebAudioPlayer = /** @class */ function(_super) {
+        var g = require("@akashic/akashic-engine"), helper = require("./WebAudioHelper"), WebAudioPlayer = function(_super) {
             function WebAudioPlayer(system, manager) {
                 var _this = _super.call(this, system) || this;
                 return _this._audioContext = helper.getAudioContext(), _this._manager = manager, 
@@ -2814,11 +2487,9 @@ require = function e(t, n, r) {
                 if (this.currentAudio && this.stop(), asset.data) {
                     var bufferNode = helper.createBufferNode(this._audioContext);
                     bufferNode.loop = asset.loop, bufferNode.buffer = asset.data, this._gainNode.gain.value = this.volume * this._system.volume * this._manager.getMasterVolume(), 
-                    bufferNode.connect(this._gainNode), this._sourceNode = bufferNode, // Chromeだとevent listerで指定した場合に動かないことがある
-                    // https://github.com/mozilla-appmaker/appmaker/issues/1984
-                    this._sourceNode.onended = this._endedEventHandler, this._sourceNode.start(0);
-                } else // 再生できるオーディオがない場合。duration後に停止処理だけ行う(処理のみ進め音は鳴らさない)
-                this._dummyDurationWaitTimer = setTimeout(this._endedEventHandler, asset.duration);
+                    bufferNode.connect(this._gainNode), this._sourceNode = bufferNode, this._sourceNode.onended = this._endedEventHandler, 
+                    this._sourceNode.start(0);
+                } else this._dummyDurationWaitTimer = setTimeout(this._endedEventHandler, asset.duration);
                 _super.prototype.play.call(this, asset);
             }, WebAudioPlayer.prototype.stop = function() {
                 this.currentAudio && (this._clearEndedEventHandler(), this._sourceNode && this._sourceNode.stop(0), 
@@ -2842,23 +2513,16 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var WebAudioAsset_1 = require("./WebAudioAsset"), WebAudioPlayer_1 = require("./WebAudioPlayer"), WebAudioPlugin = /** @class */ function() {
-            /* tslint:enable:typedef */
+        var WebAudioAsset_1 = require("./WebAudioAsset"), WebAudioPlayer_1 = require("./WebAudioPlayer"), WebAudioPlugin = function() {
             function WebAudioPlugin() {
                 this.supportedFormats = this._detectSupportedFormats();
             }
-            // AudioContextが存在するかどうかで判定する
-            // http://mohayonao.hatenablog.com/entry/2012/12/12/103009
-            // https://github.com/Modernizr/Modernizr/blob/master/feature-detects/audio/webaudio.js
             return WebAudioPlugin.isSupported = function() {
                 return "AudioContext" in window ? !0 : "webkitAudioContext" in window ? !0 : !1;
             }, Object.defineProperty(WebAudioPlugin.prototype, "supportedFormats", {
                 get: function() {
                     return this._supportedFormats;
                 },
-                // TSLintのバグ - setterはreturn typeを書くとコンパイルエラーとなる
-                /* tslint:disable:typedef */
-                // WebAudioAssetへサポートしているフォーマット一覧を渡す
                 set: function(supportedFormats) {
                     this._supportedFormats = supportedFormats, WebAudioAsset_1.WebAudioAsset.supportedFormats = supportedFormats;
                 },
@@ -2869,9 +2533,7 @@ require = function e(t, n, r) {
             }, WebAudioPlugin.prototype.createPlayer = function(system, manager) {
                 return new WebAudioPlayer_1.WebAudioPlayer(system, manager);
             }, WebAudioPlugin.prototype._detectSupportedFormats = function() {
-                // Edgeは再生できるファイル形式とcanPlayTypeの結果が一致しないため、固定でAACを利用する
                 if (-1 !== navigator.userAgent.indexOf("Edge/")) return [ "aac" ];
-                // Audio要素を実際に作って、canPlayTypeで再生できるかを判定する
                 var audioElement = document.createElement("audio"), supportedFormats = [];
                 try {
                     for (var supportedExtensions = [ "ogg", "aac", "mp4" ], i = 0, len = supportedExtensions.length; len > i; i++) {
@@ -2892,11 +2554,9 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), XHRLoader = /** @class */ function() {
+        var g = require("@akashic/akashic-engine"), XHRLoader = function() {
             function XHRLoader(options) {
-                void 0 === options && (options = {}), // デフォルトのタイムアウトは15秒
-                // TODO: タイムアウト値はこれが妥当であるか後日詳細を検討する
-                this.timeout = options.timeout || 15e3;
+                void 0 === options && (options = {}), this.timeout = options.timeout || 15e3;
             }
             return XHRLoader.prototype.get = function(url, callback) {
                 this._getRequestObject({
@@ -2915,7 +2575,6 @@ require = function e(t, n, r) {
                     callback(g.ExceptionFactory.createAssetLoadError("loading timeout"));
                 }, !1), request.addEventListener("load", function() {
                     if (request.status >= 200 && request.status < 300) {
-                        // "text" とそれ以外で取得方法を分類する
                         var response = "text" === requestObject.responseType ? request.responseText : request.response;
                         callback(null, response);
                     } else callback(g.ExceptionFactory.createAssetLoadError("loading error. status: " + request.status));
