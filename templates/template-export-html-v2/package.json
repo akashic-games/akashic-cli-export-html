@@ -19,7 +19,7 @@
   },
   "optionalDependencies": {
     "@akashic/game-driver": "~1.1.0",
-    "@akashic/pdi-browser": "~1.2.1",
+    "@akashic/pdi-browser": "~1.2.2",
     "@akashic/game-storage": "0.0.6"
   },
   "private": true

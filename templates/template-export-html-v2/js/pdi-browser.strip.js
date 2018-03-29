@@ -21,34 +21,6 @@ require = function e(t, n, r) {
     for (var i = "function" == typeof require && require, o = 0; o < r.length; o++) s(r[o]);
     return s;
 }({
-    "@akashic/pdi-browser": [ function(require, module, exports) {
-        "use strict";
-        Object.defineProperty(exports, "__esModule", {
-            value: !0
-        });
-        var Platform_1 = require("./Platform");
-        exports.Platform = Platform_1.Platform;
-        var ResourceFactory_1 = require("./ResourceFactory");
-        exports.ResourceFactory = ResourceFactory_1.ResourceFactory;
-        var g = require("@akashic/akashic-engine");
-        exports.g = g;
-        var AudioPluginRegistry_1 = require("./plugin/AudioPluginRegistry");
-        exports.AudioPluginRegistry = AudioPluginRegistry_1.AudioPluginRegistry;
-        var AudioPluginManager_1 = require("./plugin/AudioPluginManager");
-        exports.AudioPluginManager = AudioPluginManager_1.AudioPluginManager;
-        var HTMLAudioPlugin_1 = require("./plugin/HTMLAudioPlugin/HTMLAudioPlugin");
-        exports.HTMLAudioPlugin = HTMLAudioPlugin_1.HTMLAudioPlugin;
-        var WebAudioPlugin_1 = require("./plugin/WebAudioPlugin/WebAudioPlugin");
-        exports.WebAudioPlugin = WebAudioPlugin_1.WebAudioPlugin;
-    }, {
-        "./Platform": 4,
-        "./ResourceFactory": 6,
-        "./plugin/AudioPluginManager": 21,
-        "./plugin/AudioPluginRegistry": 22,
-        "./plugin/HTMLAudioPlugin/HTMLAudioPlugin": 25,
-        "./plugin/WebAudioPlugin/WebAudioPlugin": 29,
-        "@akashic/akashic-engine": "@akashic/akashic-engine"
-    } ],
     1: [ function(require, module, exports) {
         "use strict";
         Object.defineProperty(exports, "__esModule", {
@@ -1309,7 +1281,7 @@ require = function e(t, n, r) {
                 var audioElement = document.createElement("audio"), supportedFormats = [];
                 try {
                     for (var supportedExtensions = [ "ogg", "aac", "mp4" ], i = 0, len = supportedExtensions.length; len > i; i++) {
-                        var ext = supportedExtensions[i], supported = "no" !== audioElement.canPlayType("audio/" + ext) && "" !== audioElement.canPlayType("audio/" + ext);
+                        var ext = supportedExtensions[i], canPlay = audioElement.canPlayType("audio/" + ext), supported = "no" !== canPlay && "" !== canPlay;
                         supported && supportedFormats.push(ext);
                     }
                 } catch (e) {}
@@ -1384,7 +1356,8 @@ require = function e(t, n, r) {
         var WebAudioHelper, AudioContext = window.AudioContext || window.webkitAudioContext, singleContext = null;
         !function(WebAudioHelper) {
             function getAudioContext() {
-                return singleContext || (singleContext = new AudioContext()), singleContext;
+                return singleContext || (singleContext = new AudioContext(), WebAudioHelper._workAroundSafari()), 
+                singleContext;
             }
             function createGainNode(context) {
                 return context.createGain ? context.createGain() : context.createGainNode();
@@ -1394,8 +1367,13 @@ require = function e(t, n, r) {
                 return sourceNode.start ? sourceNode : (sourceNode.start = sourceNode.noteOn, sourceNode.stop = sourceNode.noteOff, 
                 sourceNode);
             }
+            function _workAroundSafari() {
+                document.addEventListener("touchstart", function touchInitializeHandler() {
+                    document.removeEventListener("touchstart", touchInitializeHandler), singleContext.createBufferSource().start(0);
+                }, !0);
+            }
             WebAudioHelper.getAudioContext = getAudioContext, WebAudioHelper.createGainNode = createGainNode, 
-            WebAudioHelper.createBufferNode = createBufferNode;
+            WebAudioHelper.createBufferNode = createBufferNode, WebAudioHelper._workAroundSafari = _workAroundSafari;
         }(WebAudioHelper || (WebAudioHelper = {})), module.exports = WebAudioHelper;
     }, {} ],
     28: [ function(require, module, exports) {
@@ -1485,7 +1463,7 @@ require = function e(t, n, r) {
                 var audioElement = document.createElement("audio"), supportedFormats = [];
                 try {
                     for (var supportedExtensions = [ "ogg", "aac", "mp4" ], i = 0, len = supportedExtensions.length; len > i; i++) {
-                        var ext = supportedExtensions[i], supported = "no" !== audioElement.canPlayType("audio/" + ext) && "" !== audioElement.canPlayType("audio/" + ext);
+                        var ext = supportedExtensions[i], canPlay = audioElement.canPlayType("audio/" + ext), supported = "no" !== canPlay && "" !== canPlay;
                         supported && supportedFormats.push(ext);
                     }
                 } catch (e) {}
@@ -1540,5 +1518,33 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-    }, {} ]
+    }, {} ],
+    "@akashic/pdi-browser": [ function(require, module, exports) {
+        "use strict";
+        Object.defineProperty(exports, "__esModule", {
+            value: !0
+        });
+        var Platform_1 = require("./Platform");
+        exports.Platform = Platform_1.Platform;
+        var ResourceFactory_1 = require("./ResourceFactory");
+        exports.ResourceFactory = ResourceFactory_1.ResourceFactory;
+        var g = require("@akashic/akashic-engine");
+        exports.g = g;
+        var AudioPluginRegistry_1 = require("./plugin/AudioPluginRegistry");
+        exports.AudioPluginRegistry = AudioPluginRegistry_1.AudioPluginRegistry;
+        var AudioPluginManager_1 = require("./plugin/AudioPluginManager");
+        exports.AudioPluginManager = AudioPluginManager_1.AudioPluginManager;
+        var HTMLAudioPlugin_1 = require("./plugin/HTMLAudioPlugin/HTMLAudioPlugin");
+        exports.HTMLAudioPlugin = HTMLAudioPlugin_1.HTMLAudioPlugin;
+        var WebAudioPlugin_1 = require("./plugin/WebAudioPlugin/WebAudioPlugin");
+        exports.WebAudioPlugin = WebAudioPlugin_1.WebAudioPlugin;
+    }, {
+        "./Platform": 4,
+        "./ResourceFactory": 6,
+        "./plugin/AudioPluginManager": 21,
+        "./plugin/AudioPluginRegistry": 22,
+        "./plugin/HTMLAudioPlugin/HTMLAudioPlugin": 25,
+        "./plugin/WebAudioPlugin/WebAudioPlugin": 29,
+        "@akashic/akashic-engine": "@akashic/akashic-engine"
+    } ]
 }, {}, []);
