@@ -1,6 +1,6 @@
 {
   "name": "@akashic/akashic-cli-export-html",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "description": "A module to convert your Akashic game to a runnable standalone.",
   "main": "lib/index.js",
   "scripts": {
@@ -26,7 +26,7 @@
     "update-template": "npm run update-template:v1 && npm run update-template:v1",
     "update-template:v1": "cd templates/template-export-html-v1 && npm run update && npm run build && cd ../../",
     "update-template:v2": "cd templates/template-export-html-v2 && npm run update && npm run build && cd ../../"
-},
+  },
   "author": "DWANGO Co., Ltd.",
   "license": "MIT",
   "bin": {
@@ -42,21 +42,22 @@
   "devDependencies": {
     "@akashic/akashic-engine": "~2.0.0",
     "@types/commander": "~2.3.31",
+    "@types/fs-extra": "^5.0.0",
     "@types/fs-readdir-recursive": "~1.0.0",
     "@types/node": "~8.0.53",
     "@types/uglify-js": "~2.6.29",
-    "@types/fs-extra": "^5.0.0",
     "browserify": "^13.0.0",
-    "shx": "~0.2.2",
+    "istanbul": "^0.3.2",
     "jasmine": "^2.1.1",
     "jasmine-reporters": "~2.0.4",
-    "istanbul": "^0.3.2",
     "jasmine-terminal-reporter": "~0.9.1",
+    "mock-fs": "3.12.1",
     "remark-cli": "~2.0.0",
     "remark-lint": "~5.0.1",
-    "mock-fs": "3.12.1",
+    "shx": "~0.2.2",
     "tslint": "~5.9.0",
     "typescript": "~2.6.1",
+    "uglify-save-license": "^0.4.1",
     "vinyl-source-stream": "^1.1.0"
   },
   "typings": "lib/index.d.ts",
