@@ -32,7 +32,7 @@ window.addEventListener("load", function() {
 		var pf = new pdiBrowser.Platform({
 			amflow: amflowClient,
 			containerView: document.getElementById("container"),
-			audioPlugins: [pdiBrowser.HTMLAudioPlugin],
+			audioPlugins: [pdiBrowser.WebAudioPlugin, pdiBrowser.HTMLAudioPlugin],
 		});
 
 		pf.loadGameConfiguration = function(url, callback) {
