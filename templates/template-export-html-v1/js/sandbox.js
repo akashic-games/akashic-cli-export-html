@@ -29,10 +29,18 @@ window.addEventListener("load", function() {
 			}
 		});
 
+		var audioPlugins;
+		if (location.protocol !== "file:") {
+			// 特にSafariの制約(user activationなしでは音が鳴らない)回避のため、可能ならWebAudioを使う
+			audioPlugins = [pdiBrowser.WebAudioPlugin, pdiBrowser.HTMLAudioPlugin];
+		} else {
+			// file:の場合ブラウザによってCORSの制約にひっかかるWebAudioは避ける
+			audioPlugins = [pdiBrowser.HTMLAudioPlugin];
+		}
 		var pf = new pdiBrowser.Platform({
 			amflow: amflowClient,
 			containerView: document.getElementById("container"),
-			audioPlugins: [pdiBrowser.WebAudioPlugin, pdiBrowser.HTMLAudioPlugin],
+			audioPlugins: audioPlugins
 		});
 
 		pf.loadGameConfiguration = function(url, callback) {
