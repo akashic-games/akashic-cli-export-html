@@ -37,7 +37,7 @@ describe("exportHTML", function () {
 			param = {
 				logger: undefined,
 				cwd: path.join(process.cwd(), "content"),
-				output:  "./output"
+				output:  "../output"
 			}
 			exp._completeExportHTMLParameterObject(param);
 			expect(param.output).toBe(path.join(process.cwd(), "output"));
