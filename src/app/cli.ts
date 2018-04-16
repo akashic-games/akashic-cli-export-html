@@ -60,7 +60,6 @@ commander
 	.option("-b, --bundle", "bundle assets and scripts in index.html (to reduce the number of files)")
 	.option("-m, --magnify", "fit game area to outer element size");
 
-
 export function run(argv: string[]): void {
 	// Commander の制約により --strip と --no-strip 引数を両立できないため、暫定対応として Commander 前に argv を処理する
 	const argvCopy = dropDeprecatedArgs(argv);
