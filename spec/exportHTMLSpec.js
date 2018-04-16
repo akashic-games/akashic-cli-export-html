@@ -27,7 +27,8 @@ describe("exportHTML", function () {
 		.then(function () {
 			var param = {
 				logger: undefined,
-				cwd: path.join(process.cwd(), "content"),
+				cwd: path.join(process.cwd(), ""),
+				source: path.join(process.cwd(), "content"),
 				output: path.join(process.cwd(), "output")
 			}
 			exp._completeExportHTMLParameterObject(param);
@@ -43,6 +44,7 @@ describe("exportHTML", function () {
 		})
 		.then(done, done.fail);
 	});
+
 
 	it("promiseExportHTML", function (done) {
 		Promise.resolve()
