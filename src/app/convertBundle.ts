@@ -11,7 +11,8 @@ import {
 	wrap,
 	getDefaultBundleScripts,
 	getDefaultBundleStyle,
-	extractAssetDefinitions
+	extractAssetDefinitions,
+	getFileContents
 } from "./convertUtil";
 
 interface InnerHTMLAssetData {
@@ -98,7 +99,8 @@ function writeEct(
 		preloadScripts: scripts.preloadScripts,
 		postloadScripts: scripts.postloadScripts,
 		css: getDefaultBundleStyle(templatePath),
-		magnify: !!options.magnify
+		magnify: !!options.magnify,
+		fileContents: getFileContents(path.join(options.source, "innerhtml"))
 	});
 	fs.writeFileSync(path.resolve(outputPath, "./index.html"), html);
 }

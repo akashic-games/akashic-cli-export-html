@@ -9,7 +9,8 @@ import {
 	copyAssetFiles,
 	encodeText,
 	wrap,
-	extractAssetDefinitions
+	extractAssetDefinitions,
+	getFileContents
 } from "./convertUtil";
 
 export async function promiseConvertNoBundle(options: ConvertTemplateParameterObject): Promise<void> {
@@ -74,7 +75,8 @@ function writeEct(assetPaths: string[], outputPath: string, conf: cmn.Configurat
 	var ectRender = ect({root: __dirname + "/../templates-build", ext: ".ect"});
 	var html = ectRender.render("no-bundle-index", {
 		assets: assetPaths,
-		magnify: !!options.magnify
+		magnify: !!options.magnify,
+		fileContents: getFileContents(path.join(options.source, "innerhtml"))
 	});
 	fs.writeFileSync(path.resolve(outputPath, "./index.html"), html);
 }

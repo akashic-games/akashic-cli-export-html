@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## Unreleased changes
+* コンテンツ中の`innerhtml`ディレクトリ内の全ファイルの内容が、出力HTMLにインサートされるように改修
+
 ## 0.1.21
 * `--output` や `--source` にフルパスを指定した場合、パスの解決に失敗してエラーになる問題を修正
 

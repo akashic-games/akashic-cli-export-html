@@ -43,6 +43,10 @@ if (! ("gLocalAssetContainer" in window)) {
 <%- @css %>
 </style>
 
+<% for fileContent in @fileContents : %>
+<%- fileContent %>
+<% end %>
+
 </head>
 <body>
 <div id="container">

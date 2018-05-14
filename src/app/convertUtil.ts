@@ -112,6 +112,20 @@ export function getDefaultBundleStyle(templatePath: string): string {
 	return fs.readFileSync(filepath, "utf8").replace(/\r\n|\r/g, "\n");
 }
 
+export function getFileContents(inputDirPath: string): string[] {
+	try {
+		fs.statSync(inputDirPath);
+		return fs.readdirSync(inputDirPath)
+			.map(fileName => fs.readFileSync(path.join(inputDirPath, fileName), "utf8").replace(/\r\n|\r/g, "\n"));
+	} catch (e) {
+		if (e.code === "ENOENT") {
+			return [];
+		} else {
+			throw e;
+		}
+	}
+}
+
 function loadScriptFile(fileName: string, templatePath: string): string {
 	try {
 		const filepath = path.resolve(__dirname, "..", templatePath, "js", fileName);
