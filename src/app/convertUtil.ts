@@ -13,6 +13,7 @@ export interface ConvertTemplateParameterObject {
 	magnify: boolean;
 	force: boolean;
 	source: string;
+	injects?: string[];
 }
 
 export function extractAssetDefinitions (conf: cmn.Configuration, type: string): string[] {
@@ -112,18 +113,28 @@ export function getDefaultBundleStyle(templatePath: string): string {
 	return fs.readFileSync(filepath, "utf8").replace(/\r\n|\r/g, "\n");
 }
 
-export function getFileContents(inputDirPath: string): string[] {
-	try {
-		fs.statSync(inputDirPath);
-		return fs.readdirSync(inputDirPath)
-			.map(fileName => fs.readFileSync(path.join(inputDirPath, fileName), "utf8").replace(/\r\n|\r/g, "\n"));
-	} catch (e) {
-		if (e.code === "ENOENT") {
-			return [];
-		} else {
-			throw e;
+export function getInjectedContents(baseDir: string, injects: string[]): string[] {
+	let injectedContents: string[] = [];
+	for (let i = 0; i < injects.length; i++) {
+		const filePath = path.join(baseDir, injects[i]);
+		try {
+			if (fs.statSync(filePath).isDirectory()) {
+				injectedContents = injectedContents.concat(getFileContentsFromDirectory(filePath));
+			} else {
+				injectedContents.push(fs.readFileSync(filePath, "utf8").replace(/\r\n|\r/g, "\n"));
+			}
+		} catch (e) {
+			if (e.code !== "ENOENT") {
+				throw e;
+			}
 		}
 	}
+	return injectedContents;
+}
+
+function getFileContentsFromDirectory(inputDirPath: string): string[] {
+	return fs.readdirSync(inputDirPath)
+		.map(fileName => fs.readFileSync(path.join(inputDirPath, fileName), "utf8").replace(/\r\n|\r/g, "\n"));
 }
 
 function loadScriptFile(fileName: string, templatePath: string): string {

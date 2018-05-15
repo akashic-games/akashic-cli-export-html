@@ -19,8 +19,9 @@
 <% end %>
 <script src="./js/sandbox.js"></script>
 
-<% for fileContent in @fileContents : %>
-<%- fileContent %>
+<% for injectedContent in @injectedContents : %>
+<%- injectedContent %>
+
 <% end %>
 
 </head>

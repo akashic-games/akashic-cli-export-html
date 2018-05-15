@@ -10,7 +10,7 @@ import {
 	encodeText,
 	wrap,
 	extractAssetDefinitions,
-	getFileContents
+	getInjectedContents
 } from "./convertUtil";
 
 export async function promiseConvertNoBundle(options: ConvertTemplateParameterObject): Promise<void> {
@@ -72,11 +72,12 @@ function convertGlobalScriptAndOutput(scriptName: string, inputPath: string, out
 }
 
 function writeEct(assetPaths: string[], outputPath: string, conf: cmn.Configuration, options: ConvertTemplateParameterObject): void {
+	const injects = options.injects ? options.injects : [];
 	var ectRender = ect({root: __dirname + "/../templates-build", ext: ".ect"});
 	var html = ectRender.render("no-bundle-index", {
 		assets: assetPaths,
 		magnify: !!options.magnify,
-		fileContents: getFileContents(path.join(options.source, "innerhtml"))
+		injectedContents: getInjectedContents(options.source, injects)
 	});
 	fs.writeFileSync(path.resolve(outputPath, "./index.html"), html);
 }

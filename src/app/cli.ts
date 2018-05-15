@@ -16,6 +16,7 @@ interface CommandParameterObject {
 	minify?: boolean;
 	bundle?: boolean;
 	magnify?: boolean;
+	injects?: string[];
 }
 
 function cli(param: CommandParameterObject): void {
@@ -32,7 +33,8 @@ function cli(param: CommandParameterObject): void {
 		hashLength: !param.hashFilename ? 0 : (param.hashFilename === true) ? 20 : Number(param.hashFilename),
 		minify: param.minify,
 		bundle: param.bundle,
-		magnify: param.magnify
+		magnify: param.magnify,
+		injects: param.injects
 	};
 	Promise.resolve()
 		.then(() => promiseExportHTML(exportParam))
@@ -58,7 +60,8 @@ commander
 	.option("-H, --hash-filename [length]", "Rename asset files with their hash values")
 	.option("-M, --minify", "minify JavaScript files")
 	.option("-b, --bundle", "bundle assets and scripts in index.html (to reduce the number of files)")
-	.option("-m, --magnify", "fit game area to outer element size");
+	.option("-m, --magnify", "fit game area to outer element size")
+	.option("-i, --inject [fileName]", "specify injected file content into index.html", inject, []);
 
 export function run(argv: string[]): void {
 	// Commander の制約により --strip と --no-strip 引数を両立できないため、暫定対応として Commander 前に argv を処理する
@@ -74,7 +77,8 @@ export function run(argv: string[]): void {
 		minify: commander["minify"],
 		bundle: commander["bundle"],
 		magnify: commander["magnify"],
-		hashFilename: commander["hashFilename"]
+		hashFilename: commander["hashFilename"],
+		injects: commander["inject"]
 	});
 }
 
@@ -85,4 +89,9 @@ function dropDeprecatedArgs(argv: string[]): string[] {
 		console.log("WARN: If you do not need to apply it, use --no-strip option.");
 	}
 	return filteredArgv;
+}
+
+function inject(val: string, injects: string[]): string[] {
+	injects.push(val);
+	return injects;
 }

@@ -43,8 +43,9 @@ if (! ("gLocalAssetContainer" in window)) {
 <%- @css %>
 </style>
 
-<% for fileContent in @fileContents : %>
-<%- fileContent %>
+<% for injectedContent in @injectedContents : %>
+<%- injectedContent %>
+
 <% end %>
 
 </head>
