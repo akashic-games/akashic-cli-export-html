@@ -32,9 +32,5 @@ describe("convertUtil", function () {
 			expect(existFileContents[0]).toBe(sampleStyleContent);
 			expect(existFileContents[1]).toBe(sampleScriptContent);
 		});
-		it("if specified file is not exist, get empty array", function() {
-			var notExistFileContents = convert.getInjectedContents(__dirname, ["fixture/not_exist"]);
-			expect(notExistFileContents.length).toBe(0);
-		});
 	});
 });

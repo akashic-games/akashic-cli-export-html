@@ -12,7 +12,6 @@ export interface ExportHTMLParameterObject extends ConvertTemplateParameterObjec
 	quiet?: boolean;
 	bundle?: boolean;
 	hashLength?: number;
-	cwd: string;
 }
 
 export function _completeExportHTMLParameterObject(param: ExportHTMLParameterObject): void {
@@ -70,6 +69,7 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 			magnify: param.magnify,
 			force: param.force,
 			source: gamepath,
+			cwd: param.cwd,
 			injects: param.injects
 		};
 		if (param.bundle) {

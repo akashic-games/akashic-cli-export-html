@@ -13,6 +13,7 @@ export interface ConvertTemplateParameterObject {
 	magnify: boolean;
 	force: boolean;
 	source: string;
+	cwd: string;
 	injects?: string[];
 }
 
@@ -117,16 +118,10 @@ export function getInjectedContents(baseDir: string, injects: string[]): string[
 	let injectedContents: string[] = [];
 	for (let i = 0; i < injects.length; i++) {
 		const filePath = path.join(baseDir, injects[i]);
-		try {
-			if (fs.statSync(filePath).isDirectory()) {
-				injectedContents = injectedContents.concat(getFileContentsFromDirectory(filePath));
-			} else {
-				injectedContents.push(fs.readFileSync(filePath, "utf8").replace(/\r\n|\r/g, "\n"));
-			}
-		} catch (e) {
-			if (e.code !== "ENOENT") {
-				throw e;
-			}
+		if (fs.statSync(filePath).isDirectory()) {
+			injectedContents = injectedContents.concat(getFileContentsFromDirectory(filePath));
+		} else {
+			injectedContents.push(fs.readFileSync(filePath, "utf8").replace(/\r\n|\r/g, "\n"));
 		}
 	}
 	return injectedContents;

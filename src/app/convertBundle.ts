@@ -101,7 +101,7 @@ function writeEct(
 		postloadScripts: scripts.postloadScripts,
 		css: getDefaultBundleStyle(templatePath),
 		magnify: !!options.magnify,
-		injectedContents: getInjectedContents(options.source, injects)
+		injectedContents: getInjectedContents(options.cwd, injects)
 	});
 	fs.writeFileSync(path.resolve(outputPath, "./index.html"), html);
 }
