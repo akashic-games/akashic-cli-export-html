@@ -2,12 +2,12 @@ var convert = require("../lib/convertUtil");
 
 describe("convertUtil", function () {
 	describe("getInjectedContents", function () {
-		var sampleScriptContent = "<script>\n\tconsole.log(\"test\");\n</script>";
+		var sampleScriptContent = "<script>\n\tconsole.log(\"test\");\n</script>\n";
 		var sampleStyleContent = "<style type=\"text/css\">\n" +
 			"\tbody{\n" +
 			"\t\toverflow: hidden;\n" +
 			"\t}\n" +
-			"</style>";
+			"</style>\n";
 
 		it("can get file content", function () {
 			var existFileContents = convert.getInjectedContents(
