@@ -11,7 +11,8 @@ import {
 	wrap,
 	getDefaultBundleScripts,
 	getDefaultBundleStyle,
-	extractAssetDefinitions
+	extractAssetDefinitions,
+	getInjectedContents
 } from "./convertUtil";
 
 interface InnerHTMLAssetData {
@@ -91,6 +92,7 @@ function convertScriptNameToInnerHTMLObj(scriptName: string, inputPath: string, 
 function writeEct(
 	innerHTMLAssetArray: InnerHTMLAssetData[], outputPath: string,
 	conf: cmn.Configuration, options: ConvertTemplateParameterObject, templatePath: string): void {
+	const injects = options.injects ? options.injects : [];
 	var scripts = getDefaultBundleScripts(templatePath, options.minify);
 	var ectRender = ect({root: __dirname + "/../templates-build", ext: ".ect"});
 	var html = ectRender.render("bundle-index", {
@@ -98,7 +100,8 @@ function writeEct(
 		preloadScripts: scripts.preloadScripts,
 		postloadScripts: scripts.postloadScripts,
 		css: getDefaultBundleStyle(templatePath),
-		magnify: !!options.magnify
+		magnify: !!options.magnify,
+		injectedContents: getInjectedContents(options.cwd, injects)
 	});
 	fs.writeFileSync(path.resolve(outputPath, "./index.html"), html);
 }

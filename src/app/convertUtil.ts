@@ -13,6 +13,8 @@ export interface ConvertTemplateParameterObject {
 	magnify: boolean;
 	force: boolean;
 	source: string;
+	cwd: string;
+	injects?: string[];
 }
 
 export function extractAssetDefinitions (conf: cmn.Configuration, type: string): string[] {
@@ -110,6 +112,24 @@ export function getDefaultBundleScripts(templatePath: string, minify?: boolean):
 export function getDefaultBundleStyle(templatePath: string): string {
 	const filepath = path.resolve(__dirname, "..", templatePath, "css", "style.css");
 	return fs.readFileSync(filepath, "utf8").replace(/\r\n|\r/g, "\n");
+}
+
+export function getInjectedContents(baseDir: string, injects: string[]): string[] {
+	let injectedContents: string[] = [];
+	for (let i = 0; i < injects.length; i++) {
+		const filePath = path.join(baseDir, injects[i]);
+		if (fs.statSync(filePath).isDirectory()) {
+			injectedContents = injectedContents.concat(getFileContentsFromDirectory(filePath));
+		} else {
+			injectedContents.push(fs.readFileSync(filePath, "utf8").replace(/\r\n|\r/g, "\n"));
+		}
+	}
+	return injectedContents;
+}
+
+function getFileContentsFromDirectory(inputDirPath: string): string[] {
+	return fs.readdirSync(inputDirPath)
+		.map(fileName => fs.readFileSync(path.join(inputDirPath, fileName), "utf8").replace(/\r\n|\r/g, "\n"));
 }
 
 function loadScriptFile(fileName: string, templatePath: string): string {
