@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## Unreleased changes
+## 0.1.22
 * `--inject` オプションを追加
   * `--inject` で指定したファイルの内容、もしくはディレクトリの全ファイルを、出力HTMLに含める
 
