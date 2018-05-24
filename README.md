@@ -37,6 +37,12 @@ npm test
 akashic-cli-export-html
 ```
 
+## 内部モジュールの更新方法
+
+`npm run build` で自動的に更新されます。
+明示的に更新したい場合、 `./templates` 以下の各 package.json の依存バージョンを書き換えた後、
+`npm run build` を再度実行するか、テンプレートのディレクトリで `npm run update` を実行してください。
+
 ## ライセンス
 本リポジトリは MIT License の元で公開されています。
 詳しくは [LICENSE](./LICENSE) をご覧ください。
