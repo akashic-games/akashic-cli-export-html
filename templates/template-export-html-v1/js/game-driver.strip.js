@@ -74,8 +74,8 @@ require = function e(t, n, r) {
         var g = (require("@akashic/akashic-pdi"), require("@akashic/akashic-engine")), PointEventResolver_1 = require("./PointEventResolver"), EventBuffer = function() {
             function EventBuffer(param) {
                 this._amflow = param.amflow, this._isLocalReceiver = !0, this._isReceiver = !1, 
-                this._isSender = !1, this._defaultEventPriority = 0, this._buffer = null, this._joinLeaveBuffer = null, 
-                this._localBuffer = null, this._filters = null, this._unfilteredLocalEvents = [], 
+                this._isSender = !1, this._isDiscarder = !1, this._defaultEventPriority = 0, this._buffer = null, 
+                this._joinLeaveBuffer = null, this._localBuffer = null, this._filters = null, this._unfilteredLocalEvents = [], 
                 this._unfilteredEvents = [], this._unfilteredJoinLeaves = [], this._pointEventResolver = new PointEventResolver_1.PointEventResolver({
                     game: param.game
                 }), this._onEvent_bound = this.onEvent.bind(this);
@@ -113,16 +113,18 @@ require = function e(t, n, r) {
                 null != param.isLocalReceiver && (this._isLocalReceiver = param.isLocalReceiver), 
                 null != param.isReceiver && this._isReceiver !== param.isReceiver && (this._isReceiver = param.isReceiver, 
                 param.isReceiver ? this._amflow.onEvent(this._onEvent_bound) : this._amflow.offEvent(this._onEvent_bound)), 
-                null != param.isSender && (this._isSender = param.isSender), null != param.defaultEventPriority && (this._defaultEventPriority = param.defaultEventPriority);
+                null != param.isSender && (this._isSender = param.isSender), null != param.isDiscarder && (this._isDiscarder = param.isDiscarder), 
+                null != param.defaultEventPriority && (this._defaultEventPriority = param.defaultEventPriority);
             }, EventBuffer.prototype.getMode = function() {
                 return {
                     isLocalReceiver: this._isLocalReceiver,
                     isReceiver: this._isReceiver,
                     isSender: this._isSender,
+                    isDiscarder: this._isDiscarder,
                     defaultEventPriority: this._defaultEventPriority
                 };
             }, EventBuffer.prototype.onEvent = function(pev) {
-                return EventBuffer.isEventLocal(pev) ? void (this._isLocalReceiver && this._unfilteredLocalEvents.push(pev)) : (this._isReceiver && (0 === pev[0] || 1 === pev[0] ? this._unfilteredJoinLeaves.push(pev) : this._unfilteredEvents.push(pev)), 
+                return EventBuffer.isEventLocal(pev) ? void (this._isLocalReceiver && !this._isDiscarder && this._unfilteredLocalEvents.push(pev)) : (this._isReceiver && !this._isDiscarder && (0 === pev[0] || 1 === pev[0] ? this._unfilteredJoinLeaves.push(pev) : this._unfilteredEvents.push(pev)), 
                 void (this._isSender && (null == pev[1] && (pev[1] = this._defaultEventPriority), 
                 this._amflow.sendEvent(pev))));
             }, EventBuffer.prototype.onPointEvent = function(e) {
@@ -142,10 +144,10 @@ require = function e(t, n, r) {
                 pev && this.onEvent(pev);
             }, EventBuffer.prototype.addEventDirect = function(pev) {
                 if (EventBuffer.isEventLocal(pev)) {
-                    if (!this._isLocalReceiver) return;
+                    if (!this._isLocalReceiver || this._isDiscarder) return;
                     return void (this._localBuffer ? this._localBuffer.push(pev) : this._localBuffer = [ pev ]);
                 }
-                this._isReceiver && (0 === pev[0] || 1 === pev[0] ? this._joinLeaveBuffer ? this._joinLeaveBuffer.push(pev) : this._joinLeaveBuffer = [ pev ] : this._buffer ? this._buffer.push(pev) : this._buffer = [ pev ]), 
+                this._isReceiver && !this._isDiscarder && (0 === pev[0] || 1 === pev[0] ? this._joinLeaveBuffer ? this._joinLeaveBuffer.push(pev) : this._joinLeaveBuffer = [ pev ] : this._buffer ? this._buffer.push(pev) : this._buffer = [ pev ]), 
                 this._isSender && (null == pev[1] && (pev[1] = this._defaultEventPriority), this._amflow.sendEvent(pev));
             }, EventBuffer.prototype.readEvents = function() {
                 var ret = this._buffer;
@@ -411,6 +413,14 @@ require = function e(t, n, r) {
                         gameSnapshot: gameSnapshot
                     }
                 });
+            }, Game.prototype._destroy = function() {
+                this.agePassedTrigger.destroy(), this.agePassedTrigger = null, this.skippingChangedTrigger.destroy(), 
+                this.skippingChangedTrigger = null, this.abortTrigger.destroy(), this.abortTrigger = null, 
+                this.player = null, this.raiseEventTrigger.destroy(), this.raiseEventTrigger = null, 
+                this.raiseTickTrigger.destroy(), this.raiseTickTrigger = null, this.snapshotTrigger.destroy(), 
+                this.snapshotTrigger = null, this.isSnapshotSaver = !1, this._getCurrentTimeFunc = null, 
+                this._eventFilterFuncs = null, this._notifyPassedAgeTable = null, this._gameArgs = null, 
+                this._globalGameArgs = null, _super.prototype._destroy.call(this);
             }, Game.prototype._restartWithSnapshot = function(snapshot) {
                 var data = snapshot.data;
                 if (this._eventFilterFuncs.removeFilter(), null != data.seed) {
@@ -512,6 +522,17 @@ require = function e(t, n, r) {
                 }).then(function(conf) {
                     return _this._createGame(conf, _this._player, param);
                 }) : p;
+            }, GameDriver.prototype.destroy = function() {
+                var _this = this;
+                return new es6_promise_1.Promise(function(resolve, reject) {
+                    _this.stopGame(), _this._game && (_this._game._destroy(), _this._game = null), _this.errorTrigger.destroy(), 
+                    _this.errorTrigger = null, _this.configurationLoadedTrigger.destroy(), _this.configurationLoadedTrigger = null, 
+                    _this.gameCreatedTrigger.destroy(), _this.gameCreatedTrigger = null, _this._platform.setRendererRequirement(void 0), 
+                    _this._platform = null, _this._loadConfigurationFunc = null, _this._player = null, 
+                    _this._rendererRequirement = null, _this._playId = null, _this._gameLoop = null, 
+                    _this._eventBuffer = null, _this._openedAmflow = !1, _this._playToken = null, _this._permission = null, 
+                    _this._hidden = !1, resolve();
+                });
             }, GameDriver.prototype._doSetDriverConfiguration = function(dconf) {
                 var _this = this;
                 if (null == dconf) return es6_promise_1.Promise.resolve();
