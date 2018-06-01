@@ -8,6 +8,7 @@
 
 通常、ゲーム開発者がこのライブラリを直接利用する必要はありません。
 [akashic-cli](https://github.com/akashic-games/akashic-cli) を利用してください。
+Akashic Engineの詳細な利用方法については、 [公式ページ](https://akashic-games.github.io/) を参照してください。
 
 ## ビルド方法
 
