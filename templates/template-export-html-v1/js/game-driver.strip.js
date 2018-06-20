@@ -1,26 +1,29 @@
-require = function e(t, n, r) {
-    function s(o, u) {
-        if (!n[o]) {
-            if (!t[o]) {
-                var a = "function" == typeof require && require;
-                if (!u && a) return a(o, !0);
-                if (i) return i(o, !0);
-                var f = new Error("Cannot find module '" + o + "'");
-                throw f.code = "MODULE_NOT_FOUND", f;
+require = function() {
+    function r(e, n, t) {
+        function o(i, f) {
+            if (!n[i]) {
+                if (!e[i]) {
+                    var c = "function" == typeof require && require;
+                    if (!f && c) return c(i, !0);
+                    if (u) return u(i, !0);
+                    var a = new Error("Cannot find module '" + i + "'");
+                    throw a.code = "MODULE_NOT_FOUND", a;
+                }
+                var p = n[i] = {
+                    exports: {}
+                };
+                e[i][0].call(p.exports, function(r) {
+                    var n = e[i][1][r];
+                    return o(n || r);
+                }, p, p.exports, r, e, n, t);
             }
-            var l = n[o] = {
-                exports: {}
-            };
-            t[o][0].call(l.exports, function(e) {
-                var n = t[o][1][e];
-                return s(n ? n : e);
-            }, l, l.exports, e, t, n, r);
+            return n[i].exports;
         }
-        return n[o].exports;
+        for (var u = "function" == typeof require && require, i = 0; i < t.length; i++) o(t[i]);
+        return o;
     }
-    for (var i = "function" == typeof require && require, o = 0; o < r.length; o++) s(r[o]);
-    return s;
-}({
+    return r;
+}()({
     1: [ function(require, module, exports) {
         "use strict";
         Object.defineProperty(exports, "__esModule", {
@@ -927,7 +930,7 @@ require = function e(t, n, r) {
                 this._clock.frameTrigger.remove(this._eventBuffer, this._eventBuffer.processEvents), 
                 this._tickBuffer.setCurrentAge(startPoint.frame), this._currentTime = startPoint.timestamp || startPoint.data.timestamp || 0, 
                 this._waitingNextTick = !1, this._lastRequestedStartPointAge = -1, this._lastRequestedStartPointTime = -1, 
-                this._game._restartWithSnapshot(startPoint), this._handleSceneChange(), this.start();
+                this._game._restartWithSnapshot(startPoint), this._handleSceneChange();
             }, GameLoop.prototype._onGameStarted = function() {
                 this._clock.frameTrigger.handleInsert(0, this._eventBuffer, this._eventBuffer.processEvents);
             }, GameLoop.prototype._setLoopRenderMode = function(mode) {
