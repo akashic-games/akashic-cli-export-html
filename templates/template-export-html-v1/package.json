@@ -13,7 +13,7 @@
     "update:engine": "node ../../build-template-support/updatefiles.js template-export-html-v1 engine"
   },
   "devDependencies": {
-    "@akashic/akashic-engine": "1.12.10",
+    "@akashic/akashic-engine": "1.12.11",
     "browserify": "^13.0.0",
     "shx": "~0.2.2"
   },
