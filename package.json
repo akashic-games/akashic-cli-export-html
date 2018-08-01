@@ -47,7 +47,7 @@
     "@types/node": "~8.0.53",
     "@types/uglify-js": "~2.6.29",
     "browserify": "^13.0.0",
-    "istanbul": "^0.3.2",
+    "istanbul": "^0.4.5",
     "jasmine": "^2.1.1",
     "jasmine-reporters": "~2.0.4",
     "jasmine-terminal-reporter": "~0.9.1",
