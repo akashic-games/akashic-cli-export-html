@@ -67,10 +67,16 @@ function convertAssetToInnerHTMLObj(assetName: string, inputPath: string, conf: 
 	var assets = conf._content.assets;
 	var isScript = assets[assetName].type === "script";
 	var assetString = fs.readFileSync(path.join(inputPath, assets[assetName].path), "utf8").replace(/\r\n|\r/g, "\n");
+	var code;
+	try {
+		code = (isScript ? wrap(assetString, minify) : encodeText(assetString));
+	} catch (e) {
+		throw new Error(`Please describe with ES5 syntax (filePath: ${inputPath})`);
+	}
 	return {
 		name: assetName,
 		type: assets[assetName].type,
-		code: (isScript ? wrap(assetString, minify) : encodeText(assetString))
+		code
 	};
 }
 
@@ -82,10 +88,16 @@ function convertScriptNameToInnerHTMLObj(scriptName: string, inputPath: string, 
 	if (path.extname(scriptPath) === ".json") {
 		scriptString = encodeText(scriptString);
 	}
+	var code;
+	try {
+		code = isScript ? wrap(scriptString, minify) : scriptString;
+	} catch (e) {
+		throw new Error(`Please describe with ES5 syntax (filePath: ${inputPath})`);
+	}
 	return {
 		name: scriptName,
 		type: isScript ? "script" : "text",
-		code: isScript ? wrap(scriptString, minify) : scriptString
+		code
 	};
 }
 

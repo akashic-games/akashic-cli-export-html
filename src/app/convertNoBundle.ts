@@ -49,7 +49,12 @@ function convertAssetAndOutput(
 	var isScript = assets[assetName].type === "script";
 	var assetString = fs.readFileSync(path.join(inputPath, assets[assetName].path), "utf8").replace(/\r\n|\r/g, "\n");
 
-	var code = (isScript ? wrapScript(assetString, assetName, minify) : wrapText(assetString, assetName));
+	var code;
+	try {
+		code = (isScript ? wrapScript(assetString, assetName, minify) : wrapText(assetString, assetName));
+	} catch (e) {
+		throw new Error(`Please describe with ES5 syntax (filePath: ${inputPath})`);
+	}
 	var assetPath = assets[assetName].path;
 	var relativePath = "./js/assets/" + path.dirname(assetPath) + "/" +
 		path.basename(assetPath, path.extname(assetPath)) + (isScript ? ".js" : ".json.js");
@@ -63,7 +68,12 @@ function convertGlobalScriptAndOutput(scriptName: string, inputPath: string, out
 	var scriptString = fs.readFileSync(path.join(inputPath, scriptName), "utf8").replace(/\r\n|\r/g, "\n");
 	var isScript = /\.js$/i.test(scriptName);
 
-	var code = isScript ? wrapScript(scriptString, scriptName, minify) : wrapText(scriptString, scriptName);
+	var code;
+	try {
+		code = isScript ? wrapScript(scriptString, scriptName, minify) : wrapText(scriptString, scriptName);
+	} catch (e) {
+		throw new Error(`Please describe with ES5 syntax (filePath: ${inputPath})`);
+	}
 	var relativePath = "./globalScripts/" + scriptName + (isScript ? "" : ".js");
 	var filePath = path.resolve(outputPath, relativePath);
 
