@@ -33,4 +33,18 @@ describe("convertUtil", function () {
 			expect(existFileContents[1]).toBe(sampleScriptContent);
 		});
 	});
+	describe("encodeText", function () {
+		it("can encode specified characters and the characters can be decode", function () {
+			var targetString = "";
+			for (var i = 0; i < 128; i++) {
+				targetString += String.fromCharCode(i);
+			}
+			targetString += "\u2028\u2029";
+			targetString += "あいうえお";
+			targetString += "１２３４５％＆’”";
+			targetString += "漢字例";
+			targetString += "○×";
+			expect(decodeURIComponent(convert.encodeText(targetString))).toBe(targetString);
+		});
+	});
 });
