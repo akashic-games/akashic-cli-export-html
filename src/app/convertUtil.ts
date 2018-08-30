@@ -85,9 +85,6 @@ export function encodeText(text: string): string {
 }
 
 export function wrap(code: string, minify?: boolean): string {
-	if (!cmn.LintUtil.validateEs5Code(code)) {
-		throw new Error("Please describe with ES5 syntax");
-	}
 	var PRE_SCRIPT = "(function(exports, require, module, __filename, __dirname) {";
 	var POST_SCRIPT = "})(g.module.exports, g.module.require, g.module, g.filename, g.dirname);";
 	var ret = PRE_SCRIPT + "\n" + code + "\n" + POST_SCRIPT + "\n";
@@ -128,6 +125,11 @@ export function getInjectedContents(baseDir: string, injects: string[]): string[
 		}
 	}
 	return injectedContents;
+}
+
+export function validateCode(fileName: string, code: string): string[] {
+	return cmn.LintUtil.validateEs5Code(code)
+		.map(info => `${fileName}(${info.line}:${info.column}): ${info.message}`);
 }
 
 function getFileContentsFromDirectory(inputDirPath: string): string[] {

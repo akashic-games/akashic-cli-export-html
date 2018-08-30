@@ -10,8 +10,14 @@ import {
 	encodeText,
 	wrap,
 	extractAssetDefinitions,
-	getInjectedContents
+	getInjectedContents,
+	validateCode
 } from "./convertUtil";
+
+interface AssetData {
+	code: string;
+	relativePath: string;
+}
 
 export async function promiseConvertNoBundle(options: ConvertTemplateParameterObject): Promise<void> {
 	var content = await cmn.ConfigurationFile.read(path.join(options.source, "game.json"), options.logger);
@@ -20,65 +26,74 @@ export async function promiseConvertNoBundle(options: ConvertTemplateParameterOb
 	var conf = new cmn.Configuration({
 		content: content
 	});
-	var assetPaths: string[] = [];
+	var assetDataList: AssetData[] = [];
 
 	writeCommonFiles(options.source, options.output, conf, options);
 
-	var gamejsonPath = path.resolve(options.output, "./js/game.json.js");
-	fsx.outputFileSync(gamejsonPath, wrapText(JSON.stringify(conf._content, null, "\t"), "game.json"));
-	assetPaths.push("./js/game.json.js");
+	assetDataList.push({
+		code: wrapText(JSON.stringify(conf._content, null, "\t"), "game.json"),
+		relativePath: "./js/game.json.js"
+	});
 
 	var assetNames = extractAssetDefinitions(conf, "script").concat(extractAssetDefinitions(conf, "text"));
 
-	assetPaths = assetPaths.concat(
-		assetNames.map((assetName: string) => convertAssetAndOutput(assetName, conf, options.source, options.output, options.minify)));
+	var errorMessages: string[] = [];
+	assetDataList = assetDataList.concat(
+		assetNames.map((assetName: string) => {
+			return convertAssetAndOutput(assetName, conf, options.source, options.minify, errorMessages);
+		})
+	);
 	if (conf._content.globalScripts) {
-		assetPaths = assetPaths.concat(conf._content.globalScripts.map((scriptName: string) => {
-			return convertGlobalScriptAndOutput(scriptName, options.source, options.output, options.minify);
+		assetDataList = assetDataList.concat(conf._content.globalScripts.map((scriptName: string) => {
+			return convertGlobalScriptAndOutput(scriptName, options.source, options.minify, errorMessages);
 		}));
 	}
 
-	writeEct(assetPaths, options.output, conf, options);
+	if (errorMessages.length > 0) {
+		throw new Error("The following ES5 syntax errors exist.\n" + errorMessages.join("\n"));
+	}
+
+	assetDataList.forEach(asset => {
+		fsx.outputFileSync(path.resolve(options.output, asset.relativePath), asset.code);
+	});
+	writeEct(assetDataList.map(asset => asset.relativePath), options.output, conf, options);
 	writeOptionScript(options.output, options);
 }
 
 function convertAssetAndOutput(
 	assetName: string, conf: cmn.Configuration,
-	inputPath: string, outputPath: string, minify?: boolean): string {
+	inputPath: string, minify?: boolean, errors?: string[]): AssetData {
 	var assets = conf._content.assets;
 	var isScript = assets[assetName].type === "script";
 	var assetString = fs.readFileSync(path.join(inputPath, assets[assetName].path), "utf8").replace(/\r\n|\r/g, "\n");
-
-	var code;
-	try {
-		code = (isScript ? wrapScript(assetString, assetName, minify) : wrapText(assetString, assetName));
-	} catch (e) {
-		throw new Error(`Please describe with ES5 syntax (filePath: ${inputPath})`);
-	}
 	var assetPath = assets[assetName].path;
+	if (isScript) {
+		validateCode(assetPath, assetString).forEach(error => {
+			errors.push(error);
+		});
+	}
+
 	var relativePath = "./js/assets/" + path.dirname(assetPath) + "/" +
 		path.basename(assetPath, path.extname(assetPath)) + (isScript ? ".js" : ".json.js");
-	var filePath = path.resolve(outputPath, relativePath);
-
-	fsx.outputFileSync(filePath, code);
-	return relativePath;
+	return {
+		code: (isScript ? wrapScript(assetString, assetName, minify) : wrapText(assetString, assetName)),
+		relativePath
+	};
 }
 
-function convertGlobalScriptAndOutput(scriptName: string, inputPath: string, outputPath: string, minify?: boolean): string {
+function convertGlobalScriptAndOutput(scriptName: string, inputPath: string, minify?: boolean, errors?: string[]): AssetData {
 	var scriptString = fs.readFileSync(path.join(inputPath, scriptName), "utf8").replace(/\r\n|\r/g, "\n");
 	var isScript = /\.js$/i.test(scriptName);
-
-	var code;
-	try {
-		code = isScript ? wrapScript(scriptString, scriptName, minify) : wrapText(scriptString, scriptName);
-	} catch (e) {
-		throw new Error(`Please describe with ES5 syntax (filePath: ${inputPath})`);
+	if (isScript) {
+		validateCode(scriptName, scriptString).forEach(error => {
+			errors.push(error);
+		});
 	}
-	var relativePath = "./globalScripts/" + scriptName + (isScript ? "" : ".js");
-	var filePath = path.resolve(outputPath, relativePath);
 
-	fsx.outputFileSync(filePath, code);
-	return relativePath;
+	return {
+		code: isScript ? wrapScript(scriptString, scriptName, minify) : wrapText(scriptString, scriptName),
+		relativePath: "./globalScripts/" + scriptName + (isScript ? "" : ".js")
+	};
 }
 
 function writeEct(assetPaths: string[], outputPath: string, conf: cmn.Configuration, options: ConvertTemplateParameterObject): void {

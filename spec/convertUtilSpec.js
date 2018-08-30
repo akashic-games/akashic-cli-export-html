@@ -33,21 +33,31 @@ describe("convertUtil", function () {
 			expect(existFileContents[1]).toBe(sampleScriptContent);
 		});
 	});
-	describe("wrap", function () {
-		it("can wrap ES5 syntax code", function () {
-			var targetCode = "var a = 1;";
-			var PRE_SCRIPT = "(function(exports, require, module, __filename, __dirname) {";
-			var POST_SCRIPT = "})(g.module.exports, g.module.require, g.module, g.filename, g.dirname);";
-			var expected = PRE_SCRIPT + "\n" + targetCode + "\n" + POST_SCRIPT + "\n";
-			expect(convert.wrap(targetCode)).toBe(expected);
+	describe("validateCode", function () {
+		it("return empty array if code is written with ES5 syntax", function () {
+			const es5Code = `
+				"use strict";
+				var fn = function () {
+					return 1;
+				};
+				var array = [1, 2];
+				var a = array[0];
+				var b = array[1];
+			`;
+			expect(convert.validateCode("es5.js", es5Code).length).toBe(0);
 		});
-		it("can not wrap code that is not ES5 syntax", function () {
-			var targetCode = "const a = 1;";
-			try {
-				convert.wrap(targetCode);
-			} catch (e) {
-				expect(e.message).toBe("Please describe with ES5 syntax");
-			}
+		it("return error messages if code is not written with ES5 syntax", function () {
+			const es6Code = `
+				"use strict";
+				const fn = () => {
+					return 1;
+				}
+				const array = [1, 3];
+				const [a, b] = array;
+			`;
+			const result = convert.validateCode("es6.js", es6Code);
+			expect(result.length).toBe(1);
+			expect(result[0]).toBe("es6.js(3:5): Parsing error: The keyword \'const\' is reserved");
 		});
 	});
 });

@@ -12,7 +12,8 @@ import {
 	getDefaultBundleScripts,
 	getDefaultBundleStyle,
 	extractAssetDefinitions,
-	getInjectedContents
+	getInjectedContents,
+	validateCode
 } from "./convertUtil";
 
 interface InnerHTMLAssetData {
@@ -36,15 +37,20 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 		code: encodeText(JSON.stringify(conf._content, null, "\t"))
 	});
 
+	var errorMessages: string[] = [];
 	var innerHTMLAssetNames = extractAssetDefinitions(conf, "script").concat(extractAssetDefinitions(conf, "text"));
 	innerHTMLAssetArray = innerHTMLAssetArray.concat(innerHTMLAssetNames.map((assetName: string) => {
-		return convertAssetToInnerHTMLObj(assetName, options.source, conf, options.minify);
+		return convertAssetToInnerHTMLObj(assetName, options.source, conf, options.minify, errorMessages);
 	}));
 
 	if (conf._content.globalScripts) {
 		innerHTMLAssetArray = innerHTMLAssetArray.concat(conf._content.globalScripts.map((scriptName: string) => {
-			return convertScriptNameToInnerHTMLObj(scriptName, options.source, options.minify);
+			return convertScriptNameToInnerHTMLObj(scriptName, options.source, options.minify, errorMessages);
 		}));
+	}
+
+	if (errorMessages.length > 0) {
+		throw new Error("The following ES5 syntax errors exist.\n" + errorMessages.join("\n"));
 	}
 
 	let templatePath: string;
@@ -63,24 +69,25 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 	writeCommonFiles(options.source, options.output, conf, options, templatePath);
 }
 
-function convertAssetToInnerHTMLObj(assetName: string, inputPath: string, conf: cmn.Configuration, minify?: boolean): InnerHTMLAssetData {
+function convertAssetToInnerHTMLObj(
+	assetName: string, inputPath: string, conf: cmn.Configuration, minify?: boolean, errors?: string[]): InnerHTMLAssetData {
 	var assets = conf._content.assets;
 	var isScript = assets[assetName].type === "script";
 	var assetString = fs.readFileSync(path.join(inputPath, assets[assetName].path), "utf8").replace(/\r\n|\r/g, "\n");
-	var code;
-	try {
-		code = (isScript ? wrap(assetString, minify) : encodeText(assetString));
-	} catch (e) {
-		throw new Error(`Please describe with ES5 syntax (filePath: ${inputPath})`);
+	if (isScript) {
+		validateCode(assets[assetName].path, assetString).forEach(error => {
+			errors.push(error);
+		});
 	}
 	return {
 		name: assetName,
 		type: assets[assetName].type,
-		code
+		code: isScript ? wrap(assetString, minify) : encodeText(assetString)
 	};
 }
 
-function convertScriptNameToInnerHTMLObj(scriptName: string, inputPath: string, minify?: boolean): InnerHTMLAssetData {
+function convertScriptNameToInnerHTMLObj(
+	scriptName: string, inputPath: string, minify?: boolean, errors?: string[]): InnerHTMLAssetData {
 	var scriptString = fs.readFileSync(path.join(inputPath, scriptName), "utf8").replace(/\r\n|\r/g, "\n");
 	var isScript = /\.js$/i.test(scriptName);
 
@@ -88,16 +95,15 @@ function convertScriptNameToInnerHTMLObj(scriptName: string, inputPath: string, 
 	if (path.extname(scriptPath) === ".json") {
 		scriptString = encodeText(scriptString);
 	}
-	var code;
-	try {
-		code = isScript ? wrap(scriptString, minify) : scriptString;
-	} catch (e) {
-		throw new Error(`Please describe with ES5 syntax (filePath: ${inputPath})`);
+	if (isScript) {
+		validateCode(scriptName, scriptString).forEach(error => {
+			errors.push(error);
+		});
 	}
 	return {
 		name: scriptName,
 		type: isScript ? "script" : "text",
-		code
+		code: isScript ? wrap(scriptString, minify) : scriptString
 	};
 }
 
