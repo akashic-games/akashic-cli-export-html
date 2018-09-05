@@ -14,6 +14,7 @@ export interface ConvertTemplateParameterObject {
 	force: boolean;
 	source: string;
 	cwd: string;
+	copyText: boolean;
 	injects?: string[];
 }
 
@@ -29,7 +30,7 @@ export function copyAssetFilesStrip(
 	options.logger.info("copying stripped fileset...");
 	var assetNames = Object.keys(assets);
 	assetNames.filter((assetName) => {
-		return assets[assetName].type !== "script" && assets[assetName].type !== "text";
+		return assets[assetName].type !== "script" && (options.copyText || assets[assetName].type !== "text");
 	}).forEach((assetName) => {
 		var assetPath = assets[assetName].path;
 		var assetDir = path.dirname(assetPath);
@@ -64,14 +65,14 @@ export function copyAssetFiles(inputPath: string, outputPath: string, options: C
 	options.logger.info("copying files...");
 	const scriptPath = path.resolve(inputPath, "script");
 	const textPath = path.resolve(inputPath, "text");
-	const isScriptOrTextAsset = (src: string) => {
-		return path.relative(scriptPath, src)[0] !== "." || path.relative(textPath, src)[0] !== ".";
+	const isAssetNotToBeCopied = (src: string) => {
+		return path.relative(scriptPath, src)[0] !== "." || (!options.copyText && path.relative(textPath, src)[0] !== ".");
 	};
 	try {
 		const files = readdir(inputPath);
 		files.forEach(p => {
 			cmn.Util.mkdirpSync(path.dirname(path.resolve(outputPath, p)));
-			if (!isScriptOrTextAsset(path.resolve(inputPath, p))) {
+			if (!isAssetNotToBeCopied(path.resolve(inputPath, p))) {
 				fs.writeFileSync(path.resolve(outputPath, p), fs.readFileSync(path.resolve(inputPath, p)));
 			}
 		});

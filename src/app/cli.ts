@@ -3,6 +3,7 @@ import * as path from "path";
 import * as commander from "commander";
 import { ConsoleLogger } from "@akashic/akashic-cli-commons";
 import { promiseExportHTML } from "./exportHTML";
+import { promiseExportAtsumaru } from "./exportAtsumaru";
 
 interface CommandParameterObject {
 	cwd?: string;
@@ -17,6 +18,7 @@ interface CommandParameterObject {
 	bundle?: boolean;
 	magnify?: boolean;
 	injects?: string[];
+	atsumaru?: boolean;
 }
 
 function cli(param: CommandParameterObject): void {
@@ -30,14 +32,21 @@ function cli(param: CommandParameterObject): void {
 		exclude: param.exclude,
 		logger: logger,
 		strip: (param.strip != null) ? param.strip : true,
-		hashLength: !param.hashFilename ? 0 : (param.hashFilename === true) ? 20 : Number(param.hashFilename),
+		hashLength: !param.hashFilename && !param.atsumaru ? 0 : (typeof param.hashFilename !== "number") ? 20 : Number(param.hashFilename),
 		minify: param.minify,
-		bundle: param.bundle,
+		bundle: param.bundle || param.atsumaru,
 		magnify: param.magnify,
-		injects: param.injects
+		injects: param.injects,
+		copyText: !param.bundle || param.atsumaru
 	};
 	Promise.resolve()
-		.then(() => promiseExportHTML(exportParam))
+		.then(() => {
+			if (param.atsumaru) {
+				return promiseExportAtsumaru(exportParam);
+			} else {
+				return promiseExportHTML(exportParam);
+			}
+		})
 		.catch((err: any) => {
 			logger.error(err);
 			process.exit(1);
@@ -61,7 +70,8 @@ commander
 	.option("-M, --minify", "minify JavaScript files")
 	.option("-b, --bundle", "bundle assets and scripts in index.html (to reduce the number of files)")
 	.option("-m, --magnify", "fit game area to outer element size")
-	.option("-i, --inject [fileName]", "specify injected file content into index.html", inject, []);
+	.option("-i, --inject [fileName]", "specify injected file content into index.html", inject, [])
+	.option("-a, --atsumaru", "generate files that can be posted to RPG-atsumaru and nicocas");
 
 export function run(argv: string[]): void {
 	// Commander の制約により --strip と --no-strip 引数を両立できないため、暫定対応として Commander 前に argv を処理する
@@ -78,7 +88,8 @@ export function run(argv: string[]): void {
 		bundle: commander["bundle"],
 		magnify: commander["magnify"],
 		hashFilename: commander["hashFilename"],
-		injects: commander["inject"]
+		injects: commander["inject"],
+		atsumaru: commander["atsumaru"]
 	});
 }
 

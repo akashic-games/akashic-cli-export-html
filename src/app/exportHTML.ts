@@ -70,7 +70,8 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 			force: param.force,
 			source: gamepath,
 			cwd: param.cwd,
-			injects: param.injects
+			injects: param.injects,
+			copyText: param.copyText
 		};
 		if (param.bundle) {
 			return promiseConvertBundle(convertParam);
