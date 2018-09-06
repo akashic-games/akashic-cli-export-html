@@ -127,7 +127,7 @@ export function getInjectedContents(baseDir: string, injects: string[]): string[
 	return injectedContents;
 }
 
-export function validateCode(fileName: string, code: string): string[] {
+export function validateEs5Code(fileName: string, code: string): string[] {
 	return cmn.LintUtil.validateEs5Code(code)
 		.map(info => `${fileName}(${info.line}:${info.column}): ${info.message}`);
 }

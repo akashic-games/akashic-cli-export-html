@@ -44,7 +44,7 @@ describe("convertUtil", function () {
 				var a = array[0];
 				var b = array[1];
 			`;
-			expect(convert.validateCode("es5.js", es5Code).length).toBe(0);
+			expect(convert.validateEs5Code("es5.js", es5Code).length).toBe(0);
 		});
 		it("return error messages if code is not written with ES5 syntax", function () {
 			const es6Code = `
@@ -55,7 +55,7 @@ describe("convertUtil", function () {
 				const array = [1, 3];
 				const [a, b] = array;
 			`;
-			const result = convert.validateCode("es6.js", es6Code);
+			const result = convert.validateEs5Code("es6.js", es6Code);
 			expect(result.length).toBe(1);
 			expect(result[0]).toBe("es6.js(3:5): Parsing error: The keyword \'const\' is reserved");
 		});

@@ -13,7 +13,7 @@ import {
 	getDefaultBundleStyle,
 	extractAssetDefinitions,
 	getInjectedContents,
-	validateCode
+	validateEs5Code
 } from "./convertUtil";
 
 interface InnerHTMLAssetData {
@@ -50,7 +50,7 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 	}
 
 	if (errorMessages.length > 0) {
-		throw new Error("The following ES5 syntax errors exist.\n" + errorMessages.join("\n"));
+		options.logger.warn("The following ES5 syntax errors exist.\n" + errorMessages.join("\n"));
 	}
 
 	let templatePath: string;
@@ -75,9 +75,7 @@ function convertAssetToInnerHTMLObj(
 	var isScript = assets[assetName].type === "script";
 	var assetString = fs.readFileSync(path.join(inputPath, assets[assetName].path), "utf8").replace(/\r\n|\r/g, "\n");
 	if (isScript) {
-		validateCode(assets[assetName].path, assetString).forEach(error => {
-			errors.push(error);
-		});
+		errors.push.apply(errors, validateEs5Code(assets[assetName].path, assetString));
 	}
 	return {
 		name: assetName,
@@ -96,9 +94,7 @@ function convertScriptNameToInnerHTMLObj(
 		scriptString = encodeText(scriptString);
 	}
 	if (isScript) {
-		validateCode(scriptName, scriptString).forEach(error => {
-			errors.push(error);
-		});
+		errors.push.apply(errors, validateEs5Code(scriptName, scriptString));
 	}
 	return {
 		name: scriptName,

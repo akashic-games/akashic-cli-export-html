@@ -11,7 +11,7 @@ import {
 	wrap,
 	extractAssetDefinitions,
 	getInjectedContents,
-	validateCode
+	validateEs5Code
 } from "./convertUtil";
 
 interface AssetData {
@@ -50,7 +50,7 @@ export async function promiseConvertNoBundle(options: ConvertTemplateParameterOb
 	}
 
 	if (errorMessages.length > 0) {
-		throw new Error("The following ES5 syntax errors exist.\n" + errorMessages.join("\n"));
+		options.logger.warn("The following ES5 syntax errors exist.\n" + errorMessages.join("\n"));
 	}
 
 	assetDataList.forEach(asset => {
@@ -68,9 +68,7 @@ function convertAssetAndOutput(
 	var assetString = fs.readFileSync(path.join(inputPath, assets[assetName].path), "utf8").replace(/\r\n|\r/g, "\n");
 	var assetPath = assets[assetName].path;
 	if (isScript) {
-		validateCode(assetPath, assetString).forEach(error => {
-			errors.push(error);
-		});
+		errors.push.apply(errors, validateEs5Code(assetPath, assetString));
 	}
 
 	var relativePath = "./js/assets/" + path.dirname(assetPath) + "/" +
@@ -85,9 +83,7 @@ function convertGlobalScriptAndOutput(scriptName: string, inputPath: string, min
 	var scriptString = fs.readFileSync(path.join(inputPath, scriptName), "utf8").replace(/\r\n|\r/g, "\n");
 	var isScript = /\.js$/i.test(scriptName);
 	if (isScript) {
-		validateCode(scriptName, scriptString).forEach(error => {
-			errors.push(error);
-		});
+		errors.push.apply(errors, validateEs5Code(scriptName, scriptString));
 	}
 
 	return {
