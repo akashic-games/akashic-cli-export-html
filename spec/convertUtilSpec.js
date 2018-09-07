@@ -33,7 +33,7 @@ describe("convertUtil", function () {
 			expect(existFileContents[1]).toBe(sampleScriptContent);
 		});
 	});
-	describe("validateCode", function () {
+	describe("validateEs5Code", function () {
 		it("return empty array if code is written with ES5 syntax", function () {
 			const es5Code = `
 				"use strict";
@@ -58,6 +58,20 @@ describe("convertUtil", function () {
 			const result = convert.validateEs5Code("es6.js", es6Code);
 			expect(result.length).toBe(1);
 			expect(result[0]).toBe("es6.js(3:5): Parsing error: The keyword \'const\' is reserved");
+		});
+	});
+	describe("encodeText", function () {
+		it("can encode specified characters and the characters can be decode", function () {
+			var targetString = "";
+			for (var i = 0; i < 128; i++) {
+				targetString += String.fromCharCode(i);
+			}
+			targetString += "\u2028\u2029";
+			targetString += "あいうえお";
+			targetString += "１２３４５％＆’”";
+			targetString += "漢字例";
+			targetString += "○×";
+			expect(decodeURIComponent(convert.encodeText(targetString))).toBe(targetString);
 		});
 	});
 });

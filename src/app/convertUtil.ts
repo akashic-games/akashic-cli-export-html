@@ -81,7 +81,7 @@ export function copyAssetFiles(inputPath: string, outputPath: string, options: C
 }
 
 export function encodeText(text: string): string {
-	return text.replace(/[\u2028\u2029'"\\\b\f\n\r\t\v]/g, encodeURIComponent);
+	return text.replace(/[\u2028\u2029'"\\\b\f\n\r\t\v%]/g, encodeURIComponent);
 }
 
 export function wrap(code: string, minify?: boolean): string {
