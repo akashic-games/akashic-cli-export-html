@@ -57,9 +57,12 @@ window.addEventListener("load", function() {
 			return new LocalScriptAsset(id, assetPath);
 		};
 
-		pf._resourceFactory.createTextAsset = function(id, assetPath) {
+		var createTextAsset = function(id, assetPath) {
 			return new LocalTextAsset(id, assetPath);
 		};
+		if (typeof LocalTextAsset !== "undefined") {
+			pf._resourceFactory.createTextAsset = createTextAsset;
+		}
 
 		driver = new gdr.GameDriver({
 			platform: pf,
