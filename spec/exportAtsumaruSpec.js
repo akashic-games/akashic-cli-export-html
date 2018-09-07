@@ -26,7 +26,7 @@ describe("exportAtsumaru", function () {
 				})
 				.then(function () {
 					expect(fs.existsSync(path.join(outputDirPath, "index.html"))).toBe(true);
-					const expectedFilePath = cmn.Renamer.hashBasename("script/aez_bundle_main.js", 20);
+					const expectedFilePath = cmn.Renamer.hashFilepath("script/aez_bundle_main.js", 20);
 					expect(fs.existsSync(path.join(outputDirPath, expectedFilePath))).toBe(true);
 					expect(fs.existsSync(path.join(outputDirPath, "script", "main.js"))).toBe(false);
 				})
