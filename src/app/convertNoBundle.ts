@@ -14,11 +14,6 @@ import {
 	validateEs5Code
 } from "./convertUtil";
 
-interface AssetData {
-	code: string;
-	relativePath: string;
-}
-
 export async function promiseConvertNoBundle(options: ConvertTemplateParameterObject): Promise<void> {
 	var content = await cmn.ConfigurationFile.read(path.join(options.source, "game.json"), options.logger);
 	if (!content.environment) content.environment = {};
@@ -26,70 +21,67 @@ export async function promiseConvertNoBundle(options: ConvertTemplateParameterOb
 	var conf = new cmn.Configuration({
 		content: content
 	});
-	var assetDataList: AssetData[] = [];
+	var assetPaths: string[] = [];
 
 	writeCommonFiles(options.source, options.output, conf, options);
 
-	assetDataList.push({
-		code: wrapText(JSON.stringify(conf._content, null, "\t"), "game.json"),
-		relativePath: "./js/game.json.js"
-	});
+	var gamejsonPath = path.resolve(options.output, "./js/game.json.js");
+	fsx.outputFileSync(gamejsonPath, wrapText(JSON.stringify(conf._content, null, "\t"), "game.json"));
+	assetPaths.push("./js/game.json.js");
 
 	var assetNames = extractAssetDefinitions(conf, "script").concat(extractAssetDefinitions(conf, "text"));
-
 	var errorMessages: string[] = [];
-	assetDataList = assetDataList.concat(
+	assetPaths = assetPaths.concat(
 		assetNames.map((assetName: string) => {
-			return convertAssetAndOutput(assetName, conf, options.source, options.minify, errorMessages);
-		})
-	);
+			return convertAssetAndOutput(assetName, conf, options.source, options.output, options.minify, errorMessages);
+		}));
 	if (conf._content.globalScripts) {
-		assetDataList = assetDataList.concat(conf._content.globalScripts.map((scriptName: string) => {
-			return convertGlobalScriptAndOutput(scriptName, options.source, options.minify, errorMessages);
+		assetPaths = assetPaths.concat(conf._content.globalScripts.map((scriptName: string) => {
+			return convertGlobalScriptAndOutput(scriptName, options.source, options.output, options.minify, errorMessages);
 		}));
 	}
-
 	if (errorMessages.length > 0) {
 		options.logger.warn("The following ES5 syntax errors exist.\n" + errorMessages.join("\n"));
 	}
 
-	assetDataList.forEach(asset => {
-		fsx.outputFileSync(path.resolve(options.output, asset.relativePath), asset.code);
-	});
-	writeEct(assetDataList.map(asset => asset.relativePath), options.output, conf, options);
+	writeEct(assetPaths, options.output, conf, options);
 	writeOptionScript(options.output, options);
 }
 
 function convertAssetAndOutput(
 	assetName: string, conf: cmn.Configuration,
-	inputPath: string, minify?: boolean, errors?: string[]): AssetData {
+	inputPath: string, outputPath: string, minify?: boolean, errors?: string[]): string {
 	var assets = conf._content.assets;
 	var isScript = assets[assetName].type === "script";
 	var assetString = fs.readFileSync(path.join(inputPath, assets[assetName].path), "utf8").replace(/\r\n|\r/g, "\n");
 	var assetPath = assets[assetName].path;
 	if (isScript) {
-		errors.push.apply(errors, validateEs5Code(assetPath, assetString));
+		errors.push.apply(errors, validateEs5Code(assetPath, assetString)); // ES5構文に反する箇所があるかのチェック
 	}
 
+	var code = (isScript ? wrapScript(assetString, assetName, minify) : wrapText(assetString, assetName));
 	var relativePath = "./js/assets/" + path.dirname(assetPath) + "/" +
 		path.basename(assetPath, path.extname(assetPath)) + (isScript ? ".js" : ".json.js");
-	return {
-		code: (isScript ? wrapScript(assetString, assetName, minify) : wrapText(assetString, assetName)),
-		relativePath
-	};
+	var filePath = path.resolve(outputPath, relativePath);
+
+	fsx.outputFileSync(filePath, code);
+	return relativePath;
 }
 
-function convertGlobalScriptAndOutput(scriptName: string, inputPath: string, minify?: boolean, errors?: string[]): AssetData {
+function convertGlobalScriptAndOutput(
+	scriptName: string, inputPath: string, outputPath: string, minify?: boolean, errors?: string[]): string {
 	var scriptString = fs.readFileSync(path.join(inputPath, scriptName), "utf8").replace(/\r\n|\r/g, "\n");
 	var isScript = /\.js$/i.test(scriptName);
 	if (isScript) {
-		errors.push.apply(errors, validateEs5Code(scriptName, scriptString));
+		errors.push.apply(errors, validateEs5Code(scriptName, scriptString)); // ES5構文に反する箇所があるかのチェック
 	}
 
-	return {
-		code: isScript ? wrapScript(scriptString, scriptName, minify) : wrapText(scriptString, scriptName),
-		relativePath: "./globalScripts/" + scriptName + (isScript ? "" : ".js")
-	};
+	var code = isScript ? wrapScript(scriptString, scriptName, minify) : wrapText(scriptString, scriptName);
+	var relativePath = "./globalScripts/" + scriptName + (isScript ? "" : ".js");
+	var filePath = path.resolve(outputPath, relativePath);
+
+	fsx.outputFileSync(filePath, code);
+	return relativePath;
 }
 
 function writeEct(assetPaths: string[], outputPath: string, conf: cmn.Configuration, options: ConvertTemplateParameterObject): void {
