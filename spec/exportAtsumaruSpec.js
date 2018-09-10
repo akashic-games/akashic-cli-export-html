@@ -42,7 +42,8 @@ describe("exportAtsumaru", function () {
 					expect(gameJson.environment.external.coe).toBe("0");
 					expect(gameJson.environment.external.send).toBe("0");
 					expect(gameJson.environment.external.nicocas).toBe("0");
-					expect(gameJson.environment["akashic-runtime"]).toBe("0.0.11");
+					expect(gameJson.environment["akashic-runtime"]["version"]).toBe("0.0.11");
+					expect(gameJson.environment["akashic-runtime"]["flavor"]).toBe("-canvas");
 				})
 				.then(done, done.fail);
 		});

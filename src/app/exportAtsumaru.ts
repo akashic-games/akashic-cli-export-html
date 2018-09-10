@@ -9,8 +9,9 @@ export function promiseExportAtsumaru(param: ExportHTMLParameterObject): Promise
 		.then(() => {
 			// index.html以外はakashic export zip時にも生成されるので削除しておく。削除しないとハッシュ名の衝突が起きてエラーになるため。
 			fs.readdirSync(param.output).forEach(fileName => {
-				if (fileName !== "index.html") {
-					fsx.removeSync(path.join(param.output, fileName));
+				const filePath = path.join(param.output, fileName);
+				if (fileName === "files" && fs.statSync(filePath).isDirectory()) {
+					fsx.removeSync(filePath);
 				}
 			});
 			// akashic export zip -o [outputDir] -b -H の実行
@@ -33,11 +34,15 @@ export function promiseExportAtsumaru(param: ExportHTMLParameterObject): Promise
 			gameJson.environment.external.coe = "0";
 			gameJson.environment.external.send = "0";
 			gameJson.environment.external.nicocas = "0";
+			gameJson.environment["akashic-runtime"] = {};
 			// TODO: べだ書きせずにengine-filesの最新のバージョンを取れるようにする
 			if (!gameJson.environment["sandbox-runtime"] || gameJson.environment["sandbox-runtime"] === "1") {
-				gameJson.environment["akashic-runtime"] = "0.0.11"; // v1に対応するengine-filesのバージョン
+				gameJson.environment["akashic-runtime"]["version"] = "0.0.11"; // v1に対応するengine-filesのバージョン
 			} else {
-				gameJson.environment["akashic-runtime"] = "1.0.11"; // v2に対応するengine-filesのバージョン
+				gameJson.environment["akashic-runtime"]["version"] = "1.0.11"; // v2に対応するengine-filesのバージョン
+			}
+			if (!gameJson.renderer || gameJson.renderer !== "webgl") {
+				gameJson.environment["akashic-runtime"]["flavor"] = "-canvas";
 			}
 			fs.writeFileSync(gameJsonPath, JSON.stringify(gameJson, null, 2));
 			// export-html時に作られたディレクトリがディレクトリ毎コピーされてしまっているので削除

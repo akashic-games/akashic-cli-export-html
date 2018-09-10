@@ -71,7 +71,7 @@ export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<voi
 			source: gamepath,
 			cwd: param.cwd,
 			injects: param.injects,
-			copyText: param.copyText
+			unbundleText: param.unbundleText
 		};
 		if (param.bundle) {
 			return promiseConvertBundle(convertParam);

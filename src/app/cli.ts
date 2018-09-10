@@ -37,7 +37,7 @@ function cli(param: CommandParameterObject): void {
 		bundle: param.bundle || param.atsumaru,
 		magnify: param.magnify,
 		injects: param.injects,
-		copyText: !param.bundle || param.atsumaru
+		unbundleText: !param.bundle || param.atsumaru
 	};
 	Promise.resolve()
 		.then(() => {
