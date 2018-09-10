@@ -128,6 +128,11 @@ export function getInjectedContents(baseDir: string, injects: string[]): string[
 	return injectedContents;
 }
 
+export function validateEs5Code(fileName: string, code: string): string[] {
+	return cmn.LintUtil.validateEs5Code(code)
+		.map(info => `${fileName}(${info.line}:${info.column}): ${info.message}`);
+}
+
 function getFileContentsFromDirectory(inputDirPath: string): string[] {
 	return fs.readdirSync(inputDirPath)
 		.map(fileName => fs.readFileSync(path.join(inputDirPath, fileName), "utf8").replace(/\r\n|\r/g, "\n"));

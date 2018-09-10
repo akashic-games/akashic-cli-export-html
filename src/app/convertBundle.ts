@@ -12,7 +12,8 @@ import {
 	getDefaultBundleScripts,
 	getDefaultBundleStyle,
 	extractAssetDefinitions,
-	getInjectedContents
+	getInjectedContents,
+	validateEs5Code
 } from "./convertUtil";
 
 interface InnerHTMLAssetData {
@@ -36,15 +37,20 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 		code: encodeText(JSON.stringify(conf._content, null, "\t"))
 	});
 
+	var errorMessages: string[] = [];
 	var innerHTMLAssetNames = extractAssetDefinitions(conf, "script").concat(extractAssetDefinitions(conf, "text"));
 	innerHTMLAssetArray = innerHTMLAssetArray.concat(innerHTMLAssetNames.map((assetName: string) => {
-		return convertAssetToInnerHTMLObj(assetName, options.source, conf, options.minify);
+		return convertAssetToInnerHTMLObj(assetName, options.source, conf, options.minify, errorMessages);
 	}));
 
 	if (conf._content.globalScripts) {
 		innerHTMLAssetArray = innerHTMLAssetArray.concat(conf._content.globalScripts.map((scriptName: string) => {
-			return convertScriptNameToInnerHTMLObj(scriptName, options.source, options.minify);
+			return convertScriptNameToInnerHTMLObj(scriptName, options.source, options.minify, errorMessages);
 		}));
+	}
+
+	if (errorMessages.length > 0) {
+		options.logger.warn("The following ES5 syntax errors exist.\n" + errorMessages.join("\n"));
 	}
 
 	let templatePath: string;
@@ -62,24 +68,32 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 	writeCommonFiles(options.source, options.output, conf, options, templatePath);
 }
 
-function convertAssetToInnerHTMLObj(assetName: string, inputPath: string, conf: cmn.Configuration, minify?: boolean): InnerHTMLAssetData {
+function convertAssetToInnerHTMLObj(
+	assetName: string, inputPath: string, conf: cmn.Configuration, minify?: boolean, errors?: string[]): InnerHTMLAssetData {
 	var assets = conf._content.assets;
 	var isScript = assets[assetName].type === "script";
 	var assetString = fs.readFileSync(path.join(inputPath, assets[assetName].path), "utf8").replace(/\r\n|\r/g, "\n");
+	if (isScript) {
+		errors.push.apply(errors, validateEs5Code(assets[assetName].path, assetString));
+	}
 	return {
 		name: assetName,
 		type: assets[assetName].type,
-		code: (isScript ? wrap(assetString, minify) : encodeText(assetString))
+		code: isScript ? wrap(assetString, minify) : encodeText(assetString)
 	};
 }
 
-function convertScriptNameToInnerHTMLObj(scriptName: string, inputPath: string, minify?: boolean): InnerHTMLAssetData {
+function convertScriptNameToInnerHTMLObj(
+	scriptName: string, inputPath: string, minify?: boolean, errors?: string[]): InnerHTMLAssetData {
 	var scriptString = fs.readFileSync(path.join(inputPath, scriptName), "utf8").replace(/\r\n|\r/g, "\n");
 	var isScript = /\.js$/i.test(scriptName);
 
 	var scriptPath = path.resolve("./", scriptName);
 	if (path.extname(scriptPath) === ".json") {
 		scriptString = encodeText(scriptString);
+	}
+	if (isScript) {
+		errors.push.apply(errors, validateEs5Code(scriptName, scriptString));
 	}
 	return {
 		name: scriptName,
