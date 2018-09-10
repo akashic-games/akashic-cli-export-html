@@ -10,7 +10,8 @@ import {
 	encodeText,
 	wrap,
 	extractAssetDefinitions,
-	getInjectedContents
+	getInjectedContents,
+	validateEs5Code
 } from "./convertUtil";
 
 export async function promiseConvertNoBundle(options: ConvertTemplateParameterObject): Promise<void> {
@@ -29,13 +30,18 @@ export async function promiseConvertNoBundle(options: ConvertTemplateParameterOb
 	assetPaths.push("./js/game.json.js");
 
 	var assetNames = extractAssetDefinitions(conf, "script").concat(extractAssetDefinitions(conf, "text"));
-
+	var errorMessages: string[] = [];
 	assetPaths = assetPaths.concat(
-		assetNames.map((assetName: string) => convertAssetAndOutput(assetName, conf, options.source, options.output, options.minify)));
+		assetNames.map((assetName: string) => {
+			return convertAssetAndOutput(assetName, conf, options.source, options.output, options.minify, errorMessages);
+		}));
 	if (conf._content.globalScripts) {
 		assetPaths = assetPaths.concat(conf._content.globalScripts.map((scriptName: string) => {
-			return convertGlobalScriptAndOutput(scriptName, options.source, options.output, options.minify);
+			return convertGlobalScriptAndOutput(scriptName, options.source, options.output, options.minify, errorMessages);
 		}));
+	}
+	if (errorMessages.length > 0) {
+		options.logger.warn("The following ES5 syntax errors exist.\n" + errorMessages.join("\n"));
 	}
 
 	writeEct(assetPaths, options.output, conf, options);
@@ -44,13 +50,16 @@ export async function promiseConvertNoBundle(options: ConvertTemplateParameterOb
 
 function convertAssetAndOutput(
 	assetName: string, conf: cmn.Configuration,
-	inputPath: string, outputPath: string, minify?: boolean): string {
+	inputPath: string, outputPath: string, minify?: boolean, errors?: string[]): string {
 	var assets = conf._content.assets;
 	var isScript = assets[assetName].type === "script";
 	var assetString = fs.readFileSync(path.join(inputPath, assets[assetName].path), "utf8").replace(/\r\n|\r/g, "\n");
+	var assetPath = assets[assetName].path;
+	if (isScript) {
+		errors.push.apply(errors, validateEs5Code(assetPath, assetString)); // ES5構文に反する箇所があるかのチェック
+	}
 
 	var code = (isScript ? wrapScript(assetString, assetName, minify) : wrapText(assetString, assetName));
-	var assetPath = assets[assetName].path;
 	var relativePath = "./js/assets/" + path.dirname(assetPath) + "/" +
 		path.basename(assetPath, path.extname(assetPath)) + (isScript ? ".js" : ".json.js");
 	var filePath = path.resolve(outputPath, relativePath);
@@ -59,9 +68,13 @@ function convertAssetAndOutput(
 	return relativePath;
 }
 
-function convertGlobalScriptAndOutput(scriptName: string, inputPath: string, outputPath: string, minify?: boolean): string {
+function convertGlobalScriptAndOutput(
+	scriptName: string, inputPath: string, outputPath: string, minify?: boolean, errors?: string[]): string {
 	var scriptString = fs.readFileSync(path.join(inputPath, scriptName), "utf8").replace(/\r\n|\r/g, "\n");
 	var isScript = /\.js$/i.test(scriptName);
+	if (isScript) {
+		errors.push.apply(errors, validateEs5Code(scriptName, scriptString)); // ES5構文に反する箇所があるかのチェック
+	}
 
 	var code = isScript ? wrapScript(scriptString, scriptName, minify) : wrapText(scriptString, scriptName);
 	var relativePath = "./globalScripts/" + scriptName + (isScript ? "" : ".js");
