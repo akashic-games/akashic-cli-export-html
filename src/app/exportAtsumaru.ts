@@ -7,7 +7,7 @@ import {ExportHTMLParameterObject, promiseExportHTML} from "./exportHTML";
 export function promiseExportAtsumaru(param: ExportHTMLParameterObject): Promise<void> {
 	return promiseExportHTML(param)
 		.then(() => {
-			// index.html以外はakashic export zip時にも生成されるので削除しておく。削除しないとハッシュ名の衝突が起きてエラーになるため。
+			// filesディレクトリはakashic export zip時にも生成されるので削除しておく。削除しないとハッシュ名の衝突が起きてエラーになるため。
 			fs.readdirSync(param.output).forEach(fileName => {
 				const filePath = path.join(param.output, fileName);
 				if (fileName === "files" && fs.statSync(filePath).isDirectory()) {
