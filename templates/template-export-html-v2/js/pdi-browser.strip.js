@@ -45,8 +45,8 @@ require = function e(t, n, r) {
         "./ResourceFactory": 6,
         "./plugin/AudioPluginManager": 34,
         "./plugin/AudioPluginRegistry": 35,
-        "./plugin/HTMLAudioPlugin/HTMLAudioPlugin": 38,
-        "./plugin/WebAudioPlugin/WebAudioPlugin": 42,
+        "./plugin/HTMLAudioPlugin/HTMLAudioPlugin": 39,
+        "./plugin/WebAudioPlugin/WebAudioPlugin": 44,
         "@akashic/akashic-engine": "@akashic/akashic-engine"
     } ],
     1: [ function(require, module, exports) {
@@ -530,7 +530,7 @@ require = function e(t, n, r) {
         }(g.ScriptAsset);
         exports.XHRScriptAsset = XHRScriptAsset;
     }, {
-        "../utils/XHRLoader": 43,
+        "../utils/XHRLoader": 45,
         "@akashic/akashic-engine": "@akashic/akashic-engine"
     } ],
     12: [ function(require, module, exports) {
@@ -569,7 +569,7 @@ require = function e(t, n, r) {
         }(g.TextAsset);
         exports.XHRTextAsset = XHRTextAsset;
     }, {
-        "../utils/XHRLoader": 43,
+        "../utils/XHRLoader": 45,
         "@akashic/akashic-engine": "@akashic/akashic-engine"
     } ],
     13: [ function(require, module, exports) {
@@ -892,6 +892,8 @@ require = function e(t, n, r) {
                 throw g.ExceptionFactory.createAssertionError("Context2DRenderer#setTransform() is not implemented");
             }, Context2DRenderer.prototype.setShaderProgram = function(shaderProgram) {
                 throw g.ExceptionFactory.createAssertionError("Context2DRenderer#setShaderProgram() is not implemented");
+            }, Context2DRenderer.prototype.isSupportedShaderProgram = function() {
+                return !1;
             }, Context2DRenderer.prototype._getImageData = function(sx, sy, sw, sh) {
                 return this.context.getImageData(sx, sy, sw, sh);
             }, Context2DRenderer.prototype._putImageData = function(imageData, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight) {
@@ -1420,6 +1422,8 @@ require = function e(t, n, r) {
                 this.currentState().globalAlpha = opacity;
             }, WebGLRenderer.prototype.setShaderProgram = function(shaderProgram) {
                 this.currentState().shaderProgram = this._shared.initializeShaderProgram(shaderProgram);
+            }, WebGLRenderer.prototype.isSupportedShaderProgram = function() {
+                return !0;
             }, WebGLRenderer.prototype.changeViewportSize = function(width, height) {
                 var old = this._renderTarget;
                 this._renderTarget = {
@@ -1462,49 +1466,32 @@ require = function e(t, n, r) {
     } ],
     27: [ function(require, module, exports) {
         "use strict";
-        var __extends = this && this.__extends || function() {
-            var extendStatics = Object.setPrototypeOf || {
-                __proto__: []
-            } instanceof Array && function(d, b) {
-                d.__proto__ = b;
-            } || function(d, b) {
-                for (var p in b) b.hasOwnProperty(p) && (d[p] = b[p]);
-            };
-            return function(d, b) {
-                function __() {
-                    this.constructor = d;
-                }
-                extendStatics(d, b), d.prototype = null === b ? Object.create(b) : (__.prototype = b.prototype, 
-                new __());
-            };
-        }();
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), WebGLShaderProgram = function(_super) {
+        var g = require("@akashic/akashic-engine"), WebGLShaderProgram = function() {
             function WebGLShaderProgram(context, fSrc, uniforms) {
-                var _this = this, vSrc = WebGLShaderProgram._DEFAULT_VERTEX_SHADER, fSrc = fSrc || WebGLShaderProgram._DEFAULT_FRAGMENT_SHADER, program = WebGLShaderProgram._makeShaderProgram(context, vSrc, fSrc);
-                return _this = _super.call(this, {
-                    fragmentShader: fSrc,
-                    uniforms: uniforms
-                }) || this, _this.program = program, _this._context = context, _this._aVertex = context.getAttribLocation(_this.program, "aVertex"), 
-                _this._uColor = context.getUniformLocation(_this.program, "uColor"), _this._uAlpha = context.getUniformLocation(_this.program, "uAlpha"), 
-                _this._uSampler = context.getUniformLocation(_this.program, "uSampler"), _this._uniformCaches = [], 
-                _this._uniformSetterTable = {
-                    "float": _this._uniform1f.bind(_this),
-                    "int": _this._uniform1i.bind(_this),
-                    vec2: _this._uniform2fv.bind(_this),
-                    vec3: _this._uniform3fv.bind(_this),
-                    vec4: _this._uniform4fv.bind(_this),
-                    ivec2: _this._uniform2iv.bind(_this),
-                    ivec3: _this._uniform3iv.bind(_this),
-                    ivec4: _this._uniform4iv.bind(_this),
-                    mat2: _this._uniformMatrix2fv.bind(_this),
-                    mat3: _this._uniformMatrix3fv.bind(_this),
-                    mat4: _this._uniformMatrix4fv.bind(_this)
-                }, _this;
+                var vSrc = WebGLShaderProgram._DEFAULT_VERTEX_SHADER, fSrc = fSrc || WebGLShaderProgram._DEFAULT_FRAGMENT_SHADER, program = WebGLShaderProgram._makeShaderProgram(context, vSrc, fSrc);
+                this.program = program, this._context = context, this._aVertex = context.getAttribLocation(this.program, "aVertex"), 
+                this._uColor = context.getUniformLocation(this.program, "uColor"), this._uAlpha = context.getUniformLocation(this.program, "uAlpha"), 
+                this._uSampler = context.getUniformLocation(this.program, "uSampler"), this._uniforms = uniforms, 
+                this._uniformCaches = [], this._uniformSetterTable = {
+                    "float": this._uniform1f.bind(this),
+                    "int": this._uniform1i.bind(this),
+                    float_v: this._uniform1fv.bind(this),
+                    int_v: this._uniform1iv.bind(this),
+                    vec2: this._uniform2fv.bind(this),
+                    vec3: this._uniform3fv.bind(this),
+                    vec4: this._uniform4fv.bind(this),
+                    ivec2: this._uniform2iv.bind(this),
+                    ivec3: this._uniform3iv.bind(this),
+                    ivec4: this._uniform4iv.bind(this),
+                    mat2: this._uniformMatrix2fv.bind(this),
+                    mat3: this._uniformMatrix3fv.bind(this),
+                    mat4: this._uniformMatrix4fv.bind(this)
+                };
             }
-            return __extends(WebGLShaderProgram, _super), WebGLShaderProgram._makeShader = function(gl, typ, src) {
+            return WebGLShaderProgram._makeShader = function(gl, typ, src) {
                 var shader = gl.createShader(typ);
                 if (gl.shaderSource(shader, src), gl.compileShader(shader), !gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
                     var msg = gl.getShaderInfoLog(shader);
@@ -1532,14 +1519,16 @@ require = function e(t, n, r) {
                 this._context.uniform1i(this._uSampler, value);
             }, WebGLShaderProgram.prototype.updateUniforms = function() {
                 for (var i = 0; i < this._uniformCaches.length; ++i) {
-                    var cache = this._uniformCaches[i], value = this.uniforms[cache.name].value;
+                    var cache = this._uniformCaches[i], value = this._uniforms[cache.name].value;
                     (cache.isArray || value !== cache.beforeValue) && (cache.update(cache.loc, value), 
                     cache.beforeValue = value);
                 }
             }, WebGLShaderProgram.prototype.initializeUniforms = function() {
-                var _this = this, uniformCaches = [], uniforms = this.uniforms;
+                var _this = this, uniformCaches = [], uniforms = this._uniforms;
                 null != uniforms && Object.keys(uniforms).forEach(function(k) {
-                    var type = uniforms[k].type, isArray = !("int" === type || "float" === type), update = _this._uniformSetterTable[type];
+                    var type = uniforms[k].type, isArray = Array.isArray(uniforms[k].value);
+                    !isArray || "int" !== type && "float" !== type || (type += "_v");
+                    var update = _this._uniformSetterTable[type];
                     if (!update) throw g.ExceptionFactory.createAssertionError("WebGLShaderProgram#initializeUniforms: Uniform type '" + type + "' is not supported.");
                     uniformCaches.push({
                         name: k,
@@ -1559,6 +1548,10 @@ require = function e(t, n, r) {
                 this._context.uniform1f(loc, v);
             }, WebGLShaderProgram.prototype._uniform1i = function(loc, v) {
                 this._context.uniform1i(loc, v);
+            }, WebGLShaderProgram.prototype._uniform1fv = function(loc, v) {
+                this._context.uniform1fv(loc, v);
+            }, WebGLShaderProgram.prototype._uniform1iv = function(loc, v) {
+                this._context.uniform1iv(loc, v);
             }, WebGLShaderProgram.prototype._uniform2fv = function(loc, v) {
                 this._context.uniform2fv(loc, v);
             }, WebGLShaderProgram.prototype._uniform3fv = function(loc, v) {
@@ -1580,7 +1573,7 @@ require = function e(t, n, r) {
             }, WebGLShaderProgram._DEFAULT_VERTEX_SHADER = "#version 100\nprecision mediump float;\nattribute vec4 aVertex;\nvarying vec2 vTexCoord;\nvarying vec4 vColor;\nuniform vec4 uColor;\nuniform float uAlpha;\nvoid main() {    gl_Position = vec4(aVertex.xy, 0.0, 1.0);    vTexCoord = aVertex.zw;    vColor = uColor * uAlpha;}", 
             WebGLShaderProgram._DEFAULT_FRAGMENT_SHADER = "#version 100\nprecision mediump float;\nvarying vec2 vTexCoord;\nvarying vec4 vColor;\nuniform sampler2D uSampler;\nvoid main() {    gl_FragColor = texture2D(uSampler, vTexCoord) * vColor;}", 
             WebGLShaderProgram;
-        }(g.ShaderProgram);
+        }();
         exports.WebGLShaderProgram = WebGLShaderProgram;
     }, {
         "@akashic/akashic-engine": "@akashic/akashic-engine"
@@ -1624,7 +1617,7 @@ require = function e(t, n, r) {
             }, WebGLSharedObject.prototype.draw = function(state, surfaceTexture, offsetX, offsetY, width, height, canvasOffsetX, canvasOffsetY, color) {
                 this._numSprites >= this._maxSpriteCount && this._commit();
                 var shaderProgram;
-                if (shaderProgram = surfaceTexture === this._fillRectSurfaceTexture || null == state.shaderProgram ? this._defaultShaderProgram : state.shaderProgram, 
+                if (shaderProgram = surfaceTexture === this._fillRectSurfaceTexture || null == state.shaderProgram || null == state.shaderProgram._program ? this._defaultShaderProgram : state.shaderProgram._program, 
                 this._currentShaderProgram !== shaderProgram && (this._commit(), this._currentShaderProgram = shaderProgram, 
                 this._currentShaderProgram.use(), this._currentShaderProgram.updateUniforms(), this._currentCompositeOperation = null, 
                 this._currentAlpha = null, this._currentColor = [], this._currentTexture = null), 
@@ -1702,15 +1695,13 @@ require = function e(t, n, r) {
             }, WebGLSharedObject.prototype.getDefaultShaderProgram = function() {
                 return this._defaultShaderProgram;
             }, WebGLSharedObject.prototype.initializeShaderProgram = function(shaderProgram) {
-                if (shaderProgram) {
-                    if (!shaderProgram.program) {
-                        var program = new WebGLShaderProgram_1.WebGLShaderProgram(this._context, shaderProgram.fragmentShader, shaderProgram.uniforms);
-                        program.initializeUniforms(), shaderProgram = program;
-                    }
-                } else shaderProgram = this._defaultShaderProgram;
+                if (shaderProgram && !shaderProgram._program) {
+                    var program = new WebGLShaderProgram_1.WebGLShaderProgram(this._context, shaderProgram.fragmentShader, shaderProgram.uniforms);
+                    program.initializeUniforms(), shaderProgram._program = program;
+                }
                 return shaderProgram;
             }, WebGLSharedObject.prototype._init = function() {
-                var program = new WebGLShaderProgram_1.WebGLShaderProgram(this._context);
+                var _a, program = new WebGLShaderProgram_1.WebGLShaderProgram(this._context);
                 this._textureAtlas = new WebGLTextureAtlas_1.WebGLTextureAtlas(), this._fillRectTexture = this.makeTextureRaw(1, 1, new Uint8Array([ 255, 255, 255, 255 ])), 
                 this._fillRectSurfaceTexture = {
                     texture: this._fillRectTexture,
@@ -1751,7 +1742,6 @@ require = function e(t, n, r) {
                 _a);
                 var compositeOperation = this._compositeOps[this._currentCompositeOperation];
                 this._context.blendFunc(compositeOperation[0], compositeOperation[1]);
-                var _a;
             }, WebGLSharedObject.prototype._makeBuffer = function(data) {
                 var buffer = this._context.createBuffer();
                 return this._context.bindBuffer(this._context.ARRAY_BUFFER, buffer), this._context.bufferData(this._context.ARRAY_BUFFER, data, this._context.DYNAMIC_DRAW), 
@@ -1928,7 +1918,7 @@ require = function e(t, n, r) {
         exports.InputAbstractHandler = InputAbstractHandler;
     }, {
         "@akashic/akashic-engine": "@akashic/akashic-engine",
-        "@akashic/akashic-pdi": 44
+        "@akashic/akashic-pdi": 46
     } ],
     32: [ function(require, module, exports) {
         "use strict";
@@ -1955,16 +1945,16 @@ require = function e(t, n, r) {
             function MouseHandler(inputView, disablePreventDefault) {
                 var _this = _super.call(this, inputView, disablePreventDefault) || this, identifier = 1;
                 return _this.onMouseDown = function(e) {
-                    0 === e.button && (_this.pointDown(identifier, e), window.addEventListener("mousemove", _this.onMouseMove, !1), 
-                    window.addEventListener("mouseup", _this.onMouseUp, !1), _this._disablePreventDefault || (e.stopPropagation(), 
-                    e.preventDefault()));
+                    0 === e.button && (_this.eventTarget = e.target, _this.pointDown(identifier, e), 
+                    window.addEventListener("mousemove", _this.onMouseMove, !1), window.addEventListener("mouseup", _this.onMouseUp, !1), 
+                    _this._disablePreventDefault || (e.stopPropagation(), e.preventDefault()));
                 }, _this.onMouseMove = function(e) {
-                    _this.pointMove(identifier, e), _this._disablePreventDefault || (e.stopPropagation(), 
-                    e.preventDefault());
+                    e.target === _this.eventTarget && (_this.pointMove(identifier, e), _this._disablePreventDefault || (e.stopPropagation(), 
+                    e.preventDefault()));
                 }, _this.onMouseUp = function(e) {
-                    _this.pointUp(identifier, e), window.removeEventListener("mousemove", _this.onMouseMove, !1), 
+                    e.target === _this.eventTarget && (_this.pointUp(identifier, e), window.removeEventListener("mousemove", _this.onMouseMove, !1), 
                     window.removeEventListener("mouseup", _this.onMouseUp, !1), _this._disablePreventDefault || (e.stopPropagation(), 
-                    e.preventDefault());
+                    e.preventDefault()));
                 }, _this;
             }
             return __extends(MouseHandler, _super), MouseHandler.isSupported = function() {
@@ -2164,6 +2154,66 @@ require = function e(t, n, r) {
     } ],
     37: [ function(require, module, exports) {
         "use strict";
+        function resumeHandler() {
+            playSuspendedAudioElements(), clearUserInteractListener();
+        }
+        function setUserInteractListener() {
+            document.addEventListener("keydown", resumeHandler, !0), document.addEventListener("mousedown", resumeHandler, !0), 
+            document.addEventListener("touchend", resumeHandler, !0);
+        }
+        function clearUserInteractListener() {
+            document.removeEventListener("keydown", resumeHandler), document.removeEventListener("mousedown", resumeHandler), 
+            document.removeEventListener("touchend", resumeHandler);
+        }
+        function playSuspendedAudioElements() {
+            state = 2, suspendedAudioElements.forEach(function(audio) {
+                return audio.play();
+            }), suspendedAudioElements = [];
+        }
+        var HTMLAudioAutoplayHelper, state = 0, suspendedAudioElements = [];
+        !function(HTMLAudioAutoplayHelper) {
+            function setupChromeMEIWorkaround(audio) {
+                function playHandler() {
+                    switch (state) {
+                      case 0:
+                      case 1:
+                        playSuspendedAudioElements();
+                        break;
+
+                      case 2:                    }
+                    state = 2, clearTimeout(timer);
+                }
+                function suspendedHandler() {
+                    switch (audio.removeEventListener("play", playHandler), state) {
+                      case 0:
+                        suspendedAudioElements.push(audio), state = 1, setUserInteractListener();
+                        break;
+
+                      case 1:
+                        suspendedAudioElements.push(audio);
+                        break;
+
+                      case 2:
+                        audio.play();
+                    }
+                }
+                switch (state) {
+                  case 0:
+                    audio.addEventListener("play", playHandler, !0);
+                    var timer = setTimeout(suspendedHandler, 100);
+                    break;
+
+                  case 1:
+                    suspendedAudioElements.push(audio);
+                    break;
+
+                  case 2:                }
+            }
+            HTMLAudioAutoplayHelper.setupChromeMEIWorkaround = setupChromeMEIWorkaround;
+        }(HTMLAudioAutoplayHelper || (HTMLAudioAutoplayHelper = {})), module.exports = HTMLAudioAutoplayHelper;
+    }, {} ],
+    38: [ function(require, module, exports) {
+        "use strict";
         var __extends = this && this.__extends || function() {
             var extendStatics = Object.setPrototypeOf || {
                 __proto__: []
@@ -2183,7 +2233,7 @@ require = function e(t, n, r) {
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var g = require("@akashic/akashic-engine"), HTMLAudioPlayer = function(_super) {
+        var g = require("@akashic/akashic-engine"), autoPlayHelper = require("./HTMLAudioAutoplayHelper"), HTMLAudioPlayer = function(_super) {
             function HTMLAudioPlayer(system, manager) {
                 var _this = _super.call(this, system) || this;
                 return _this._manager = manager, _this._endedEventHandler = function() {
@@ -2195,8 +2245,8 @@ require = function e(t, n, r) {
             return __extends(HTMLAudioPlayer, _super), HTMLAudioPlayer.prototype.play = function(asset) {
                 this.currentAudio && this.stop();
                 var audio = asset.cloneElement();
-                audio ? (audio.volume = this.volume * this._system.volume * this._manager.getMasterVolume(), 
-                audio.play(), audio.loop = asset.loop, audio.addEventListener("ended", this._endedEventHandler, !1), 
+                audio ? (autoPlayHelper.setupChromeMEIWorkaround(audio), audio.volume = this._calculateVolume(), 
+                audio.play()["catch"](function(err) {}), audio.loop = asset.loop, audio.addEventListener("ended", this._endedEventHandler, !1), 
                 audio.addEventListener("play", this._onPlayEventHandler, !1), this._isWaitingPlayEvent = !0, 
                 this._audioInstance = audio) : this._dummyDurationWaitTimer = setTimeout(this._endedEventHandler, asset.duration), 
                 _super.prototype.play.call(this, asset);
@@ -2204,10 +2254,11 @@ require = function e(t, n, r) {
                 this.currentAudio && (this._clearEndedEventHandler(), this._audioInstance && (this._isWaitingPlayEvent ? this._isStopRequested = !0 : (this._audioInstance.pause(), 
                 this._audioInstance = null)), _super.prototype.stop.call(this));
             }, HTMLAudioPlayer.prototype.changeVolume = function(volume) {
-                this._audioInstance && (this._audioInstance.volume = volume * this._system.volume * this._manager.getMasterVolume()), 
-                _super.prototype.changeVolume.call(this, volume);
+                _super.prototype.changeVolume.call(this, volume), this._audioInstance && (this._audioInstance.volume = this._calculateVolume());
+            }, HTMLAudioPlayer.prototype._changeMuted = function(muted) {
+                _super.prototype._changeMuted.call(this, muted), this._audioInstance && (this._audioInstance.volume = this._calculateVolume());
             }, HTMLAudioPlayer.prototype.notifyMasterVolumeChanged = function() {
-                this._audioInstance && (this._audioInstance.volume = this.volume * this._system.volume * this._manager.getMasterVolume());
+                this._audioInstance && (this._audioInstance.volume = this._calculateVolume());
             }, HTMLAudioPlayer.prototype._onAudioEnded = function() {
                 this._clearEndedEventHandler(), _super.prototype.stop.call(this);
             }, HTMLAudioPlayer.prototype._clearEndedEventHandler = function() {
@@ -2217,13 +2268,16 @@ require = function e(t, n, r) {
             }, HTMLAudioPlayer.prototype._onPlayEvent = function() {
                 this._isWaitingPlayEvent && (this._isWaitingPlayEvent = !1, this._isStopRequested && (this._isStopRequested = !1, 
                 this._audioInstance.pause(), this._audioInstance = null));
+            }, HTMLAudioPlayer.prototype._calculateVolume = function() {
+                return this._muted ? 0 : this.volume * this._system.volume * this._manager.getMasterVolume();
             }, HTMLAudioPlayer;
         }(g.AudioPlayer);
         exports.HTMLAudioPlayer = HTMLAudioPlayer;
     }, {
+        "./HTMLAudioAutoplayHelper": 37,
         "@akashic/akashic-engine": "@akashic/akashic-engine"
     } ],
-    38: [ function(require, module, exports) {
+    39: [ function(require, module, exports) {
         "use strict";
         Object.defineProperty(exports, "__esModule", {
             value: !0
@@ -2266,9 +2320,9 @@ require = function e(t, n, r) {
         exports.HTMLAudioPlugin = HTMLAudioPlugin;
     }, {
         "./HTMLAudioAsset": 36,
-        "./HTMLAudioPlayer": 37
+        "./HTMLAudioPlayer": 38
     } ],
-    39: [ function(require, module, exports) {
+    40: [ function(require, module, exports) {
         "use strict";
         var __extends = this && this.__extends || function() {
             var extendStatics = Object.setPrototypeOf || {
@@ -2322,11 +2376,41 @@ require = function e(t, n, r) {
         }(g.AudioAsset);
         exports.WebAudioAsset = WebAudioAsset;
     }, {
-        "../../utils/XHRLoader": 43,
-        "./WebAudioHelper": 40,
+        "../../utils/XHRLoader": 45,
+        "./WebAudioHelper": 42,
         "@akashic/akashic-engine": "@akashic/akashic-engine"
     } ],
-    40: [ function(require, module, exports) {
+    41: [ function(require, module, exports) {
+        "use strict";
+        function resumeHandler() {
+            var context = helper.getAudioContext();
+            context.resume(), clearUserInteractListener();
+        }
+        function setUserInteractListener() {
+            document.addEventListener("keydown", resumeHandler, !0), document.addEventListener("mousedown", resumeHandler, !0), 
+            document.addEventListener("touchend", resumeHandler, !0);
+        }
+        function clearUserInteractListener() {
+            document.removeEventListener("keydown", resumeHandler), document.removeEventListener("mousedown", resumeHandler), 
+            document.removeEventListener("touchend", resumeHandler);
+        }
+        var WebAudioAutoplayHelper, helper = require("./WebAudioHelper");
+        !function(WebAudioAutoplayHelper) {
+            function setupChromeMEIWorkaround() {
+                var context = helper.getAudioContext();
+                if (!context || "function" != typeof context.resume) {
+                    var gain = helper.createGainNode(context), osc = context.createOscillator();
+                    osc.type = "sawtooth", osc.frequency.value = 440, osc.connect(gain), osc.start(0);
+                    var contextState = context.state;
+                    osc.disconnect(), "running" !== contextState && setUserInteractListener();
+                }
+            }
+            WebAudioAutoplayHelper.setupChromeMEIWorkaround = setupChromeMEIWorkaround;
+        }(WebAudioAutoplayHelper || (WebAudioAutoplayHelper = {})), module.exports = WebAudioAutoplayHelper;
+    }, {
+        "./WebAudioHelper": 42
+    } ],
+    42: [ function(require, module, exports) {
         "use strict";
         var WebAudioHelper, AudioContext = window.AudioContext || window.webkitAudioContext, singleContext = null;
         !function(WebAudioHelper) {
@@ -2351,7 +2435,7 @@ require = function e(t, n, r) {
             WebAudioHelper.createBufferNode = createBufferNode, WebAudioHelper._workAroundSafari = _workAroundSafari;
         }(WebAudioHelper || (WebAudioHelper = {})), module.exports = WebAudioHelper;
     }, {} ],
-    41: [ function(require, module, exports) {
+    43: [ function(require, module, exports) {
         "use strict";
         var __extends = this && this.__extends || function() {
             var extendStatics = Object.setPrototypeOf || {
@@ -2382,12 +2466,13 @@ require = function e(t, n, r) {
                 }, _this;
             }
             return __extends(WebAudioPlayer, _super), WebAudioPlayer.prototype.changeVolume = function(volume) {
-                this._gainNode.gain.value = volume * this._system.volume * this._manager.getMasterVolume(), 
-                _super.prototype.changeVolume.call(this, volume);
+                _super.prototype.changeVolume.call(this, volume), this._gainNode.gain.value = this._calculateVolume();
+            }, WebAudioPlayer.prototype._changeMuted = function(muted) {
+                _super.prototype._changeMuted.call(this, muted), this._gainNode.gain.value = this._calculateVolume();
             }, WebAudioPlayer.prototype.play = function(asset) {
                 if (this.currentAudio && this.stop(), asset.data) {
                     var bufferNode = helper.createBufferNode(this._audioContext);
-                    bufferNode.loop = asset.loop, bufferNode.buffer = asset.data, this._gainNode.gain.value = this.volume * this._system.volume * this._manager.getMasterVolume(), 
+                    bufferNode.loop = asset.loop, bufferNode.buffer = asset.data, this._gainNode.gain.value = this._calculateVolume(), 
                     bufferNode.connect(this._gainNode), this._sourceNode = bufferNode, this._sourceNode.onended = this._endedEventHandler, 
                     this._sourceNode.start(0);
                 } else this._dummyDurationWaitTimer = setTimeout(this._endedEventHandler, asset.duration);
@@ -2396,27 +2481,29 @@ require = function e(t, n, r) {
                 this.currentAudio && (this._clearEndedEventHandler(), this._sourceNode && this._sourceNode.stop(0), 
                 _super.prototype.stop.call(this));
             }, WebAudioPlayer.prototype.notifyMasterVolumeChanged = function() {
-                this._gainNode.gain.value = this.volume * this._system.volume * this._manager.getMasterVolume();
+                this._gainNode.gain.value = this._calculateVolume();
             }, WebAudioPlayer.prototype._onAudioEnded = function() {
                 this._clearEndedEventHandler(), _super.prototype.stop.call(this);
             }, WebAudioPlayer.prototype._clearEndedEventHandler = function() {
                 this._sourceNode && (this._sourceNode.onended = null), null != this._dummyDurationWaitTimer && (clearTimeout(this._dummyDurationWaitTimer), 
                 this._dummyDurationWaitTimer = null);
+            }, WebAudioPlayer.prototype._calculateVolume = function() {
+                return this._muted ? 0 : this.volume * this._system.volume * this._manager.getMasterVolume();
             }, WebAudioPlayer;
         }(g.AudioPlayer);
         exports.WebAudioPlayer = WebAudioPlayer;
     }, {
-        "./WebAudioHelper": 40,
+        "./WebAudioHelper": 42,
         "@akashic/akashic-engine": "@akashic/akashic-engine"
     } ],
-    42: [ function(require, module, exports) {
+    44: [ function(require, module, exports) {
         "use strict";
         Object.defineProperty(exports, "__esModule", {
             value: !0
         });
-        var WebAudioAsset_1 = require("./WebAudioAsset"), WebAudioPlayer_1 = require("./WebAudioPlayer"), WebAudioPlugin = function() {
+        var WebAudioAsset_1 = require("./WebAudioAsset"), WebAudioPlayer_1 = require("./WebAudioPlayer"), autoPlayHelper = require("./WebAudioAutoplayHelper"), WebAudioPlugin = function() {
             function WebAudioPlugin() {
-                this.supportedFormats = this._detectSupportedFormats();
+                this.supportedFormats = this._detectSupportedFormats(), autoPlayHelper.setupChromeMEIWorkaround();
             }
             return WebAudioPlugin.isSupported = function() {
                 return "AudioContext" in window ? !0 : "webkitAudioContext" in window ? !0 : !1;
@@ -2447,10 +2534,11 @@ require = function e(t, n, r) {
         }();
         exports.WebAudioPlugin = WebAudioPlugin;
     }, {
-        "./WebAudioAsset": 39,
-        "./WebAudioPlayer": 41
+        "./WebAudioAsset": 40,
+        "./WebAudioAutoplayHelper": 41,
+        "./WebAudioPlayer": 43
     } ],
-    43: [ function(require, module, exports) {
+    45: [ function(require, module, exports) {
         "use strict";
         Object.defineProperty(exports, "__esModule", {
             value: !0
@@ -2488,7 +2576,7 @@ require = function e(t, n, r) {
     }, {
         "@akashic/akashic-engine": "@akashic/akashic-engine"
     } ],
-    44: [ function(require, module, exports) {
+    46: [ function(require, module, exports) {
         "use strict";
         Object.defineProperty(exports, "__esModule", {
             value: !0
