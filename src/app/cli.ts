@@ -32,7 +32,8 @@ function cli(param: CommandParameterObject): void {
 		exclude: param.exclude,
 		logger: logger,
 		strip: (param.strip != null) ? param.strip : true,
-		hashLength: !param.hashFilename && !param.atsumaru ? 0 : (typeof param.hashFilename !== "number") ? 20 : Number(param.hashFilename),
+		hashLength: !param.hashFilename && !param.atsumaru ? 0 :
+			(param.hashFilename === true || param.hashFilename === undefined) ? 20 : Number(param.hashFilename),
 		minify: param.minify,
 		bundle: param.bundle || param.atsumaru,
 		magnify: param.magnify,
