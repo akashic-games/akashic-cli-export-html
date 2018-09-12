@@ -3,18 +3,22 @@ var atsumaru = require("../lib/exportAtsumaru");
 var path = require("path");
 var fs = require("fs");
 var fsx = require("fs-extra");
+var zip = require("zip");
 
 describe("exportAtsumaru", function () {
 	const dirPath = path.join(__dirname, "fixture", "sample_game");
 	const outputDirPath = path.join(dirPath, "output");
-	const cliParam = {
-		logger: undefined,
-		cwd: dirPath,
-		output: outputDirPath,
-		hashLength: 20,
-		bundle: true,
-		copyText: true
-	};
+	var cliParam;
+	beforeEach(function() {
+		cliParam = {
+			logger: undefined,
+			cwd: dirPath,
+			output: outputDirPath,
+			hashLength: 20,
+			bundle: true,
+			copyText: true
+		};
+	});
 	afterEach(function() {
 		fsx.removeSync(outputDirPath);
 	});
@@ -47,12 +51,30 @@ describe("exportAtsumaru", function () {
 				})
 				.then(done, done.fail);
 		});
-		it("throw error when output destination is not specified", function (done) {
-			const invalidCliParam = cliParam;
-			delete invalidCliParam["output"];
+		it("create zip when output destination includes '.zip'", function (done) {
+			cliParam["output"] = outputDirPath + ".zip";
 			Promise.resolve()
 				.then(function () {
-					return atsumaru.promiseExportAtsumaru(invalidCliParam);
+					return atsumaru.promiseExportAtsumaru(cliParam);
+				})
+				.then(function () {
+					const files = zip.Reader(fs.readFileSync(outputDirPath + ".zip")).toObject('utf8');
+					const fileNames = Object.keys(files);
+					expect(fileNames).toContain("output/game.json");
+					expect(fileNames).toContain("output/index.html");
+					const expectedFilePath = cmn.Renamer.hashFilepath("script/aez_bundle_main.js", 20);
+					expect(fileNames).toContain("output/" + expectedFilePath);
+				})
+				.then(function() {
+					fsx.removeSync(outputDirPath + ".zip");
+				})
+				.then(done, done.fail);
+		});
+		it("throw error when output destination is not specified", function (done) {
+			delete cliParam["output"];
+			Promise.resolve()
+				.then(function () {
+					return atsumaru.promiseExportAtsumaru(cliParam);
 				})
 				.then(function () {
 					return done.fail()

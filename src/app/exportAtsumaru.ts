@@ -1,10 +1,17 @@
 import * as fs from "fs";
 import * as fsx from "fs-extra";
 import * as path from "path";
+import * as archiver from "archiver";
 import {promiseExportZip} from "@akashic/akashic-cli-export-zip/lib/bundle";
 import {ExportHTMLParameterObject, promiseExportHTML} from "./exportHTML";
 
 export function promiseExportAtsumaru(param: ExportHTMLParameterObject): Promise<void> {
+	const originalOutput = param.output;
+	if (param.output === undefined) {
+		param.output = "";
+	}
+	const outZip = path.extname(param.output) === ".zip";
+	param.output = outZip ? param.output.replace(/.zip$/g, "") : param.output;
 	return promiseExportHTML(param)
 		.then(() => {
 			// filesディレクトリはakashic export zip時にも生成されるので削除しておく。削除しないとハッシュ名の衝突が起きてエラーになるため。
@@ -45,7 +52,24 @@ export function promiseExportAtsumaru(param: ExportHTMLParameterObject): Promise
 				gameJson.environment["akashic-runtime"]["flavor"] = "-canvas";
 			}
 			fs.writeFileSync(gameJsonPath, JSON.stringify(gameJson, null, 2));
-			// export-html時に作られたディレクトリがディレクトリ毎コピーされてしまっているので削除
+			// export-html時に作られたディレクトリがディレクトリ毎コピーされてしまっているので削除。
+			// TODO: export-zipのstripモードが使えるようになったら、この処理は削除
 			fsx.removeSync(path.join(param.output, path.basename(param.output)));
+		}).then(() => {
+			if (!outZip) {
+				return;
+			}
+			return new Promise<void>((resolve, reject) => {
+				const ostream = fs.createWriteStream(originalOutput);
+				const archive = archiver("zip");
+				ostream.on("close", () => resolve());
+				archive.on("error", (err) => reject(err));
+				archive.pipe(ostream);
+				archive.glob(path.relative(param.source, param.output) + "/**/*", { cwd: param.cwd });
+				archive.finalize();
+			}).then(() => {
+				fsx.removeSync(param.output);
+				param.logger.info("Done Zip!");
+			});
 		});
 }
