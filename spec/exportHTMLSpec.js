@@ -16,8 +16,9 @@ describe("exportHTML", function () {
 				cwd: process.cwd(),
 				output: process.cwd()
 			}
-			exp._completeExportHTMLParameterObject(param);
-			expect(param.logger).not.toBe(undefined);
+			var result = exp._completeExportHTMLParameterObject(param);
+			expect(param.logger).toBe(undefined);
+			expect(result.logger).not.toBe(undefined);
 			})
 		.then(done, done.fail);
 	});
@@ -31,16 +32,16 @@ describe("exportHTML", function () {
 				source: path.join(process.cwd(), "content"),
 				output: path.join(process.cwd(), "output")
 			}
-			exp._completeExportHTMLParameterObject(param);
-			expect(param.output).toBe(path.join(process.cwd(), "output"));
+			var result = exp._completeExportHTMLParameterObject(param);
+			expect(result.output).toBe(path.join(process.cwd(), "output"));
 
 			param = {
 				logger: undefined,
 				cwd: path.join(process.cwd(), "content"),
 				output:  "../output"
 			}
-			exp._completeExportHTMLParameterObject(param);
-			expect(param.output).toBe(path.join(process.cwd(), "output"));
+			var result = exp._completeExportHTMLParameterObject(param);
+			expect(result.output).toBe(path.join(process.cwd(), "output"));
 		})
 		.then(done, done.fail);
 	});

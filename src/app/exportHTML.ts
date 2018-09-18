@@ -14,18 +14,20 @@ export interface ExportHTMLParameterObject extends ConvertTemplateParameterObjec
 	hashLength?: number;
 }
 
-export function _completeExportHTMLParameterObject(param: ExportHTMLParameterObject): void {
+export function _completeExportHTMLParameterObject(p: ExportHTMLParameterObject): ExportHTMLParameterObject {
+	const param = {...p};
 	const source = param.source ? param.source : "./";
 	param.source = path.resolve(param.cwd, source);
 	param.output = path.resolve(param.cwd, param.output);
 	param.logger = param.logger || new cmn.ConsoleLogger();
+	return param;
 }
-export function promiseExportHTML(param: ExportHTMLParameterObject): Promise<void> {
-	if (!param.output) {
+export function promiseExportHTML(p: ExportHTMLParameterObject): Promise<void> {
+	if (!p.output) {
 		return Promise.reject("--output option must be specified.");
 	}
 
-	_completeExportHTMLParameterObject(param);
+	const param = _completeExportHTMLParameterObject(p);
 	let gamepath: string;
 
 	if (!param.strip && !/^\.\./.test(path.relative(param.source, param.output))) {

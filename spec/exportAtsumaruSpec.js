@@ -13,7 +13,7 @@ describe("exportAtsumaru", function () {
 		cliParam = {
 			logger: undefined,
 			cwd: dirPath,
-			output: outputDirPath,
+			output: "output",
 			hashLength: 20,
 			bundle: true,
 			copyText: true
