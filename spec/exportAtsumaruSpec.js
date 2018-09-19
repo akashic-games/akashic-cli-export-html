@@ -53,6 +53,28 @@ describe("exportAtsumaru", function () {
 				})
 				.then(done, done.fail);
 		});
+		it("does not add akashic-runtime-information about nicocas to game.json, if it is already written", function (done) {
+			const targetDirPath = path.join(__dirname, "fixture", "sample_game2");
+			const outputDirPath = path.join(targetDirPath, "output");
+			Promise.resolve()
+				.then(function () {
+					cliParam.cwd = targetDirPath;
+					return atsumaru.promiseExportAtsumaru(cliParam);
+				})
+				.then(function (dest) {
+					expect(dest).toBe(outputDirPath);
+					const gameJson = require(path.join(outputDirPath, "game.json"));
+					expect(gameJson.environment.external.coe).toBe("0");
+					expect(gameJson.environment.external.send).toBe("0");
+					expect(gameJson.environment.external.nicocas).toBe("0");
+					expect(gameJson.environment["akashic-runtime"]["version"]).toBe("1.0.9-beta");
+					expect(gameJson.environment["akashic-runtime"]["flavor"]).toBe(undefined);
+				})
+				.then(function() {
+					fsx.removeSync(outputDirPath);
+				})
+				.then(done, done.fail);
+		});
 		it("create zip when output destination includes '.zip'", function (done) {
 			cliParam["output"] = outputDirPath + ".zip";
 			Promise.resolve()
