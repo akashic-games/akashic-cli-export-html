@@ -4,6 +4,7 @@ import * as path from "path";
 import * as archiver from "archiver";
 import {promiseExportZip} from "@akashic/akashic-cli-export-zip/lib/bundle";
 import {_completeExportHTMLParameterObject, ExportHTMLParameterObject, promiseExportHTML} from "./exportHTML";
+import {getFromHttps} from "./apiUtil";
 
 export function promiseExportAtsumaru(param: ExportHTMLParameterObject): Promise<string> {
 	if (param.output === undefined) {
@@ -30,8 +31,7 @@ export function promiseExportAtsumaru(param: ExportHTMLParameterObject): Promise
 			});
 		}).then(() => {
 			// game.jsonへの追記
-			const gameJsonPath = path.join(completedParam.output, "game.json");
-			const gameJson = require(gameJsonPath);
+			const gameJson = require(path.join(completedParam.output, "game.json"));
 			if (!gameJson.environment) {
 				gameJson.environment = {};
 			}
@@ -41,20 +41,27 @@ export function promiseExportAtsumaru(param: ExportHTMLParameterObject): Promise
 			gameJson.environment.external.coe = "0";
 			gameJson.environment.external.send = "0";
 			gameJson.environment.external.nicocas = "0";
-			if (!gameJson.environment["akashic-runtime"]) {
-				gameJson.environment["akashic-runtime"] = {};
-				// TODO: べだ書きせずにengine-filesの最新のバージョンを取れるようにする
-				if (!gameJson.environment["sandbox-runtime"] || gameJson.environment["sandbox-runtime"] === "1") {
-					gameJson.environment["akashic-runtime"]["version"] = "0.0.11"; // v1に対応するengine-filesのバージョン
-				} else {
-					gameJson.environment["akashic-runtime"]["version"] = "1.0.11"; // v2に対応するengine-filesのバージョン
-				}
-				if (!gameJson.renderers || gameJson.renderers.indexOf("webgl") === -1) {
-					gameJson.environment["akashic-runtime"]["flavor"] = "-canvas";
-				}
+			if (gameJson.environment["akashic-runtime"]) {
+				return gameJson;
 			}
-			fs.writeFileSync(gameJsonPath, JSON.stringify(gameJson, null, 2));
-		}).then(() => {
+			gameJson.environment["akashic-runtime"] = {};
+			if (!gameJson.renderers || gameJson.renderers.indexOf("webgl") === -1) {
+				gameJson.environment["akashic-runtime"]["flavor"] = "-canvas";
+			}
+			return getFromHttps(
+				"https://raw.githubusercontent.com/akashic-games/akashic-runtime-version-table/master/versions.json").then((data) => {
+				const versionInfo = JSON.parse(data);
+				if (!gameJson.environment["sandbox-runtime"] || gameJson.environment["sandbox-runtime"] === "1") {
+					gameJson.environment["akashic-runtime"]["version"] = versionInfo["latest"]["1"];
+				} else {
+					gameJson.environment["akashic-runtime"]["version"] = versionInfo["latest"]["2"];
+				}
+				return gameJson;
+			});
+		}).then((gameJson) => {
+			fs.writeFileSync(path.join(completedParam.output, "game.json"), JSON.stringify(gameJson, null, 2));
+		})
+		.then(() => {
 			if (!outZip) {
 				return;
 			}
