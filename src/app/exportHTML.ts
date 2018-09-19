@@ -18,23 +18,23 @@ export function _completeExportHTMLParameterObject(p: ExportHTMLParameterObject)
 	const param = {...p};
 	const source = param.source ? param.source : "./";
 	param.source = path.resolve(param.cwd, source);
-	param.output = path.resolve(param.cwd, param.output);
+	param.output = param.output ? path.resolve(param.cwd, param.output) : undefined;
 	param.logger = param.logger || new cmn.ConsoleLogger();
 	return param;
 }
-export function promiseExportHTML(p: ExportHTMLParameterObject): Promise<void> {
-	if (!p.output) {
-		return Promise.reject("--output option must be specified.");
-	}
-
+export function promiseExportHTML(p: ExportHTMLParameterObject): Promise<string> {
 	const param = _completeExportHTMLParameterObject(p);
 	let gamepath: string;
 
-	if (!param.strip && !/^\.\./.test(path.relative(param.source, param.output))) {
+	if (!param.strip && param.output != null && !/^\.\./.test(path.relative(param.source, param.output))) {
 		param.logger.warn("The output path overlaps with the game directory: files will be exported into the game directory.");
 		param.logger.warn("NOTE that after this, exporting this game with --no-strip option may include the files.");
 	}
 	return new Promise((resolve, reject) => {
+		if (!param.output) {
+			param.output = fs.mkdtempSync(path.join(os.tmpdir(), "akashic-export-html-tmp-"));
+			resolve();
+		}
 		fs.stat(path.resolve(param.output), (error: any, stat: any) => {
 			if (error) {
 				if (error.code !== "ENOENT") {
@@ -91,7 +91,10 @@ export function promiseExportHTML(p: ExportHTMLParameterObject): Promise<void> {
 		param.logger.error(error);
 		throw error;
 	})
-	.then(() => param.logger.info("Done!"));
+	.then(() => {
+		param.logger.info("Done!");
+		return param.output;
+	});
 }
 
 export function exportHTML(param: ExportHTMLParameterObject, cb: (err?: any) => void): void {

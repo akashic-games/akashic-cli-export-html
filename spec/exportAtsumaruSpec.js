@@ -28,7 +28,8 @@ describe("exportAtsumaru", function () {
 				.then(function () {
 					return atsumaru.promiseExportAtsumaru(cliParam);
 				})
-				.then(function () {
+				.then(function (dest) {
+					expect(dest).toBe(outputDirPath);
 					expect(fs.existsSync(path.join(outputDirPath, "index.html"))).toBe(true);
 					const expectedFilePath = cmn.Renamer.hashFilepath("script/aez_bundle_main.js", 20);
 					expect(fs.existsSync(path.join(outputDirPath, expectedFilePath))).toBe(true);
@@ -41,7 +42,8 @@ describe("exportAtsumaru", function () {
 				.then(function () {
 					return atsumaru.promiseExportAtsumaru(cliParam);
 				})
-				.then(function () {
+				.then(function (dest) {
+					expect(dest).toBe(outputDirPath);
 					const gameJson = require(path.join(outputDirPath, "game.json"));
 					expect(gameJson.environment.external.coe).toBe("0");
 					expect(gameJson.environment.external.send).toBe("0");
@@ -57,7 +59,8 @@ describe("exportAtsumaru", function () {
 				.then(function () {
 					return atsumaru.promiseExportAtsumaru(cliParam);
 				})
-				.then(function () {
+				.then(function (dest) {
+					expect(dest).toBe(outputDirPath + ".zip");
 					const files = zip.Reader(fs.readFileSync(outputDirPath + ".zip")).toObject('utf8');
 					const fileNames = Object.keys(files);
 					expect(fileNames).toContain("output/game.json");
@@ -77,10 +80,10 @@ describe("exportAtsumaru", function () {
 					return atsumaru.promiseExportAtsumaru(cliParam);
 				})
 				.then(function () {
-					return done.fail()
+					return done.fail();
 				})
 				.catch(function (err) {
-					expect(err).toBe("--output option must be specified.");
+					expect(err.message).toBe("--output option must be specified.");
 					done();
 				});
 		});

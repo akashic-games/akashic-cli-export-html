@@ -42,6 +42,9 @@ function cli(param: CommandParameterObject): void {
 	};
 	Promise.resolve()
 		.then(() => {
+			if (param.output === undefined) {
+				throw new Error("--output option must be specified.");
+			}
 			if (param.atsumaru) {
 				return promiseExportAtsumaru(exportParam);
 			} else {

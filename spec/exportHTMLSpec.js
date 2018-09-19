@@ -1,6 +1,7 @@
 var cmn = require("@akashic/akashic-cli-commons");
 var exp = require("../lib/exportHTML");
 var path = require("path");
+var fsx = require("fs-extra");
 
 describe("exportHTML", function () {
 	var logger = new cmn.ConsoleLogger({
@@ -52,14 +53,14 @@ describe("exportHTML", function () {
 		.then(function () {
 			var param = {
 				logger: undefined,
-				cwd: "./",
+				cwd: path.join(__dirname, "fixture", "sample_game"),
 			}
 			return exp.promiseExportHTML(param);
 		})
-		.then(() => done.fail())
-		.catch((err) => {
-			expect(err).toBe("--output option must be specified.");
-			done();
-		});
+		.then((dest) => {
+			expect(dest).toMatch(/^\/tmp\/akashic-export-html-tmp-.+$/);
+			fsx.removeSync(dest);
+		})
+		.then(done, done.fail);
 	});
 });
