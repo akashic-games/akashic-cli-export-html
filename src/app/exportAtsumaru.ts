@@ -25,7 +25,8 @@ export function promiseExportAtsumaru(param: ExportHTMLParameterObject): Promise
 				source: completedParam.source,
 				bundle: completedParam.bundle,
 				dest: completedParam.output,
-				hashLength: completedParam.hashLength
+				hashLength: completedParam.hashLength,
+				strip: true
 			});
 		}).then(() => {
 			// game.jsonへの追記
@@ -53,9 +54,6 @@ export function promiseExportAtsumaru(param: ExportHTMLParameterObject): Promise
 				}
 			}
 			fs.writeFileSync(gameJsonPath, JSON.stringify(gameJson, null, 2));
-			// export-html時に作られたディレクトリがディレクトリ毎コピーされてしまっているので削除。
-			// TODO: export-zipのstripモードが使えるようになったら、この処理は削除
-			fsx.removeSync(path.join(completedParam.output, path.basename(completedParam.output)));
 		}).then(() => {
 			if (!outZip) {
 				return;
