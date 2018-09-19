@@ -17,7 +17,6 @@ export function promiseExportAtsumaru(param: ExportHTMLParameterObject): Promise
 	const completedParam = _completeExportHTMLParameterObject({...param});
 	return promiseExportHTML({...param, output: destDir, logger: completedParam.logger})
 		.then((dest) => {
-			console.log(dest);
 			completedParam.output = dest;
 			// filesディレクトリはakashic export zip時にも生成されるので削除しておく。削除しないとハッシュ名の衝突が起きてエラーになるため。
 			fsx.removeSync(path.join(completedParam.output, "files"));
