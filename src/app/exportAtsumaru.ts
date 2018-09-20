@@ -10,10 +10,7 @@ export function promiseExportAtsumaru(param: ExportHTMLParameterObject): Promise
 		throw new Error("--output option must be specified.");
 	}
 	const outZip = path.extname(param.output) === ".zip";
-	let destDir;
-	if (!outZip) {
-		destDir = param.output;
-	}
+	const destDir = outZip ? undefined : param.output;
 	const completedParam = _completeExportHTMLParameterObject({...param});
 	return promiseExportHTML({...param, output: destDir, logger: completedParam.logger})
 		.then((dest) => {
@@ -48,9 +45,9 @@ export function promiseExportAtsumaru(param: ExportHTMLParameterObject): Promise
 					gameJson.environment["akashic-runtime"]["version"] = "0.0.11"; // v1に対応するengine-filesのバージョン
 				} else {
 					gameJson.environment["akashic-runtime"]["version"] = "1.0.11"; // v2に対応するengine-filesのバージョン
-				}
-				if (!gameJson.renderers || gameJson.renderers.indexOf("webgl") === -1) {
-					gameJson.environment["akashic-runtime"]["flavor"] = "-canvas";
+					if (!gameJson.renderers || gameJson.renderers.indexOf("webgl") === -1) {
+						gameJson.environment["akashic-runtime"]["flavor"] = "-canvas";
+					}
 				}
 			}
 			fs.writeFileSync(gameJsonPath, JSON.stringify(gameJson, null, 2));

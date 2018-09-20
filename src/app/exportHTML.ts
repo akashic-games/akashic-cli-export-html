@@ -33,7 +33,7 @@ export function promiseExportHTML(p: ExportHTMLParameterObject): Promise<string>
 	return new Promise((resolve, reject) => {
 		if (!param.output) {
 			param.output = fs.mkdtempSync(path.join(os.tmpdir(), "akashic-export-html-tmp-"));
-			resolve();
+			return resolve();
 		}
 		fs.stat(path.resolve(param.output), (error: any, stat: any) => {
 			if (error) {
