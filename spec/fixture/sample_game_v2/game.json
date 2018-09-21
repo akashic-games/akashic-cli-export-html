@@ -10,10 +10,8 @@
 			"global": true
 		}
 	},
+	"renderers": ["canvas"],
 	"environment": {
-		"sandbox-runtime": "2",
-		"akashic-runtime": {
-			"version": "1.0.9-beta"
-		}
+		"sandbox-runtime": "2"
 	}
 }

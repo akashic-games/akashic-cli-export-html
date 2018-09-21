@@ -11,10 +11,7 @@ export function promiseExportAtsumaru(param: ExportHTMLParameterObject): Promise
 		throw new Error("--output option must be specified.");
 	}
 	const outZip = path.extname(param.output) === ".zip";
-	let destDir;
-	if (!outZip) {
-		destDir = param.output;
-	}
+	const destDir = outZip ? undefined : param.output;
 	const completedParam = _completeExportHTMLParameterObject({...param});
 	return promiseExportHTML({...param, output: destDir, logger: completedParam.logger})
 		.then((dest) => {
@@ -45,16 +42,16 @@ export function promiseExportAtsumaru(param: ExportHTMLParameterObject): Promise
 				return gameJson;
 			}
 			gameJson.environment["akashic-runtime"] = {};
-			if (!gameJson.renderers || gameJson.renderers.indexOf("webgl") === -1) {
-				gameJson.environment["akashic-runtime"]["flavor"] = "-canvas";
-			}
 			return getFromHttps(
 				"https://raw.githubusercontent.com/akashic-games/akashic-runtime-version-table/master/versions.json").then((data) => {
 				const versionInfo = JSON.parse(data);
 				if (!gameJson.environment["sandbox-runtime"] || gameJson.environment["sandbox-runtime"] === "1") {
-					gameJson.environment["akashic-runtime"]["version"] = versionInfo["latest"]["1"];
+					gameJson.environment["akashic-runtime"]["version"] = "~" + versionInfo["latest"]["1"];
 				} else {
-					gameJson.environment["akashic-runtime"]["version"] = versionInfo["latest"]["2"];
+					gameJson.environment["akashic-runtime"]["version"] = "~" + versionInfo["latest"]["2"];
+					if (!gameJson.renderers || gameJson.renderers.indexOf("webgl") === -1) {
+						gameJson.environment["akashic-runtime"]["flavor"] = "-canvas";
+					}
 				}
 				return gameJson;
 			});
