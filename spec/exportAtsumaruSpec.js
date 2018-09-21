@@ -48,7 +48,7 @@ describe("exportAtsumaru", function () {
 					expect(gameJson.environment.external.coe).toBe("0");
 					expect(gameJson.environment.external.send).toBe("0");
 					expect(gameJson.environment.external.nicocas).toBe("0");
-					expect(gameJson.environment["akashic-runtime"]["version"]).toMatch(/^0\.0\.\d+$/); // TODO: あとで1.1.xに修正
+					expect(gameJson.environment["akashic-runtime"]["version"]).toMatch(/^~0\.0\.\d+$/); // TODO: あとで1.1.xに修正
 					expect(gameJson.environment["akashic-runtime"]["flavor"]).toBe(undefined);
 				})
 				.then(done, done.fail);
@@ -67,7 +67,7 @@ describe("exportAtsumaru", function () {
 					expect(gameJson.environment.external.coe).toBe("0");
 					expect(gameJson.environment.external.send).toBe("0");
 					expect(gameJson.environment.external.nicocas).toBe("0");
-					expect(gameJson.environment["akashic-runtime"]["version"]).toMatch(/^1\.0\.\d+$/); // TODO: あとで2.1.xに修正
+					expect(gameJson.environment["akashic-runtime"]["version"]).toMatch(/^~1\.0\.\d+$/); // TODO: あとで2.1.xに修正
 					expect(gameJson.environment["akashic-runtime"]["flavor"]).toBe("-canvas");
 				})
 				.then(function() {
@@ -89,7 +89,7 @@ describe("exportAtsumaru", function () {
 					expect(gameJson.environment.external.coe).toBe("0");
 					expect(gameJson.environment.external.send).toBe("0");
 					expect(gameJson.environment.external.nicocas).toBe("0");
-					expect(gameJson.environment["akashic-runtime"]["version"]).toBe("1.0.9-beta");
+					expect(gameJson.environment["akashic-runtime"]["version"]).toBe("~1.0.9-beta");
 					expect(gameJson.environment["akashic-runtime"]["flavor"]).toBe(undefined);
 				})
 				.then(function() {

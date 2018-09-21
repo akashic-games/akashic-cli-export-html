@@ -42,9 +42,9 @@ export function promiseExportAtsumaru(param: ExportHTMLParameterObject): Promise
 				gameJson.environment["akashic-runtime"] = {};
 				// TODO: べだ書きせずにengine-filesの最新のバージョンを取れるようにする
 				if (!gameJson.environment["sandbox-runtime"] || gameJson.environment["sandbox-runtime"] === "1") {
-					gameJson.environment["akashic-runtime"]["version"] = "0.0.11"; // v1に対応するengine-filesのバージョン
+					gameJson.environment["akashic-runtime"]["version"] = "~0.0.11"; // v1に対応するengine-filesのバージョン
 				} else {
-					gameJson.environment["akashic-runtime"]["version"] = "1.0.11"; // v2に対応するengine-filesのバージョン
+					gameJson.environment["akashic-runtime"]["version"] = "~1.0.11"; // v2に対応するengine-filesのバージョン
 					if (!gameJson.renderers || gameJson.renderers.indexOf("webgl") === -1) {
 						gameJson.environment["akashic-runtime"]["flavor"] = "-canvas";
 					}
