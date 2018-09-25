@@ -25,7 +25,7 @@ describe("apiUtil", function () {
 					return done.fail();
 				})
 				.catch(function (err) {
-					expect(err.message).toBe("can not access with protocol other than https");
+					expect(err.message).toBe(`Protocol "http:" not supported. Expected "https:"`);
 					done();
 				});
 		});
@@ -38,7 +38,7 @@ describe("apiUtil", function () {
 					return done.fail();
 				})
 				.catch(function (err) {
-					expect(err.message).toBe("Failed to load page, status code: 404");
+					expect(err.message).toBe("Failed to get resource. url: https://example.com/notfound. status code: 404.");
 					done();
 				});
 		});
