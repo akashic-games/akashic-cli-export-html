@@ -37,7 +37,7 @@ describe("exportAtsumaru", function () {
 				})
 				.then(done, done.fail);
 		});
-		it("add information about nicocas to game.json (v1)", function (done) {
+		it("add information about environment to game.json (v1)", function (done) {
 			Promise.resolve()
 				.then(function () {
 					return atsumaru.promiseExportAtsumaru(cliParam);
@@ -53,7 +53,7 @@ describe("exportAtsumaru", function () {
 				})
 				.then(done, done.fail);
 		});
-		it("add information about nicocas to game.json (v2)", function (done) {
+		it("add information about environment to game.json (v2)", function (done) {
 			const targetDirPath = path.join(__dirname, "fixture", "sample_game_v2");
 			const outputDirPath = path.join(targetDirPath, "output");
 			Promise.resolve()
@@ -75,7 +75,7 @@ describe("exportAtsumaru", function () {
 				})
 				.then(done, done.fail);
 		});
-		it("does not add akashic-runtime-information about nicocas to game.json, if it is already written", function (done) {
+		it("does not add akashic-runtime-information about environment to game.json, if it is already written", function (done) {
 			const targetDirPath = path.join(__dirname, "fixture", "sample_game_with_akashic_runtime");
 			const outputDirPath = path.join(targetDirPath, "output");
 			Promise.resolve()

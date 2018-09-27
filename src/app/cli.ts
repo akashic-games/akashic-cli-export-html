@@ -75,7 +75,7 @@ commander
 	.option("-b, --bundle", "bundle assets and scripts in index.html (to reduce the number of files)")
 	.option("-m, --magnify", "fit game area to outer element size")
 	.option("-i, --inject [fileName]", "specify injected file content into index.html", inject, [])
-	.option("-a, --atsumaru", "generate files that can be posted to RPG-atsumaru and nicocas");
+	.option("-a, --atsumaru", "generate files that can be posted to RPG-atsumaru");
 
 export function run(argv: string[]): void {
 	// Commander の制約により --strip と --no-strip 引数を両立できないため、暫定対応として Commander 前に argv を処理する
