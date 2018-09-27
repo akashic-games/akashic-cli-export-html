@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## Unreleased changes
+## 0.1.33
 * `--atsumaru` オプションの追加
   * RPGアツマールに投稿可能な形式に変換します
 
