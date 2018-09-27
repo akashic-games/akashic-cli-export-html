@@ -38,7 +38,10 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 	});
 
 	var errorMessages: string[] = [];
-	var innerHTMLAssetNames = extractAssetDefinitions(conf, "script").concat(extractAssetDefinitions(conf, "text"));
+	var innerHTMLAssetNames = extractAssetDefinitions(conf, "script");
+	if (!options.unbundleText) {
+		innerHTMLAssetNames = innerHTMLAssetNames.concat(extractAssetDefinitions(conf, "text"));
+	}
 	innerHTMLAssetArray = innerHTMLAssetArray.concat(innerHTMLAssetNames.map((assetName: string) => {
 		return convertAssetToInnerHTMLObj(assetName, options.source, conf, options.minify, errorMessages);
 	}));
@@ -64,7 +67,6 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 		default:
 			throw Error("Unknown engine version: `environment[\"sandbox-runtime\"]` field in game.json should be \"1\" or \"2\".");
 	}
-
 	writeEct(innerHTMLAssetArray, options.output, conf, options, templatePath);
 	writeCommonFiles(options.source, options.output, conf, options, templatePath);
 }
@@ -107,7 +109,7 @@ function writeEct(
 	innerHTMLAssetArray: InnerHTMLAssetData[], outputPath: string,
 	conf: cmn.Configuration, options: ConvertTemplateParameterObject, templatePath: string): void {
 	const injects = options.injects ? options.injects : [];
-	var scripts = getDefaultBundleScripts(templatePath, options.minify);
+	var scripts = getDefaultBundleScripts(templatePath, options.minify, !options.unbundleText);
 	var ectRender = ect({root: __dirname + "/../templates-build", ext: ".ect"});
 	var html = ectRender.render("bundle-index", {
 		assets: innerHTMLAssetArray,

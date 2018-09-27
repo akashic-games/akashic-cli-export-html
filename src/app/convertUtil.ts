@@ -14,6 +14,7 @@ export interface ConvertTemplateParameterObject {
 	force: boolean;
 	source: string;
 	cwd: string;
+	unbundleText: boolean;
 	injects?: string[];
 }
 
@@ -29,7 +30,7 @@ export function copyAssetFilesStrip(
 	options.logger.info("copying stripped fileset...");
 	var assetNames = Object.keys(assets);
 	assetNames.filter((assetName) => {
-		return assets[assetName].type !== "script" && assets[assetName].type !== "text";
+		return assets[assetName].type !== "script" && (options.unbundleText || assets[assetName].type !== "text");
 	}).forEach((assetName) => {
 		var assetPath = assets[assetName].path;
 		var assetDir = path.dirname(assetPath);
@@ -64,14 +65,14 @@ export function copyAssetFiles(inputPath: string, outputPath: string, options: C
 	options.logger.info("copying files...");
 	const scriptPath = path.resolve(inputPath, "script");
 	const textPath = path.resolve(inputPath, "text");
-	const isScriptOrTextAsset = (src: string) => {
-		return path.relative(scriptPath, src)[0] !== "." || path.relative(textPath, src)[0] !== ".";
+	const isAssetToBeCopied = (src: string) => {
+		return path.relative(scriptPath, src)[0] === "." && (options.unbundleText || path.relative(textPath, src)[0] === ".");
 	};
 	try {
 		const files = readdir(inputPath);
 		files.forEach(p => {
 			cmn.Util.mkdirpSync(path.dirname(path.resolve(outputPath, p)));
-			if (!isScriptOrTextAsset(path.resolve(inputPath, p))) {
+			if (isAssetToBeCopied(path.resolve(inputPath, p))) {
 				fs.writeFileSync(path.resolve(outputPath, p), fs.readFileSync(path.resolve(inputPath, p)));
 			}
 		});
@@ -91,11 +92,14 @@ export function wrap(code: string, minify?: boolean): string {
 	return minify ? UglifyJS.minify(ret, { fromString: true }).code : ret;
 }
 
-export function getDefaultBundleScripts(templatePath: string, minify?: boolean): any {
+export function getDefaultBundleScripts(templatePath: string, minify?: boolean, bundleText: boolean = true): any {
 	var preloadScriptNames =
 		["akashic-engine.strip.js", "game-driver.strip.js", "pdi-browser.strip.js"];
 	var postloadScriptNames =
-		["build/LocalScriptAsset.js", "build/LocalTextAsset.js", "game-storage.strip.js", "logger.js", "sandbox.js", "initGlobals.js"];
+		["build/LocalScriptAsset.js", "game-storage.strip.js", "logger.js", "sandbox.js", "initGlobals.js"];
+	if (bundleText) {
+		postloadScriptNames.push("build/LocalTextAsset.js");
+	}
 
 	var preloadScripts = preloadScriptNames.map((fileName) => loadScriptFile(fileName, templatePath));
 	var postloadScripts = postloadScriptNames.map((fileName) => loadScriptFile(fileName, templatePath));

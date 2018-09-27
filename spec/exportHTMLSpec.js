@@ -1,6 +1,7 @@
 var cmn = require("@akashic/akashic-cli-commons");
 var exp = require("../lib/exportHTML");
 var path = require("path");
+var fsx = require("fs-extra");
 
 describe("exportHTML", function () {
 	var logger = new cmn.ConsoleLogger({
@@ -16,8 +17,9 @@ describe("exportHTML", function () {
 				cwd: process.cwd(),
 				output: process.cwd()
 			}
-			exp._completeExportHTMLParameterObject(param);
-			expect(param.logger).not.toBe(undefined);
+			var result = exp._completeExportHTMLParameterObject(param);
+			expect(param.logger).toBe(undefined);
+			expect(result.logger).not.toBe(undefined);
 			})
 		.then(done, done.fail);
 	});
@@ -31,16 +33,16 @@ describe("exportHTML", function () {
 				source: path.join(process.cwd(), "content"),
 				output: path.join(process.cwd(), "output")
 			}
-			exp._completeExportHTMLParameterObject(param);
-			expect(param.output).toBe(path.join(process.cwd(), "output"));
+			var result = exp._completeExportHTMLParameterObject(param);
+			expect(result.output).toBe(path.join(process.cwd(), "output"));
 
 			param = {
 				logger: undefined,
 				cwd: path.join(process.cwd(), "content"),
 				output:  "../output"
 			}
-			exp._completeExportHTMLParameterObject(param);
-			expect(param.output).toBe(path.join(process.cwd(), "output"));
+			var result = exp._completeExportHTMLParameterObject(param);
+			expect(result.output).toBe(path.join(process.cwd(), "output"));
 		})
 		.then(done, done.fail);
 	});
@@ -51,14 +53,14 @@ describe("exportHTML", function () {
 		.then(function () {
 			var param = {
 				logger: undefined,
-				cwd: "./",
+				cwd: path.join(__dirname, "fixture", "sample_game"),
 			}
 			return exp.promiseExportHTML(param);
 		})
-		.then(() => done.fail())
-		.catch((err) => {
-			expect(err).toBe("--output option must be specified.");
-			done();
-		});
+		.then((dest) => {
+			expect(dest).toMatch(/^\/tmp\/akashic-export-html-tmp-.+$/);
+			fsx.removeSync(dest);
+		})
+		.then(done, done.fail);
 	});
 });
