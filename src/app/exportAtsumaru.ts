@@ -35,9 +35,7 @@ export function promiseExportAtsumaru(param: ExportHTMLParameterObject): Promise
 			if (!gameJson.environment.external) {
 				gameJson.environment.external = {};
 			}
-			gameJson.environment.external.coe = "0";
 			gameJson.environment.external.send = "0";
-			gameJson.environment.external.nicocas = "0";
 			if (gameJson.environment["akashic-runtime"]) {
 				return gameJson;
 			}
