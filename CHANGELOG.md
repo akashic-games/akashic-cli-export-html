@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## Unreleased changes
+* `--magnify`オプションを使用してもコンテンツがRPGアツマールページでリサイズされない不具合の修正
+* `--atsumaru` オプション使用時に`--magnify`オプションも同時に使用されるように変更
+* `--atsumaru` オプション使用時に`game.json`に書き込まれる内容を変更
+
 ## 0.1.34
 * 内部コンポーネントの更新
 

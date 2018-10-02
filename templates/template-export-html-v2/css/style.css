@@ -3,8 +3,16 @@
 	border: 0;
 	padding: 0;
 }
-body{
+
+html {
+	width: 100%;
+	height: 100%;
+}
+
+body {
 	overflow: hidden;
+	width: 100%;
+	height: 100%;
 }
 
 #container {
@@ -12,8 +20,10 @@ body{
 	padding: 0px;
 	overflow: hidden;
 	touch-action: none;
+	width: 100%;
+	height: 100%;
 }
 
-#container canvas{
+#container canvas {
 	background-size: contain;
 }
