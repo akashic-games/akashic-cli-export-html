@@ -36,7 +36,7 @@ function cli(param: CommandParameterObject): void {
 			(param.hashFilename === true || param.hashFilename === undefined) ? 20 : Number(param.hashFilename),
 		minify: param.minify,
 		bundle: param.bundle || param.atsumaru,
-		magnify: param.magnify,
+		magnify: param.magnify || param.atsumaru,
 		injects: param.injects,
 		unbundleText: !param.bundle || param.atsumaru
 	};
