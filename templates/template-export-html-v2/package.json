@@ -13,12 +13,12 @@
     "update:engine": "node ../../build-template-support/updatefiles.js template-export-html-v2 engine"
   },
   "devDependencies": {
-    "@akashic/akashic-engine": "2.4.1",
+    "@akashic/akashic-engine": "2.4.2",
     "browserify": "^13.0.0",
     "shx": "~0.2.2"
   },
   "optionalDependencies": {
-    "@akashic/game-driver": "1.4.1",
+    "@akashic/game-driver": "1.4.2",
     "@akashic/game-storage": "0.0.6",
     "@akashic/pdi-browser": "1.5.0"
   },
