@@ -43,12 +43,12 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 		innerHTMLAssetNames = innerHTMLAssetNames.concat(extractAssetDefinitions(conf, "text"));
 	}
 	innerHTMLAssetArray = innerHTMLAssetArray.concat(innerHTMLAssetNames.map((assetName: string) => {
-		return convertAssetToInnerHTMLObj(assetName, options.source, conf, options.minify, errorMessages);
+		return convertAssetToInnerHTMLObj(assetName, options.source, conf, options.minify, options.lint, errorMessages);
 	}));
 
 	if (conf._content.globalScripts) {
 		innerHTMLAssetArray = innerHTMLAssetArray.concat(conf._content.globalScripts.map((scriptName: string) => {
-			return convertScriptNameToInnerHTMLObj(scriptName, options.source, options.minify, errorMessages);
+			return convertScriptNameToInnerHTMLObj(scriptName, options.source, options.minify, options.lint, errorMessages);
 		}));
 	}
 
@@ -72,11 +72,12 @@ export async function promiseConvertBundle(options: ConvertTemplateParameterObje
 }
 
 function convertAssetToInnerHTMLObj(
-	assetName: string, inputPath: string, conf: cmn.Configuration, minify?: boolean, errors?: string[]): InnerHTMLAssetData {
+	assetName: string, inputPath: string, conf: cmn.Configuration,
+	minify?: boolean, lint?: boolean, errors?: string[]): InnerHTMLAssetData {
 	var assets = conf._content.assets;
 	var isScript = assets[assetName].type === "script";
 	var assetString = fs.readFileSync(path.join(inputPath, assets[assetName].path), "utf8").replace(/\r\n|\r/g, "\n");
-	if (isScript) {
+	if (isScript && lint) {
 		errors.push.apply(errors, validateEs5Code(assets[assetName].path, assetString));
 	}
 	return {
@@ -87,7 +88,8 @@ function convertAssetToInnerHTMLObj(
 }
 
 function convertScriptNameToInnerHTMLObj(
-	scriptName: string, inputPath: string, minify?: boolean, errors?: string[]): InnerHTMLAssetData {
+	scriptName: string, inputPath: string,
+	minify?: boolean, lint?: boolean, errors?: string[]): InnerHTMLAssetData {
 	var scriptString = fs.readFileSync(path.join(inputPath, scriptName), "utf8").replace(/\r\n|\r/g, "\n");
 	var isScript = /\.js$/i.test(scriptName);
 
@@ -95,7 +97,7 @@ function convertScriptNameToInnerHTMLObj(
 	if (path.extname(scriptPath) === ".json") {
 		scriptString = encodeText(scriptString);
 	}
-	if (isScript) {
+	if (isScript && lint) {
 		errors.push.apply(errors, validateEs5Code(scriptName, scriptString));
 	}
 	return {

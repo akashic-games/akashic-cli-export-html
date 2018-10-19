@@ -48,6 +48,8 @@ describe("exportAtsumaru", function () {
 					expect(gameJson.environment.external.send).toBe("0");
 					expect(gameJson.environment["akashic-runtime"]["version"]).toMatch(/^~1\.1\.\d+$/);
 					expect(gameJson.environment["akashic-runtime"]["flavor"]).toBe(undefined);
+					expect(gameJson.environment["niconico"]["supportedModes"].length).toBe(1);
+					expect(gameJson.environment["niconico"]["supportedModes"]).toContain("single");
 				})
 				.then(done, done.fail);
 		});
@@ -65,6 +67,8 @@ describe("exportAtsumaru", function () {
 					expect(gameJson.environment.external.send).toBe("0");
 					expect(gameJson.environment["akashic-runtime"]["version"]).toMatch(/^~2\.1\.\d+$/);
 					expect(gameJson.environment["akashic-runtime"]["flavor"]).toBe("-canvas");
+					expect(gameJson.environment["niconico"]["supportedModes"].length).toBe(1);
+					expect(gameJson.environment["niconico"]["supportedModes"]).toContain("single");
 				})
 				.then(function() {
 					fsx.removeSync(outputDirPath);
@@ -85,6 +89,9 @@ describe("exportAtsumaru", function () {
 					expect(gameJson.environment.external.send).toBe("0");
 					expect(gameJson.environment["akashic-runtime"]["version"]).toBe("~1.0.9-beta");
 					expect(gameJson.environment["akashic-runtime"]["flavor"]).toBe(undefined);
+					expect(gameJson.environment["niconico"]["supportedModes"].length).toBe(2);
+					expect(gameJson.environment["niconico"]["supportedModes"]).toContain("single");
+					expect(gameJson.environment["niconico"]["supportedModes"]).toContain("ranking");
 				})
 				.then(function() {
 					fsx.removeSync(outputDirPath);

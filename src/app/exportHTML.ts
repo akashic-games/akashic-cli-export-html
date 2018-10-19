@@ -26,6 +26,7 @@ export function promiseExportHTML(p: ExportHTMLParameterObject): Promise<string>
 	const param = _completeExportHTMLParameterObject(p);
 	let gamepath: string;
 
+	param.logger.info("exporting content into html...");
 	if (!param.strip && param.output != null && !/^\.\./.test(path.relative(param.source, param.output))) {
 		param.logger.warn("The output path overlaps with the game directory: files will be exported into the game directory.");
 		param.logger.warn("NOTE that after this, exporting this game with --no-strip option may include the files.");
@@ -73,7 +74,8 @@ export function promiseExportHTML(p: ExportHTMLParameterObject): Promise<string>
 			source: gamepath,
 			cwd: param.cwd,
 			injects: param.injects,
-			unbundleText: param.unbundleText
+			unbundleText: param.unbundleText,
+			lint: param.lint
 		};
 		if (param.bundle) {
 			return promiseConvertBundle(convertParam);
