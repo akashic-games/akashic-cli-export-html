@@ -34,7 +34,10 @@ export function promiseExportAtsumaru(param: ExportHTMLParameterObject): Promise
 			}
 			if (!gameJson.environment.niconico || !gameJson.environment.niconico.supportedModes) {
 				// モード指定がなければ、常に指定可能なモードであるsingleモードを追加する。
-				completedParam.logger.warn("'environment.niconico.supportedModes', a required property  for '--atsumaru' mode, is not given in game.json. Assumed to be [\"single\"].");
+				completedParam.logger.warn(
+					"'environment.niconico.supportedModes', a required property for '--atsumaru' mode," +
+					"is not given in game.json. Assumed to be [\"single\"]."
+				);
 				gameJson.environment.niconico = {
 					"supportedModes": ["single"]
 				};
