@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## Unreleased changes
+## 0.1.37
 * `--atsumaru` オプション指定時、二度 lint される問題を修正
 * `--atsumaru` オプション指定時、`game.json` に `environment.niconico.supportedModes` が指定されているかのチェックを追加
 * export処理を開始したことを示す文言を表示
