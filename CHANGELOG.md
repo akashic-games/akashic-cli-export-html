@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.1.37
+* `--atsumaru` オプション指定時、二度 lint される問題を修正
+* `--atsumaru` オプション指定時、`game.json` に `environment.niconico.supportedModes` が指定されているかのチェックを追加
+* export処理を開始したことを示す文言を表示
+
 ## 0.1.36
 * `--magnify`オプションを使用してもコンテンツがRPGアツマールページでリサイズされない不具合の修正
 * `--atsumaru` オプション使用時に`--magnify`オプションも同時に使用されるように変更

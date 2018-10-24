@@ -33,11 +33,11 @@ export async function promiseConvertNoBundle(options: ConvertTemplateParameterOb
 	var errorMessages: string[] = [];
 	assetPaths = assetPaths.concat(
 		assetNames.map((assetName: string) => {
-			return convertAssetAndOutput(assetName, conf, options.source, options.output, options.minify, errorMessages);
+			return convertAssetAndOutput(assetName, conf, options.source, options.output, options.minify, options.lint, errorMessages);
 		}));
 	if (conf._content.globalScripts) {
 		assetPaths = assetPaths.concat(conf._content.globalScripts.map((scriptName: string) => {
-			return convertGlobalScriptAndOutput(scriptName, options.source, options.output, options.minify, errorMessages);
+			return convertGlobalScriptAndOutput(scriptName, options.source, options.output, options.minify, options.lint, errorMessages);
 		}));
 	}
 	if (errorMessages.length > 0) {
@@ -50,12 +50,13 @@ export async function promiseConvertNoBundle(options: ConvertTemplateParameterOb
 
 function convertAssetAndOutput(
 	assetName: string, conf: cmn.Configuration,
-	inputPath: string, outputPath: string, minify?: boolean, errors?: string[]): string {
+	inputPath: string, outputPath: string,
+	minify?: boolean, lint?: boolean, errors?: string[]): string {
 	var assets = conf._content.assets;
 	var isScript = assets[assetName].type === "script";
 	var assetString = fs.readFileSync(path.join(inputPath, assets[assetName].path), "utf8").replace(/\r\n|\r/g, "\n");
 	var assetPath = assets[assetName].path;
-	if (isScript) {
+	if (isScript && lint) {
 		errors.push.apply(errors, validateEs5Code(assetPath, assetString)); // ES5構文に反する箇所があるかのチェック
 	}
 
@@ -69,10 +70,11 @@ function convertAssetAndOutput(
 }
 
 function convertGlobalScriptAndOutput(
-	scriptName: string, inputPath: string, outputPath: string, minify?: boolean, errors?: string[]): string {
+	scriptName: string, inputPath: string, outputPath: string,
+	minify?: boolean, lint?: boolean, errors?: string[]): string {
 	var scriptString = fs.readFileSync(path.join(inputPath, scriptName), "utf8").replace(/\r\n|\r/g, "\n");
 	var isScript = /\.js$/i.test(scriptName);
-	if (isScript) {
+	if (isScript && lint) {
 		errors.push.apply(errors, validateEs5Code(scriptName, scriptString)); // ES5構文に反する箇所があるかのチェック
 	}
 

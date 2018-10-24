@@ -14,6 +14,9 @@
 		"sandbox-runtime": "2",
 		"akashic-runtime": {
 			"version": "~1.0.9-beta"
+		},
+		"niconico": {
+			"supportedModes": ["single", "ranking"]
 		}
 	}
 }

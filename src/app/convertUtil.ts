@@ -15,6 +15,7 @@ export interface ConvertTemplateParameterObject {
 	source: string;
 	cwd: string;
 	unbundleText: boolean;
+	lint: boolean;
 	injects?: string[];
 }
 
