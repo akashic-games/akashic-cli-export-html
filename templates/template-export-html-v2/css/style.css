@@ -22,6 +22,8 @@ body {
 	touch-action: none;
 	width: 100%;
 	height: 100%;
+
+	/* iOS表示崩れ対策: bodyのサイズ計算からこの要素を除外 */
 	position: absolute;
 }
 
