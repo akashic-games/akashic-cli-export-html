@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## 0.1.38
+* `--magnify` オプション指定時、iOS Safariで画面位置がずれることがある問題を修正
+
 ## 0.1.37
 * `--atsumaru` オプション指定時、二度 lint される問題を修正
 * `--atsumaru` オプション指定時、`game.json` に `environment.niconico.supportedModes` が指定されているかのチェックを追加
