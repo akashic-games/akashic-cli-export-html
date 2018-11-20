@@ -171,7 +171,7 @@ require = function() {
                     if (!filter) return void (this._filters = null);
                     for (var i = this._filters.length - 1; i >= 0; --i) this._filters[i].func === filter && this._filters.splice(i, 1);
                 }
-            }, EventBuffer.prototype.processEvents = function() {
+            }, EventBuffer.prototype.processEvents = function(isLocal) {
                 var lpevs = this._unfilteredLocalEvents, pevs = this._unfilteredEvents, joins = this._unfilteredJoinLeaves;
                 if (!this._filters) return lpevs.length > 0 && (this._unfilteredLocalEvents = [], 
                 this._localBuffer = this._localBuffer ? this._localBuffer.concat(lpevs) : lpevs), 
@@ -190,13 +190,13 @@ require = function() {
                     lpevs); ++i) ;
                     lpevs && lpevs.length > 0 && (this._localBuffer = this._localBuffer ? this._localBuffer.concat(lpevs) : lpevs);
                 }
-                if (pevs.length > 0) {
+                if (!isLocal && pevs.length > 0) {
                     this._unfilteredEvents = [];
                     for (var i = 0; i < this._filters.length && (pevs = this._filters[i].func(pevs), 
                     pevs); ++i) ;
                     pevs && pevs.length > 0 && (this._buffer = this._buffer ? this._buffer.concat(pevs) : pevs);
                 }
-                if (joins.length > 0) {
+                if (!isLocal && joins.length > 0) {
                     this._unfilteredJoinLeaves = [];
                     for (var i = 0; i < this._filters.length && joins && joins.length > 0 && (joins = this._filters[i].func(joins), 
                     joins); ++i) ;
@@ -537,7 +537,7 @@ require = function() {
                     return _this._doSetDriverConfiguration(param.driverConfiguration);
                 });
                 return param.configurationUrl ? p.then(function() {
-                    return _this._loadConfiguration(param.configurationUrl, param.assetBase);
+                    return _this._loadConfiguration(param.configurationUrl, param.assetBase, param.configurationBase);
                 }).then(function(conf) {
                     return _this._createGame(conf, _this._player, param);
                 }) : p;
@@ -602,10 +602,10 @@ require = function() {
                         _this._game && (_this._game.isSnapshotSaver = _this._permission.writeTick), void resolve());
                     });
                 });
-            }, GameDriver.prototype._loadConfiguration = function(configurationUrl, basePath) {
+            }, GameDriver.prototype._loadConfiguration = function(configurationUrl, assetBase, configurationBase) {
                 var _this = this;
                 return new es6_promise_1.Promise(function(resolve, reject) {
-                    _this._loadConfigurationFunc(configurationUrl, basePath, function(err, conf) {
+                    _this._loadConfigurationFunc(configurationUrl, assetBase, configurationBase, function(err, conf) {
                         return err ? reject(err) : (_this.configurationLoadedTrigger.fire(conf), void resolve(conf));
                     });
                 });
@@ -860,7 +860,8 @@ require = function() {
                 !this._skipping && (frameGap > this._skipThreshold || 0 === this._tickBuffer.currentAge) && this._tickBuffer.hasNextTick() && this._startSkipping();
                 for (var consumedFrame = 0; consumedFrame < this._skipTicksAtOnce; ++consumedFrame) {
                     if (!this._tickBuffer.hasNextTick()) {
-                        this._waitingNextTick || (this._tickBuffer.requestTicks(), this._startWaitingNextTick());
+                        this._waitingNextTick || (this._tickBuffer.requestTicks(), this._startWaitingNextTick()), 
+                        this._omitInterpolatedTickOnReplay && this._sceneLocalMode === g.LocalTickMode.InterpolateLocal && this._doLocalTick();
                         break;
                     }
                     var nextFrameTime = this._currentTime + this._frameTime, nextTickTime = this._tickBuffer.readNextTickTime();
@@ -962,17 +963,18 @@ require = function() {
                     var currentAge = this._tickBuffer.currentAge;
                     if (targetAge >= currentAge && startPoint.frame < currentAge + this._jumpIgnoreThreshold) return;
                 }
-                this._clock.frameTrigger.remove(this._eventBuffer.processEvents, this._eventBuffer), 
-                this._skipping && this._stopSkipping(), this._tickBuffer.setCurrentAge(startPoint.frame), 
-                this._currentTime = startPoint.timestamp || startPoint.data.timestamp || 0, this._waitingNextTick = !1, 
-                this._lastRequestedStartPointAge = -1, this._lastRequestedStartPointTime = -1, this._omittedTickDuration = 0, 
-                this._game._restartWithSnapshot(startPoint), this._handleSceneChange();
+                this._clock.frameTrigger.remove(this._onEventsProcessed, this), this._skipping && this._stopSkipping(), 
+                this._tickBuffer.setCurrentAge(startPoint.frame), this._currentTime = startPoint.timestamp || startPoint.data.timestamp || 0, 
+                this._waitingNextTick = !1, this._lastRequestedStartPointAge = -1, this._lastRequestedStartPointTime = -1, 
+                this._omittedTickDuration = 0, this._game._restartWithSnapshot(startPoint), this._handleSceneChange();
             }, GameLoop.prototype._onGameStarted = function() {
                 this._clock.frameTrigger.add({
                     index: 0,
-                    owner: this._eventBuffer,
-                    func: this._eventBuffer.processEvents
+                    owner: this,
+                    func: this._onEventsProcessed
                 });
+            }, GameLoop.prototype._onEventsProcessed = function() {
+                this._eventBuffer.processEvents(this._sceneLocalMode === g.LocalTickMode.FullLocal);
             }, GameLoop.prototype._setLoopRenderMode = function(mode) {
                 if (mode !== this._loopRenderMode) switch (this._loopRenderMode = mode, mode) {
                   case LoopRenderMode_1["default"].AfterRawFrame:
@@ -1091,17 +1093,18 @@ require = function() {
         var PdiUtil, es6_promise_1 = require("es6-promise"), g = require("@akashic/akashic-engine");
         !function(PdiUtil) {
             function makeLoadConfigurationFunc(pf) {
-                function loadResolvedConfiguration(url, basePath, callback) {
+                function loadResolvedConfiguration(url, assetBase, configurationBase, callback) {
+                    null != configurationBase && (url = g.PathUtil.resolvePath(configurationBase, url)), 
                     pf.loadGameConfiguration(url, function(err, conf) {
                         if (err) return void callback(err, null);
                         try {
-                            conf = PdiUtil._resolveConfigurationBasePath(conf, null != basePath ? basePath : g.PathUtil.resolveDirname(url));
+                            conf = PdiUtil._resolveConfigurationBasePath(conf, null != assetBase ? assetBase : g.PathUtil.resolveDirname(url));
                         } catch (e) {
                             return void callback(e, null);
                         }
                         if (!conf.definitions) return void callback(null, conf);
                         var defs = conf.definitions.map(function(def) {
-                            return "string" == typeof def ? promisifiedLoad(def) : promisifiedLoad(def.url, def.basePath);
+                            return "string" == typeof def ? promisifiedLoad(def, assetBase, configurationBase) : promisifiedLoad(def.url, def.basePath, configurationBase);
                         });
                         es6_promise_1.Promise.all(defs).then(function(confs) {
                             return callback(null, confs.reduce(PdiUtil._mergeGameConfiguration));
@@ -1110,16 +1113,16 @@ require = function() {
                         });
                     });
                 }
-                function promisifiedLoad(url, basePath) {
+                function promisifiedLoad(url, assetBase, configurationBase) {
                     return new es6_promise_1.Promise(function(resolve, reject) {
-                        loadResolvedConfiguration(url, basePath, function(err, conf) {
+                        loadResolvedConfiguration(url, assetBase, configurationBase, function(err, conf) {
                             err ? reject(err) : resolve(conf);
                         });
                     });
                 }
                 return loadResolvedConfiguration;
             }
-            function _resolveConfigurationBasePath(configuration, basePath) {
+            function _resolveConfigurationBasePath(configuration, assetBase) {
                 function resolvePath(base, path) {
                     var ret = g.PathUtil.resolvePath(base, path);
                     if (0 !== ret.indexOf(base)) throw g.ExceptionFactory.createAssertionError("PdiUtil._resolveConfigurationBasePath: invalid path: " + path);
@@ -1127,13 +1130,13 @@ require = function() {
                 }
                 var assets = configuration.assets;
                 if (assets instanceof Object) for (var p in assets) assets.hasOwnProperty(p) && "path" in assets[p] && (assets[p].virtualPath = assets[p].virtualPath || assets[p].path, 
-                assets[p].path = resolvePath(basePath, assets[p].path));
+                assets[p].path = resolvePath(assetBase, assets[p].path));
                 return configuration.globalScripts && (configuration.globalScripts.forEach(function(path) {
                     if (assets.hasOwnProperty(path)) throw g.ExceptionFactory.createAssertionError("PdiUtil._resolveConfigurationBasePath: asset ID already exists: " + path);
                     assets[path] = {
                         type: /\.json$/i.test(path) ? "text" : "script",
                         virtualPath: path,
-                        path: resolvePath(basePath, path),
+                        path: resolvePath(assetBase, path),
                         global: !0
                     };
                 }), delete configuration.globalScripts), configuration;

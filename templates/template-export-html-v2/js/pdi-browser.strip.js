@@ -571,7 +571,10 @@ require = function e(t, n, r) {
                 return _this = _super.call(this, width, height, canvas) || this, canvas.width = width, 
                 canvas.height = height, _this.canvas = canvas, _this._renderer = void 0, _this;
             }
-            return __extends(CanvasSurface, _super), CanvasSurface.prototype.getHTMLElement = function() {
+            return __extends(CanvasSurface, _super), CanvasSurface.prototype.destroy = function() {
+                this.canvas.width = 1, this.canvas.height = 1, this.canvas = null, this._renderer = null, 
+                _super.prototype.destroy.call(this);
+            }, CanvasSurface.prototype.getHTMLElement = function() {
                 return this.canvas;
             }, CanvasSurface.prototype.changeVisualScale = function(xScale, yScale) {
                 var canvasStyle = this.canvas.style;
