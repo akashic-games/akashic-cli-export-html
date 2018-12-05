@@ -175,8 +175,8 @@ require = function() {
                 var lpevs = this._unfilteredLocalEvents, pevs = this._unfilteredEvents, joins = this._unfilteredJoinLeaves;
                 if (!this._filters) return lpevs.length > 0 && (this._unfilteredLocalEvents = [], 
                 this._localBuffer = this._localBuffer ? this._localBuffer.concat(lpevs) : lpevs), 
-                pevs.length > 0 && (this._unfilteredEvents = [], this._buffer = this._buffer ? this._buffer.concat(pevs) : pevs), 
-                void (joins.length > 0 && (this._unfilteredJoinLeaves = [], this._joinLeaveBuffer = this._joinLeaveBuffer ? this._joinLeaveBuffer.concat(joins) : joins));
+                !isLocal && pevs.length > 0 && (this._unfilteredEvents = [], this._buffer = this._buffer ? this._buffer.concat(pevs) : pevs), 
+                void (!isLocal && joins.length > 0 && (this._unfilteredJoinLeaves = [], this._joinLeaveBuffer = this._joinLeaveBuffer ? this._joinLeaveBuffer.concat(joins) : joins));
                 if (0 === lpevs.length && 0 === pevs.length && 0 === joins.length) for (var i = 0; i < this._filters.length; ++i) if (this._filters[i].handleEmpty) {
                     var gpevs = this._filters[i].func([]);
                     if (gpevs) for (var j = 0; j < gpevs.length; ++j) {
