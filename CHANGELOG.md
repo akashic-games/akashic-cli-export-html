@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## unrelease
+* akashic-cli-export-zip@0.3.0 を利用
+
 ## 0.1.47
 * 内部コンポーネントの更新
   * v1(akashic-engine@1.13.0, game-driver@0.11.17, pdi-browser@0.10.12)

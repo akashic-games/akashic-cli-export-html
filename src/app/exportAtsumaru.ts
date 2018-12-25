@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as fsx from "fs-extra";
 import * as path from "path";
 import * as archiver from "archiver";
-import {promiseExportZip} from "@akashic/akashic-cli-export-zip/lib/bundle";
+import {promiseExportZip} from "@akashic/akashic-cli-export-zip/lib/exportZip";
 import {_completeExportHTMLParameterObject, ExportHTMLParameterObject, promiseExportHTML} from "./exportHTML";
 import {getFromHttps} from "./apiUtil";
 
