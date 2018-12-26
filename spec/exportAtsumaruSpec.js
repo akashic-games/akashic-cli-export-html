@@ -145,7 +145,7 @@ describe("exportAtsumaru", function () {
 					return atsumaru.promiseExportAtsumaru(cliParam)
 				})
 				.catch(function (err) {
-					expect(err).toBe("The output directory " + cliParam.output + " already exists. Cannot overwrite without force option.");
+					expect(err.indexOf("Cannot overwrite without force option.") !== -1).toBeTruthy();
 					fsx.removeSync(outputDirPath);
 					done();
 				});
