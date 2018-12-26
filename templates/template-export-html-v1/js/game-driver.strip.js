@@ -799,16 +799,16 @@ require = function() {
             }, GameLoop.prototype._handleSceneChange = function() {
                 var scene = this._game.scene(), localMode = scene ? scene.local : g.LocalTickMode.FullLocal, tickMode = scene ? scene.tickGenerationMode : g.TickGenerationMode.ByClock;
                 if (this._sceneLocalMode !== localMode || this._sceneTickMode !== tickMode) switch (this._sceneLocalMode = localMode, 
-                this._sceneTickMode = tickMode, localMode) {
+                this._sceneTickMode = tickMode, this._clock.frameTrigger.remove(this, this._onFrame), 
+                this._clock.frameTrigger.remove(this, this._onLocalFrame), localMode) {
                   case g.LocalTickMode.FullLocal:
-                    this._tickController.stopTick(), this._clock.frameTrigger.remove(this, this._onFrame), 
-                    this._clock.frameTrigger.handle(this, this._onLocalFrame);
+                    this._tickController.stopTick(), this._clock.frameTrigger.handle(this, this._onLocalFrame);
                     break;
 
                   case g.LocalTickMode.NonLocal:
                   case g.LocalTickMode.InterpolateLocal:
                     tickMode === g.TickGenerationMode.ByClock ? this._tickController.startTick() : this._tickController.startTickOnce(), 
-                    this._clock.frameTrigger.remove(this, this._onLocalFrame), this._clock.frameTrigger.handle(this, this._onFrame);
+                    this._clock.frameTrigger.handle(this, this._onFrame);
                     break;
 
                   default:
@@ -875,7 +875,7 @@ require = function() {
                     var skipStopGap = this._loopMode === LoopMode_1["default"].Realtime ? 0 : 1;
                     skipStopGap >= ageGap && this._stopSkipping();
                 } else ageGap > this._skipThreshold && this._startSkipping();
-                if (0 >= ageGap) return 0 === ageGap && (this._sceneTickMode !== g.TickGenerationMode.Manual && this._loopMode !== LoopMode_1["default"].Replay || 0 !== this._tickBuffer.currentAge || this._tickBuffer.requestTicks(), 
+                if (0 >= ageGap) return 0 === ageGap && (0 === this._tickBuffer.currentAge && this._tickBuffer.requestTicks(), 
                 this._startWaitingNextTick()), void (this._sceneLocalMode === g.LocalTickMode.InterpolateLocal && this._doLocalTick());
                 for (var loopCount = !this._skipping && ageGap <= this._delayIgnoreThreshold ? 1 : Math.min(ageGap, this._skipTicksAtOnce), i = 0; loopCount > i; ++i) {
                     var nextFrameTime = this._currentTime + this._frameTime, nextTickTime = this._tickBuffer.readNextTickTime();
