@@ -2,6 +2,7 @@ import * as cmn from "@akashic/akashic-cli-commons";
 import { ConvertTemplateParameterObject } from "./convertUtil";
 import { promiseConvertNoBundle } from "./convertNoBundle";
 import { promiseConvertBundle } from "./convertBundle";
+import { checkDestinationValidity } from "./convertUtil";
 
 import * as fs from "fs";
 import * as fsx from "fs-extra";
@@ -35,28 +36,11 @@ export function promiseExportHTML(p: ExportHTMLParameterObject): Promise<string>
 		if (!param.output) {
 			param.output = fs.mkdtempSync(path.join(os.tmpdir(), "akashic-export-html-tmp-"));
 			return resolve();
+		} else {
+			return checkDestinationValidity(param.output, param.force)
+				.then(() => resolve())
+				.catch((err) => reject(err));
 		}
-		fs.stat(path.resolve(param.output), (error: any, stat: any) => {
-			if (error) {
-				if (error.code !== "ENOENT") {
-					return reject("Output directory has bad status. Error code " + error.code);
-				}
-				fs.mkdir(path.resolve(param.output), (err: any) => {
-					if (err) {
-						return reject("Create " + param.output + " directory failed.");
-					}
-					resolve();
-				});
-			} else if (stat) {
-				if (!stat.isDirectory()) {
-					return reject(param.output + " is not directory.");
-				}
-				if (!param.force) {
-					return reject("The output directory " + param.output + " already exists. Cannot overwrite without force option.");
-				}
-				resolve();
-			}
-		});
 	})
 	.then(() => {
 		if (param.hashLength === 0) return param.source;
@@ -81,7 +65,8 @@ export function promiseExportHTML(p: ExportHTMLParameterObject): Promise<string>
 			return promiseConvertBundle(convertParam);
 		} else {
 			return promiseConvertNoBundle(convertParam);
-		}})
+		}
+	})
 	.then(() => {
 		// ハッシュ化した場合一時ファイルが生成されるため削除する
 		if (param.hashLength > 0) {
@@ -90,7 +75,6 @@ export function promiseExportHTML(p: ExportHTMLParameterObject): Promise<string>
 		}
 	})
 	.catch((error) => {
-		param.logger.error(error);
 		throw error;
 	})
 	.then(() => {

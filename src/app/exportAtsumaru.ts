@@ -5,6 +5,7 @@ import * as archiver from "archiver";
 import {promiseExportZip} from "@akashic/akashic-cli-export-zip/lib/exportZip";
 import {_completeExportHTMLParameterObject, ExportHTMLParameterObject, promiseExportHTML} from "./exportHTML";
 import {getFromHttps} from "./apiUtil";
+import {checkDestinationValidity} from "./convertUtil";
 
 export function promiseExportAtsumaru(param: ExportHTMLParameterObject): Promise<string> {
 	if (param.output === undefined) {
@@ -13,12 +14,14 @@ export function promiseExportAtsumaru(param: ExportHTMLParameterObject): Promise
 	const outZip = path.extname(param.output) === ".zip";
 	const destDir = outZip ? undefined : param.output;
 	const completedParam = _completeExportHTMLParameterObject({...param});
-	return promiseExportHTML({...param, output: destDir, logger: completedParam.logger})
+	return checkDestinationValidity(param.output, param.force, true)
+		.then(() => promiseExportHTML({...param, output: destDir, logger: completedParam.logger}))
 		.then((dest) => {
 			completedParam.output = dest;
 			// filesディレクトリはakashic export zip時にも生成されるので削除しておく。削除しないとハッシュ名の衝突が起きてエラーになるため。
 			fsx.removeSync(path.join(completedParam.output, "files"));
-			// akashic export zip -o [outputDir] -b -H の実行
+			// akashic export zip -o [outputDir] -b -H -f の実行
+			// forceでエラーとなる場合は、export-htmlでエラーになるため、export-zipはtrueとする。
 			return promiseExportZip({
 				source: completedParam.source,
 				bundle: completedParam.bundle,

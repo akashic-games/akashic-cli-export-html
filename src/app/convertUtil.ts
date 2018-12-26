@@ -154,3 +154,32 @@ function loadScriptFile(fileName: string, templatePath: string): string {
 		}
 	}
 }
+
+export function checkDestinationValidity(dest: string, force: boolean, isAtsumaru?: boolean): Promise<void> {
+	return new Promise<void>((resolve, reject) => {
+		fs.stat(path.resolve(dest), (error: any, stat: any) => {
+			if (error) {
+				if (error.code !== "ENOENT") {
+					return reject("Output directory has bad status. Error code " + error.code);
+				} else if (isAtsumaru) {
+					return resolve();
+				}
+
+				fs.mkdir(path.resolve(dest), (err: any) => {
+					if (err) {
+						return reject("Create " + dest + " directory failed.");
+					}
+					return resolve();
+				});
+			} else if (stat) {
+				if (!isAtsumaru && !stat.isDirectory()) {
+					return reject(dest + " is not directory.");
+				}
+				if (!force)
+					return reject("The output directory " + dest + " already exists. Cannot overwrite without force option.");
+				else
+					return resolve();
+			}
+		});
+	});
+}

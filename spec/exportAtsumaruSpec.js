@@ -16,7 +16,8 @@ describe("exportAtsumaru", function () {
 			output: "output",
 			hashLength: 20,
 			bundle: true,
-			copyText: true
+			copyText: true,
+			force: true
 		};
 	});
 	afterEach(function() {
@@ -129,6 +130,23 @@ describe("exportAtsumaru", function () {
 				})
 				.catch(function (err) {
 					expect(err.message).toBe("--output option must be specified.");
+					done();
+				});
+		});
+		it("If already outputted, force option error will be returned", function (done) {
+			const targetDirPath = path.join(__dirname, "fixture", "sample_game_with_akashic_runtime");
+			const outputDirPath = path.join(targetDirPath, "output");
+			Promise.resolve()
+				.then(function () {
+					return atsumaru.promiseExportAtsumaru(cliParam);
+				})
+				.then(function () {
+					delete cliParam["force"];
+					return atsumaru.promiseExportAtsumaru(cliParam)
+				})
+				.catch(function (err) {
+					expect(err).toBe("The output directory output already exists. Cannot overwrite without force option.");
+					fsx.removeSync(outputDirPath);
 					done();
 				});
 		});
