@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## unreleased
+## 0.2.0
 * akashic-cli-export-zip@0.3.0 を利用
 
 ## 0.1.49
