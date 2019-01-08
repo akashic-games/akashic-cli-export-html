@@ -81,7 +81,8 @@ export function promiseExportHTML(p: ExportHTMLParameterObject): Promise<string>
 			return promiseConvertBundle(convertParam);
 		} else {
 			return promiseConvertNoBundle(convertParam);
-		}})
+		}
+	})
 	.then(() => {
 		// ハッシュ化した場合一時ファイルが生成されるため削除する
 		if (param.hashLength > 0) {
@@ -90,7 +91,6 @@ export function promiseExportHTML(p: ExportHTMLParameterObject): Promise<string>
 		}
 	})
 	.catch((error) => {
-		param.logger.error(error);
 		throw error;
 	})
 	.then(() => {

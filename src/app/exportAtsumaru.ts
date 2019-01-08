@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as fsx from "fs-extra";
 import * as path from "path";
 import * as archiver from "archiver";
-import {promiseExportZip} from "@akashic/akashic-cli-export-zip/lib/bundle";
+import {promiseExportZip} from "@akashic/akashic-cli-export-zip/lib/exportZip";
 import {_completeExportHTMLParameterObject, ExportHTMLParameterObject, promiseExportHTML} from "./exportHTML";
 import {getFromHttps} from "./apiUtil";
 
@@ -13,18 +13,21 @@ export function promiseExportAtsumaru(param: ExportHTMLParameterObject): Promise
 	const outZip = path.extname(param.output) === ".zip";
 	const destDir = outZip ? undefined : param.output;
 	const completedParam = _completeExportHTMLParameterObject({...param});
-	return promiseExportHTML({...param, output: destDir, logger: completedParam.logger})
+	return _checkDestinationValidity(param.output, param.force)
+		.then(() => promiseExportHTML({...param, output: destDir, logger: completedParam.logger}))
 		.then((dest) => {
 			completedParam.output = dest;
 			// filesディレクトリはakashic export zip時にも生成されるので削除しておく。削除しないとハッシュ名の衝突が起きてエラーになるため。
 			fsx.removeSync(path.join(completedParam.output, "files"));
-			// akashic export zip -o [outputDir] -b -H の実行
+			// akashic export zip -o [outputDir] -b -H -f の実行
+			// export-html と同じ箇所に export-zip を実行するため必ず force: true で実行する。force オプションがない場合のチェックは promiseExportHTML() で行われている。
 			return promiseExportZip({
 				source: completedParam.source,
 				bundle: completedParam.bundle,
 				dest: completedParam.output,
 				hashLength: completedParam.hashLength,
-				strip: true
+				strip: true,
+				force: true
 			});
 		}).then(() => {
 			// game.jsonへの追記
@@ -85,4 +88,23 @@ export function promiseExportAtsumaru(param: ExportHTMLParameterObject): Promise
 		}).then(() => {
 			return path.resolve(param.cwd, param.output);
 		});
+}
+
+export function _checkDestinationValidity(dest: string, force: boolean): Promise<void> {
+	return new Promise<void>((resolve, reject) => {
+		fs.stat(path.resolve(dest), (error: any, stat: any) => {
+			if (error) {
+				if (error.code === "ENOENT") {
+					resolve();
+				} else {
+					return reject("Output directory has bad status. Error code " + error.code);
+				}
+				return;
+			}
+			if (!force)
+				return reject("The output directory " + dest + " already exists. Cannot overwrite without force option.");
+			else
+				resolve();
+		});
+	});
 }
