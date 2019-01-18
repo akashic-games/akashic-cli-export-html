@@ -111,7 +111,7 @@ function writeEct(
 	innerHTMLAssetArray: InnerHTMLAssetData[], outputPath: string,
 	conf: cmn.Configuration, options: ConvertTemplateParameterObject, templatePath: string): void {
 	const injects = options.injects ? options.injects : [];
-	var scripts = getDefaultBundleScripts(templatePath, options.minify, !options.unbundleText);
+	var scripts = getDefaultBundleScripts(templatePath, conf, options.minify, !options.unbundleText);
 	var ectRender = ect({root: __dirname + "/../templates-build", ext: ".ect"});
 	var html = ectRender.render("bundle-index", {
 		assets: innerHTMLAssetArray,

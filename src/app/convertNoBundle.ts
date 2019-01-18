@@ -92,7 +92,8 @@ function writeEct(assetPaths: string[], outputPath: string, conf: cmn.Configurat
 	var html = ectRender.render("no-bundle-index", {
 		assets: assetPaths,
 		magnify: !!options.magnify,
-		injectedContents: getInjectedContents(options.cwd, injects)
+		injectedContents: getInjectedContents(options.cwd, injects),
+		version: conf._content.environment["sandbox-runtime"]
 	});
 	fs.writeFileSync(path.resolve(outputPath, "./index.html"), html);
 }
