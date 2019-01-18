@@ -93,11 +93,12 @@ export function wrap(code: string, minify?: boolean): string {
 	return minify ? UglifyJS.minify(ret, { fromString: true }).code : ret;
 }
 
-export function getDefaultBundleScripts(templatePath: string, minify?: boolean, bundleText: boolean = true): any {
+export function getDefaultBundleScripts(templatePath: string, version: string, minify?: boolean, bundleText: boolean = true): any {
 	var preloadScriptNames =
 		["akashic-engine.strip.js", "game-driver.strip.js", "pdi-browser.strip.js"];
 	var postloadScriptNames =
-		["build/LocalScriptAsset.js", "game-storage.strip.js", "logger.js", "sandbox.js", "initGlobals.js"];
+		["build/LocalScriptAsset.js", "game-storage.strip.js", "sandbox.js", "initGlobals.js"];
+	if (version === "1") postloadScriptNames.push("logger.js");
 	if (bundleText) {
 		postloadScriptNames.push("build/LocalTextAsset.js");
 	}

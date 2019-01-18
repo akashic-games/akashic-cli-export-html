@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## 0.2.2
+* g.Logger 非推奨化に追従するため、 logger.js を削除
+
 ## 0.2.1
 * 内部コンポーネントの更新
   * v1(akashic-engine@1.13.0, game-driver@0.11.18, pdi-browser@0.10.12)

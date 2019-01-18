@@ -12,7 +12,9 @@
 <script src="./js/build/LocalScriptAsset.js"></script>
 <script src="./js/build/LocalTextAsset.js"></script>
 <script src="./js/game-storage.strip.js"></script>
+<% if @version == "1" : %>
 <script src="./js/logger.js"></script>
+<% end %>
 <link rel="stylesheet" type="text/css" href="css/style.css">
 
 <% for asset in @assets : %>
