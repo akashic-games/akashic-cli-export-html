@@ -52,6 +52,7 @@ function cli(param: CommandParameterObject): void {
 				return promiseExportHTML(exportParam);
 			}
 		})
+		.then(() => logger.info("Done!"))
 		.catch((err: any) => {
 			logger.error(err);
 			process.exit(1);

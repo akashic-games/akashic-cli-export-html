@@ -94,7 +94,6 @@ export function promiseExportHTML(p: ExportHTMLParameterObject): Promise<string>
 		throw error;
 	})
 	.then(() => {
-		param.logger.info("Done!");
 		return param.output;
 	});
 }
