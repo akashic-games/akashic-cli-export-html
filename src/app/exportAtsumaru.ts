@@ -83,7 +83,6 @@ export function promiseExportAtsumaru(param: ExportHTMLParameterObject): Promise
 				archive.finalize();
 			}).then(() => {
 				fsx.removeSync(completedParam.output);
-				completedParam.logger.info("Done Zip!");
 			});
 		}).then(() => {
 			return path.resolve(param.cwd, param.output);
