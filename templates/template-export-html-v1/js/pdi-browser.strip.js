@@ -1576,7 +1576,7 @@ require = function e(t, n, r) {
         "use strict";
         Object.defineProperty(exports, "__esModule", {
             value: !0
-        });
+        }), exports.PointType = rpe.PointType;
     }, {} ],
     "@akashic/pdi-browser": [ function(require, module, exports) {
         "use strict";
