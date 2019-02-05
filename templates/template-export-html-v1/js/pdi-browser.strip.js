@@ -547,7 +547,10 @@ require = function e(t, n, r) {
                 canvas.height = height, _this.canvas = canvas, _this._context = canvas.getContext("2d"), 
                 _this._renderer = void 0, _this;
             }
-            return __extends(CanvasSurface, _super), CanvasSurface.prototype.renderer = function() {
+            return __extends(CanvasSurface, _super), CanvasSurface.prototype.destroy = function() {
+                this.canvas.width = 1, this.canvas.height = 1, this.canvas = null, this._renderer = null, 
+                _super.prototype.destroy.call(this);
+            }, CanvasSurface.prototype.renderer = function() {
                 return this._renderer || (this._renderer = new Context2DRenderer_1.Context2DRenderer(this, this._context)), 
                 this._renderer;
             }, CanvasSurface.prototype.getHTMLElement = function() {
@@ -1574,9 +1577,6 @@ require = function e(t, n, r) {
     } ],
     32: [ function(require, module, exports) {
         "use strict";
-        Object.defineProperty(exports, "__esModule", {
-            value: !0
-        }), exports.PointType = rpe.PointType;
     }, {} ],
     "@akashic/pdi-browser": [ function(require, module, exports) {
         "use strict";
