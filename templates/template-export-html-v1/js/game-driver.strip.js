@@ -1892,9 +1892,6 @@ require = function() {
     } ],
     22: [ function(require, module, exports) {
         "use strict";
-        Object.defineProperty(exports, "__esModule", {
-            value: !0
-        }), exports.PointType = rpe.PointType;
     }, {} ],
     23: [ function(require, module, exports) {
         (function(process, global) {

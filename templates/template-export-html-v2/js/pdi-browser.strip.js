@@ -2204,8 +2204,8 @@ require = function e(t, n, r) {
                 this._audioInstance = audio) : this._dummyDurationWaitTimer = setTimeout(this._endedEventHandler, asset.duration), 
                 _super.prototype.play.call(this, asset);
             }, HTMLAudioPlayer.prototype.stop = function() {
-                this.currentAudio && (this._clearEndedEventHandler(), this._audioInstance && (this._isWaitingPlayEvent ? this._isStopRequested = !0 : (this._audioInstance.pause(), 
-                this._audioInstance = null)), _super.prototype.stop.call(this));
+                return this.currentAudio ? (this._clearEndedEventHandler(), this._audioInstance && (this._isWaitingPlayEvent ? this._isStopRequested = !0 : (this._audioInstance.pause(), 
+                this._audioInstance = null)), void _super.prototype.stop.call(this)) : void _super.prototype.stop.call(this);
             }, HTMLAudioPlayer.prototype.changeVolume = function(volume) {
                 _super.prototype.changeVolume.call(this, volume), this._audioInstance && (this._audioInstance.volume = this._calculateVolume());
             }, HTMLAudioPlayer.prototype._changeMuted = function(muted) {
@@ -2600,8 +2600,8 @@ require = function e(t, n, r) {
                 } else this._dummyDurationWaitTimer = setTimeout(this._endedEventHandler, asset.duration);
                 _super.prototype.play.call(this, asset);
             }, WebAudioPlayer.prototype.stop = function() {
-                this.currentAudio && (this._clearEndedEventHandler(), this._sourceNode && this._sourceNode.stop(0), 
-                _super.prototype.stop.call(this));
+                return this.currentAudio ? (this._clearEndedEventHandler(), this._sourceNode && this._sourceNode.stop(0), 
+                void _super.prototype.stop.call(this)) : void _super.prototype.stop.call(this);
             }, WebAudioPlayer.prototype.notifyMasterVolumeChanged = function() {
                 this._gainNode.gain.value = this._calculateVolume();
             }, WebAudioPlayer.prototype._onAudioEnded = function() {
